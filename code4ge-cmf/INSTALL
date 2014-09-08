@@ -1,0 +1,3 @@
+chmod a+w configs/application.ini
+http://code4ge.cmf/install
+chmod go-w configs/application.ini

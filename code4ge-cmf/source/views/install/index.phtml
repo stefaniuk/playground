@@ -1,0 +1,39 @@
+<div>
+	<h2>Database Connection Details</h2>
+	<form action="" method="post">
+		<table>
+			<tr><td>Host:</td><td><input type="text"
+				name="host"
+				dojoType="dijit.form.TextBox"
+				value="<?php echo $this->host; ?>"
+				maxLength="32"
+				tabindex="10" />
+			</td></tr>
+			<tr><td>Username:</td><td><input type="text"
+				name="username"
+				dojoType="dijit.form.TextBox"
+				value="<?php echo $this->username; ?>"
+				maxLength="32"
+				tabindex="20" />
+			</td></tr>
+			<tr><td>Password:</td><td><input type="password"
+				name="password"
+				dojoType="dijit.form.TextBox"
+				value="<?php echo $this->password; ?>"
+				maxLength="32"
+				tabindex="30" />
+			</td></tr>
+			<tr><td>Database Name:</td><td><input type="text"
+				name="dbname"
+				dojoType="dijit.form.TextBox"
+				value="<?php echo $this->dbname; ?>"
+				maxLength="32"
+				tabindex="40" />
+			</td></tr>
+			<tr><td><button type="submit"
+				dojoType="dijit.form.Button"
+				tabindex="50">Install</button>
+			</td></tr>
+		</p>
+	</form>
+</div>
