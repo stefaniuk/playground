@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="code4ge.module" default="minify" basedir=".">
+
+	<property file="build.properties" />
+
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+	<!-- ============================================ -->
+	<!-- detect operating system                      -->
+	<!-- ============================================ -->
+	<condition property="os.windows">
+		<os family="windows" />
+	</condition>
+	<condition property="os.unix">
+		<os family="unix" />
+	</condition>
+	<target name="detect-windows" if="os.windows">
+		<property name="os.script.ext" value="bat" />
+	</target>
+	<target name="detect-unix" if="os.unix">
+		<property name="os.script.ext" value="sh" />
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/create.link.sh" /></exec>
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/git.revision.sh" /></exec>
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/git.sh" /></exec>
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/remove.link.sh" /></exec>
+	</target>
+	<target name="detect-os" depends="detect-windows, detect-unix" />
+
+	<!-- ============================================ -->
+	<!-- target: get-revision                         -->
+	<!-- ============================================ -->
+	<target name="get-revision" depends="detect-os">
+		<exec executable="${basedir}/scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+		<propertyregex property="vcs.revision" input="${temp}" select="\1">
+			<regexp pattern="([0-9]*)" />
+		</propertyregex>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: setup                                -->
+	<!-- ============================================ -->
+	<target name="setup" depends="detect-os">
+		<input message="Module name:" addproperty="user.module.name" />
+		<if>
+			<not><equals arg1="${module.name}" arg2="${user.module.name}" /></not>
+			<then>
+
+				<script language="javascript"><![CDATA[
+					name = project.getProperty('user.module.name');
+					project.setProperty('user.module.name.lowercase', name.toLowerCase());
+					project.setProperty('user.module.name.propercase', name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase());
+					name = project.getProperty('module.name');
+					project.setProperty('module.name.propercase', name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase());
+				]]></script>
+
+				<!-- git: remove repository URL from the configuration file -->
+				<replace file="${basedir}/.git/config"
+					token="git@github.com:stefaniuk/code4ge.module.git"
+					value=""
+				/>
+
+				<!-- build.properties: module name -->
+				<replace file="${basedir}/build.properties"
+					token="module.name=${module.name}"
+					value="module.name=${user.module.name.lowercase}"
+				/>
+
+				<!-- *.php: module prefix -->
+				<replace dir="${basedir}/source"
+					includes="**/*.php"
+					token=" ${module.name.propercase}_"
+					value=" ${user.module.name.propercase}_"
+				/>
+
+				<!-- application.ini: default module-->
+				<replace file="${basedir}/source/configs/application.ini"
+					token='resources.frontController.defaultModule = "${module.name}"'
+					value='resources.frontController.defaultModule = "${user.module.name.lowercase}"'
+				/>
+
+				<!-- configuration: URL -->
+				<replace dir="${basedir}/source/configs"
+					includes="**"
+					token="/${module.name}"
+					value="/${user.module.name.lowercase}"
+				/>
+
+				<!-- configuration: module specific properties -->
+				<replace dir="${basedir}/source/configs"
+					includes="**"
+					token="${module.name}."
+					value="${user.module.name.lowercase}."
+				/>
+
+				<!-- class namespace -->
+				<exec executable="${basedir}/scripts/git.${os.script.ext}">
+					<arg line="mv" />
+					<arg line="${basedir}/source/classes/${module.name.propercase}" />
+					<arg line="${basedir}/source/classes/${user.module.name.propercase}" />
+				</exec>
+
+				<!-- build profile -->
+				<replace file="${basedir}/source/resources/code4ge.${module.name}.profile.js"
+					token=".${module.name}"
+					value=".${user.module.name.lowercase}"
+				/>
+				<replace file="${basedir}/source/resources/code4ge.${module.name}.profile.js"
+					token="/${module.name}"
+					value="/${user.module.name.lowercase}"
+				/>
+				<exec executable="${basedir}/scripts/git.${os.script.ext}">
+					<arg line="mv" />
+					<arg line="${basedir}/source/resources/code4ge.${module.name}.profile.js" />
+					<arg line="${basedir}/source/resources/code4ge.${user.module.name.lowercase}.profile.js" />
+				</exec>
+
+			</then>
+		</if>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: init                                 -->
+	<!-- ============================================ -->
+	<target name="init" depends="get-revision">
+		<!-- check if module name has been set -->
+		<if>
+			<equals arg1="${module.name}" arg2="module" />
+			<then>
+				<fail>Module name must be set. Run setup target first.</fail>
+			</then>
+		</if>
+		<!-- set properties -->
+		<tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+		<property name="module.version.full" value="${module.version.major}.${module.version.minor}.${vcs.revision}-${module.version.stage}" />
+		<property name="build.file" value="${basedir}/build/${ant.project.name}-${module.version.full}.tar.gz" />
+		<!-- print out properties -->
+		<echo>Module name: ${module.name}</echo>
+		<echo>Module version: ${module.version.full}</echo>
+		<echo>Date of build: ${build.date}</echo>
+		<echo>Operating system: ${os.name}</echo>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: unlink                               -->
+	<!-- ============================================ -->
+	<target name="unlink" depends="init">
+		<exec executable="${basedir}/scripts/remove.link.${os.script.ext}">
+			<arg line="${basedir}/${code4ge.jsf.dir}/source/code4ge/${module.name}" />
+		</exec>
+		<exec executable="${basedir}/scripts/remove.link.${os.script.ext}">
+			<arg line="${basedir}/${code4ge.cmf.dir}/source/modules/${module.name}" />
+		</exec>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: link                                 -->
+	<!-- ============================================ -->
+	<target name="link" depends="unlink">
+		<exec executable="${basedir}/scripts/create.link.${os.script.ext}">
+			<arg line="${basedir}/source/resources" />
+			<arg line="${basedir}/${code4ge.jsf.dir}/source/code4ge/${module.name}" />
+		</exec>
+		<exec executable="${basedir}/scripts/create.link.${os.script.ext}">
+			<arg line="${basedir}/source" />
+			<arg line="${basedir}/${code4ge.cmf.dir}/source/modules/${module.name}" />
+		</exec>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: generate-sprites                     -->
+	<!-- ============================================ -->
+	<target name="generate-sprites" depends="init">
+		<exec executable="${basedir}/${code4ge.jsf.dir}/scripts/generate.sprites.${os.script.ext}">
+			<arg line="${basedir}/${code4ge.jsf.dir}" />
+			<arg line="${basedir}/source/resources/icons/sprites/sprite.options.js" />
+		</exec>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- (DEFAULT) target: minify                     -->
+	<!-- ============================================ -->
+	<target name="minify" depends="generate-sprites">
+		<ant antfile="build.xml" dir="${basedir}/${code4ge.jsf.dir}" target="minify" inheritAll="false" />
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: build                                -->
+	<!-- ============================================ -->
+	<target name="build" depends="init">
+		<!-- TODO: the build of module has to be improved -->
+		<!-- TODO: save version in the source code -->
+		<ant antfile="build.xml" dir="${basedir}/${code4ge.cmf.dir}" target="build" inheritAll="true" />
+	</target>
+
+</project>

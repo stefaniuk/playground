@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="com.code4ge.json" default="jar" basedir=".">
+
+	<property file="build.properties" />
+
+	<!-- ============================================ -->
+	<!-- target: clean                                -->
+	<!-- ============================================ -->
+	<target name="clean">
+		<delete includeEmptyDirs="true">
+			<fileset dir="${basedir}/target/classes"
+				includes="**/*"
+				excludes="**/.gitignore"
+			/>
+		</delete>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: compile                              -->
+	<!-- ============================================ -->
+	<target name="compile" depends="clean">
+		<javac classpath="${project.classpath}"
+			srcdir="${basedir}/src/main/java"
+			destdir="${basedir}/target/classes"
+			includes="**/*.java"
+			target="1.6"
+			source="1.6"
+			includeAntRuntime="false"
+		/>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: jar                                  -->
+	<!-- ============================================ -->
+	<target name="jar" depends="compile">
+		<jar jarfile="${basedir}/build/${ant.project.name}.jar"
+			basedir="${basedir}/target/classes"
+			excludes=".gitignore"
+			compress="true"
+		/>
+	</target>
+
+</project>

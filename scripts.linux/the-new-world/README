@@ -1,0 +1,29 @@
+Installation root directory:
+============================
+
+	/usr/local
+
+Application directory structure:
+================================
+
+	/usr/local/[application]/
+		bin
+		conf
+		log
+
+Pid files:
+==========
+
+	/usr/local/[application]/log/[application].pid
+
+Log files:
+==========
+
+	1) File names
+		[application].log
+		[application].err
+
+	2) Location
+
+		/var/log/
+		/usr/local/[application]/log/ (symbolic links)

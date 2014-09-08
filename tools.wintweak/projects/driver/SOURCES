@@ -1,0 +1,4 @@
+TARGETNAME=rtkdrv
+TARGETPATH=..\..\bin
+TARGETTYPE=DRIVER
+SOURCES=drv.cpp rtk.cpp

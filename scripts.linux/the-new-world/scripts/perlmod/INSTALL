@@ -1,0 +1,46 @@
+*******************************************
+PERL MODULE MANAGER - perlmod Version 1.2.0 
+*******************************************
+
+-------------------
+Installation Steps:
+-------------------
+a) chmod 655 installer
+
+b) ./installer
+	
+Note: Always run as a root user
+
+
+------------------------------------------------
+Syntax:
+------------------------------------------------
+Usage: perlmod [options] [module1] [module2] ...
+
+Options:
+-i, install, --install		Install perl modules automatically
+-d, delete, --delete		Uninstall perl modules from the system
+-f, file, --file		Print all files related to a module
+-h, help, --help		Print help about perlmod
+-l, list, --list		List all perl modules installed in system
+-m, module, --module		List version of module installed in system
+-c, cpan, --cpan		Search for a perl module in cpan.org
+-s, search, --search		Search for a perl module installed in system
+-v, version, --version		Shows perlmod version
+
+Example:
+install 			=> perlmod -i Date::Calc SOAP::Parser Authen::NTLM::HTTP
+uninstall			=> perlmod -d Date::Calc
+module files			=> perlmod -f Date::Calc
+module details			=> perlmod -m Date::Calc
+list all modules		=> perlmod -l
+search in cpan.org		=> perlmod -c Date::Calc
+search for a module 		=> perlmod -s Date::Calc
+perlmod help			=> perlmod -h
+perlmod version			=> perlmod -v
+
+---------------------------------------------------------------------
+For any help about this script, Please contact to sendtogeo@gmail.com
+
+Developed By Geo Varghese (www.seofreetools.net)
+---------------------------------------------------------------------

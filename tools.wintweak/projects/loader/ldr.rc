@@ -1,0 +1,2 @@
+DRIVER		BINARY "..\..\bin\i386\\rtkdrv.sys"
+COMMANDER	BINARY "..\..\bin\Debug\\rtkcmd.exe"

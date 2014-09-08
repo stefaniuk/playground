@@ -1,0 +1,293 @@
+top_menu_home=Strona domowa
+top_menu_profile=Profil
+top_menu_logout=Wyloguj
+
+side_menu_myaccount_title=Serwer wirtualny
+side_menu_myaccount_header=Moje konto
+side_menu_myaccount_home=Strona domowa
+side_menu_myaccount_profile=Profil
+side_menu_myaccount_logout=Wyloguj
+side_menu_myaccount_status=Status
+side_menu_myaccount_ip=Adres IP
+
+virtual_server_list_title=Serwer wirtualne
+virtual_server_list_type=Typ
+virtual_server_list_hostname=Nazwa hosta
+virtual_server_list_ip=Adres IP
+virtual_server_list_mem=Pamięć
+virtual_server_list_burst=Szczyt / Wymiany
+virtual_server_list_os=System operacyjny
+virtual_server_list_node=Węzeł
+virtual_server_list_bandwidth=Pasmo
+virtual_server_list_no=Nie znaleziono żadnego serwera wirtualnego
+
+profile_title=Profil
+profile_update_button=Uaktualnij
+profile_personal=Personal
+profile_personal_sub=Change Name & Company details.
+profile_personal_fname=First Name
+profile_personal_lname=Last Name
+profile_personal_company=Company
+profile_email=Email Address
+profile_email_sub=Your email address should be an email address we can contact you on if your VPS is not working.
+profile_email_email=Email Address
+profile_email_notification=Login Notifications
+profile_password=Password
+profile_password_sub=Your Password should be kept secret for the security of your account and your services with us.
+profile_password_cpassword=Current Password
+profile_password_npassword=New Password
+profile_password_rnpassword=Repeat New Password
+
+generic_msg_01=A process has already been requested for this virtual server. Please wait until this has completed before requesting another.
+
+qbackup_title=Backup Virtual Server
+qbackup_title_sub=Quick Backup
+qbackup_title_sub_sub=Quick backup allows you to create an image of your virtual server and have it delivered to you within your virtual server.
+qbackup_start_button=Start Quick Backup
+qbackup_msg_success=Backup Request Successful!
+qbackup_msg_error=Backup Request Error!
+qbackup_msg_01=A process has already been requested for this virtual server. Please wait until this has completed before requesting another.
+qbackup_msg_02=Backups are not enabled on this account. Please contact support.
+qbackup_msg_03=Your virtual server is currently being backed up. Once the process is complete, your backup will be dropped in to your virtual server under /panelbackup/.
+qbackup_msg_04=Backups can only be run once every 24hours.
+qbackup_msg_05=Backups are not available for this virtulization type.
+
+boot_title=Boot Virtual Server
+boot_title_sub=If you need to boot your virtual server due to it being shutdown, click on the Boot VPS button below and your vps will be booted. This will happen instantly.
+boot_button=Boot VPS
+boot_msg_success=Boot Request Successful!
+boot_msg_error=Boot Request Error!
+boot_msg_01=This virtual server is already online.
+boot_msg_02=Your virtual server is currently being automatically booted. If you require any assistance from our technicians, please raise a Support ticket. During this process, your server is sent a shutdown command.
+
+console_title=Serial Console
+console_title_sub=You can use the serial console applet below to directly access your virtual server or use the following details to connect via a standard SSH client:
+console_username=Username
+console_password=Password
+console_ip=IP Address
+console_port=Port
+
+console_settings_title=Change Serial Console Password
+console_settings_title_sub=You can directly change the serial console password for your virtual server by entering a new password in the box below. All changes will be instant.
+console_settings_button=Change
+console_settings_msg_success=Change Serial Console Password Request Successful!
+console_settings_msg_error=Change Serial Console Password Request Error!
+console_settings_msg_01=Your virtual server serial console password has been automatically updated. If you require any assistance from our technicians, please raise a Support ticket.
+console_settings_msg_02=Your new serial console password must be 6 characters or more.
+
+control_title_01=Power Control
+control_title_02=System Control
+control_title_03=Backup Control
+control_title_04=Logs & Statistics
+control_stats_01=Hostname
+control_stats_02=IP Address
+control_stats_03=Operating System
+control_stats_04=Location
+control_stats_05=Status
+control_stats_06=Disk Space
+control_stats_07=Memory
+control_stats_08=Bandwidth
+control_stats_09=Memory
+control_stats_10=Swap
+control_stats_11=Burst
+control_stats_12=of
+control_stats_13=used
+control_stats_14=free
+control_button_01=Reboot
+control_button_02=Shutdown
+control_button_03=Boot
+control_button_04=Re-install OS
+control_button_05=Root Password
+control_button_06=Hostname
+control_button_07=Console
+control_button_08=Quick Backup
+control_button_09=IP Addresses
+control_button_10=Logs
+control_button_11=Statistics
+control_button_12=Console Settings
+control_button_13=Un Suspend
+control_button_14=Suspend
+control_button_15=Main IP
+control_msg_suspended=Suspended!
+control_msg_01=This Virtual Server has been Suspended. All functions in this control panel have been disabled. Resellers cannot unsuspend this virtual server, Please contact support.
+control_msg_02=This Virtual Server has been Suspended. All functions in this control panel have been disabled. Please contact support.
+control_msg_03=To unsuspend this virtual server click unsuspend.
+
+hostname_title=Change Hostname
+hostname_title_sub=You can directly change the hostname of your virtual server by entering a new hostname in the box below. All changes will be instant.
+hostname_button=Change
+hostname_msg_success=Change Hostname Request Successful!
+hostname_msg_error=Change Hostname Request Error!
+hostname_msg_01=Your virtual server hostname has been automatically updated. If you require any assistance from our technicians, please raise a Support ticket.
+hostname_msg_02=Your virtual server hostname will be changed after its next reboot. If you require any assistance from our technicians, please raise a Support ticket.
+hostname_msg_03=You did not supply a valid hostname.
+
+overview_title=Virtual Server Overview
+overview_ip=IP Address
+overview_hostname=Hostname
+
+log_title=Virtual Server Log
+log_date=Date
+log_action=Action
+log_request=Request IP Address
+log_status=Status
+log_no=No Logs Found
+
+unsuspend_msg_success=Successful!
+unsuspend_msg_error=Error!
+unsuspend_msg_01=This Virtual Server has been Suspended by the root admin. Please contact support.
+unsuspend_msg_02=This Virtual Server has been unuspended.
+unsuspend_msg_03=This Virtual Server is not suspended.
+
+suspend_msg_success=Successful!
+suspend_msg_error=Error!
+suspend_msg_01=This Virtual Server has been Suspended.
+suspend_msg_03=This Virtual Server is already suspended.
+
+statistics_title=Statistics
+statistics_date=Year - Month
+statistics_used=Used
+statistics_percent=Percentage
+statistics_no=No Statistics Found
+
+shutdown_title=Shutdown Virtual Server
+shutdown_title_sub=If you need to shutdown your virtual server for any reason, click on the Shutdown VPS button below and your vps will be shutdown. This will happen instantly.
+shutdown_button=Shutdown VPS
+shutdown_msg_success=Shutdown Request Successful!
+shutdown_msg_error=Shutdown Request Error!
+shutdown_msg_01=Your virtual server is currently being automatically shutdown. If you require any assistance from our technicians, please raise a Support ticket. During this process, your server is sent a shutdown command.
+shutdown_msg_02=This virtual server is offline or has already been shutdown.
+
+rootpassword_title=Change Root Password
+rootpassword_title_sub=You can directly change the root password of your virtual server by entering a new password in the box below. All changes will be instant.
+rootpassword_button=Change
+rootpassword_msg_success=Change Root Password Request Successful!
+rootpassword_msg_error=Change Root Password Request Error!
+rootpassword_msg_01=Your virtual server root password has been automatically updated. If you require any assistance from our technicians, please raise a Support ticket.
+rootpassword_msg_02=Your virtual server root password will be automatically updated on the next reboot. If you require any assistance from our technicians, please raise a Support ticket.
+rootpassword_msg_03=Your new root password must be 6 characters or more.
+
+reinstall_title=Re-Install Virtual Server
+reinstall_title_sub=If you need to restore this virtual server to a clean state, you can reload it with a clean installation from here. You can also change the OS that is installed. This operation will irreversibly destroy all data currently on the virtual server - please ensure you have backed up anything you need beforehand.
+reinstall_button=Reinstall
+reinstall_msg_success=Reinstall Request Successful!
+reinstall_msg_error=Reinstall Request Error!
+reinstall_msg_01=Your virtual server is currently being Rebuilt. If you require any assistance from our technicians, please raise a Support ticket. During this process, your server will be rebuilt. This process can take upto 30 minutes.
+reinstall_msg_02=A serious error has occured. Please contact support.
+
+reboot_title=Reboot Virtual Server
+reboot_title_sub=If you can no longer access your vps due to a possible failure or software misconfiguration, click on the Reboot VPS button below and your vps will be rebooted. This will happen instantly.
+reboot_button=Reboot VPS
+reboot_msg_success=Reboot Request Successful!
+reboot_msg_error=Reboot Request Error!
+reboot_msg_01=Your virtual server is currently being automatically rebooted. If you require any assistance from our technicians, please raise a Support ticket. During this process, your server is sent a shutdown command. It will be given upto 2 minutes to shutdown cleanly - if this does not happen, it will be terminated and restarted.
+
+rdns_title=Change Reverse DNS for IP
+rdns_title_sub=You can directly change the reverse dns of this ip address by entering a new rdns entry in the box below. Changes can take up to 48 hours.
+rdns_button=Change
+rdns_msg_success=Change Reverse DNS Request Successful!
+rdns_msg_error=Change Reverse DNS Request Error!
+rdns_msg_01=If you require any assistance from our technicians, please raise a Support ticket.
+rdns_msg_02=Please submit your request manually to support.
+rdns_msg_03=You did not supply a valid domain.
+rdns_msg_04=Information
+
+side_menu_vlist_header=Virtual Server List
+virtual_server_list_welcome_header=Welcome to your virtual server control panel
+virtual_server_list_welcome_text=This panel allows you to manage all features of your VPS's including <strong>PERMANENTLY ERASING YOUR DATA</strong>.  For this reason it is vital that you keep your login details safe.  We may occasionally need to contact you regarding your services with us so please keep your contact details up to date.  Your email address should be one that you can still access if your VPS is not working
+side_menu_myaccount_stats=My Statistics
+side_menu_stats_lastlogin=Last Login:
+side_menu_stats_vps=Virtual Servers:
+
+mainip_title=Change Main IPAddress
+mainip_title_sub=You can change the main ipaddress of your vps by selecting one of your additional ipaddresses from the box below,
+mainip_button=Change
+mainip_msg_success=Change Main IPaddress Request Successful!
+mainip_msg_error=Change Main IPaddress Request Error!
+mainip_msg_01=Your main ipaddress has been changed. If you require any assistance from our technicians, please raise a Support ticket.
+mainip_msg_02=Your main ipaddress will be changed after the next reboot. If you require any assistance from our technicians, please raise a Support ticket.
+mainip_msg_03=You have no free ipaddresses. If you require any assistance from our technicians, please raise a Support ticket.
+mainip_msg_04=Information
+
+top_bar_header_left=Welcome Back
+top_bar_header_right=Session Locked to:
+control_title_hvm=Settings
+control_hvm_apic=APIC
+control_hvm_acpi=ACPI
+control_hvm_vnc=VNC
+control_hvm_pae=PAE
+control_hvm_boot=Boot Order
+control_hvm_cdrom=CDROM Drive
+control_hvm_empty=Empty
+control_hvm_mount=Mount with
+control_hvm_msg_success=Successful!
+control_hvm_msg_01=Boot order settings updated. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_02=APIC settings updated. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_03=ACPI settings updated. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_04=VNC settings updated. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_05=CDROM unmounted. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_06=CDROM mounted. You need to reboot the virtual server for the changes to take affect.
+control_hvm_msg_07=PAE settings updated. You need to reboot the virtual server for the changes to take affect.
+control_button_16=VNC
+control_button_17=VNC Password
+hostname_msg_04=This virtualization type doesn't support direct hostname changes. Hostnames are for reference purposes only.
+vnc_settings_title=Change VNC Password
+vnc_settings_title_sub=You can directly change the VNC password for your virtual server by entering a new password in the box below.
+vnc_settings_button=Change
+vnc_settings_msg_success=Change VNC Password Request Successful!
+vnc_settings_msg_error=Change VNC Password Request Error!
+vnc_settings_msg_01=Your virtual server VNC password has been automatically updated. You need to reboot the virtual server for the changes to take affect.
+vnc_settings_msg_02=Your new VNC password must be 6 characters or more.
+
+ip_title=IP Addresses
+ip_ip=Main IP
+ip_addip=Additional IP
+ip_rdns=RDNS
+ip_gateway=Gateway
+ip_ns=Nameservers
+ip_netmask=Netmask
+ip_rdns_button=edit
+
+centralbackup_title=Backup & Restore Virtual Server
+centralbackup_title_sub=Quick Backup
+centralbackup_title_sub_sub=Central backup allows you to backup & restore your virtual server. Backups are stored offsite and in a central location. Once you reach your backup limit the oldest backup will be overwritten.
+centralbackup_table_header=Current Backups
+centralbackup_list_no=No backups found
+centralbackup_list_date=Date
+centralbackup_list_filename=Filename
+centralbackup_list_node=Backup Server
+centralbackup_list_status=Status
+centralbackup_button_1=Create Backup
+centralbackup_button_2=Delete
+centralbackup_button_3=Restore
+centralbackup_msg_error=Backup Request Error!
+centralbackup_msg_success=Backup Request Successful!
+centralbackup_restore_msg_success=Restore Request Successful!
+centralbackup_msg_01=A process has already been requested for this virtual server. Please wait until this has completed before requesting another.
+centralbackup_msg_06=Backups are not available for this account.
+centralbackup_msg_03=Your backup has been added to the queue, it will be backed up shortly.
+centralbackup_msg_04=Your restore has been added to the queue, it will be restored shortly.
+centralbackup_msg_05=Backups are not available for this virtulization type.
+centralbackup_msg_07=Backup server is unavailable.
+
+control_button_18=Central Backup
+
+clientapi_title=API Settings
+clientapi_title_sub=You can use this API to control certain aspects of this virtual server. Current options are: Reboot, Boot, Shutdown and retrieve status.
+clientapi_button=Generate
+clientapi_msg_success=Successful!
+clientapi_msg_01=Your settings have been updated. If you require any assistance from our technicians, please raise a Support ticket.
+clientapi_msg_02=Your settings have been updated. If you require any assistance from our technicians, please raise a Support ticket.
+clientapi_key=API Key
+clientapi_hash=API Hash
+clientapi_status=Status
+
+control_button_45=API Settings
+
+## v1.2.16
+ip_ipv4_title=IPv4 Addresses
+ip_ipv4_title_extra=IPv4 Extra Information
+ip_ipv6_title=IPv6 Addresses
+ip_table_rdns=Reverse DNS
+ip_table_ip=IP
+ip_table_enabled=Enabled

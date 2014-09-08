@@ -1,0 +1,181 @@
+This project provides a set of scripts to automate installation of Windows XP operating system along with optional programs.
+
+*Software requirements*
+
+<table>
+<tr><td>[http://www.open.collab.net/downloads/subversion/ Collabnet Subversion Client]</td><td>SVN cilent</td></tr>
+<tr><td>[http://www.7-zip.org/ 7-Zip]</td><td>file archiver</td></tr>
+<tr><td>[http://technet.microsoft.com/en-us/sysinternals/bb896768.aspx Junction]</td><td>tool to create directory links</td></tr>
+<tr><td>[http://www.nliteos.com/ nLite]</td><td>Windows XP installation customizer</td></tr>
+<tr><td>Windows XP x64</td><td>Windows XP installation CD</td></tr>
+</table>
+
+*How to use it*
+
+ # <p>Install required software and configure your environment.</p>
+ # <p>Export scripts from the repository using Collabnet Subversion Client. You could use this command:<code>svn export http://osbuild.googlecode.com/svn/trunk/ osbuild</code></p>
+ # <p>Create a zip file _winxp.zip_ using 7-Zip with the content of your Windows XP x64 installation CD and place it in _winxp\windows_ directory in the project's directory structure.</p>
+ # <p>Edit _"winxp\windows\Last Session_u.ini"_ file. At least you have to assign a valid serial number of your Windows XP copy to the _CDKey_ property.</p>
+ # <p>Download programs of your interest from the list below and place them in _winxp\programs_ directory.</p>
+ # <p>Edit _winxp\programs\install.cmd_ file. At least check if downloaded file names correspond to file names used by the script.</p>
+ # <p>Run _winxp\build.cmd_ script.</p>
+ # <p>Create a bootable ISO image using nLite with a content of _winxp\workspace_ directory.</p>
+
+*Installed programs*
+
+_Last updated: 31st May 2010_
+
+<table>
+<tr><td><a href="http://www.7-zip.org/">7-Zip</a></td></tr>
+<tr><td><a href="http://technet.microsoft.com/en-us/sysinternals/bb896653.aspx">Process Explorer</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=e8ba3e56-d8fe-4a91-93cf-ed6985e3927b&amp;displaylang=en">SubInACL</a></td></tr>
+<tr><td><a href="http://www.autoitscript.com/autoit3/">AutoIt</a></td></tr>
+<tr><td><a href="http://www.defraggler.com/">Defraggler</a></td></tr>
+<tr><td><a href="http://www.ccleaner.com/">CCleaner</a></td></tr>
+<tr><td><a href="http://gnuwin32.sourceforge.net/packages/coreutils.htm">CoreUtils</a></td></tr>
+<tr><td><a href="http://gnuwin32.sourceforge.net/packages/sed.htm">Sed</a></td></tr>
+<tr><td><a href="http://gnuwin32.sourceforge.net/packages/gawk.htm">Gawk</a></td></tr>
+<tr><td><a href="http://gnuwin32.sourceforge.net/packages/wget.htm">Wget</a></td></tr>
+<tr><td><a href="http://technet.microsoft.com/en-us/sysinternals/bb896768.aspx">Junction</a></td></tr>
+<tr><td><a href="http://technet.microsoft.com/en-us/sysinternals/bb963902.aspx">Autorun</a></td></tr>
+<tr><td><a href="http://sourceforge.net/projects/regshot/">RegShot</a></td></tr>
+<tr><td>TweakUI</td></tr>
+<tr><td><a href="http://www.realtimesoft.com/ultramon/">UltraMon</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=5a58b56f-60b6-4412-95b9-54d056d6f9f4&amp;DisplayLang=en">Windows Installer</a></td></tr>
+<tr><td><a href="http://support.microsoft.com/kb/949104/en-us">Windows Update Agent</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2&amp;displaylang=en">Microsoft Visual C++ Redistributable Package (x86)</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E&amp;displaylang=en">Microsoft Visual C++ Redistributable Package (x64)</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=d21c292c-368b-4ce1-9dab-3e9827b70604&amp;displaylang=en">Microsoft Core XML Services (MSXML)</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=5B2C0358-915B-4EB5-9B1D-10E506DA9D0F&amp;displaylang=en">.NET Framework 2.0</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=d0e5dea7-ac26-4ad7-b68c-fe5076bba986&amp;DisplayLang=en">.NET Framework 3.5</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=6ccb7e0d-8f1d-4b97-a397-47bcc8ba3806&amp;displaylang=en">Windows PowerShell</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?familyid=0CEF8180-E94A-4F56-B157-5AB8109CB4F5&amp;displaylang=en">DirectX</a></td></tr>
+<tr><td><a href="http://java.sun.com/javase/downloads/index.jsp">Java JRE</a></td></tr>
+<tr><td><a href="http://neosmart.net/dl.php?id=10">ToolTipFixer</a></td></tr>
+<tr><td><a href="http://ccollomb.free.fr/unlocker/">Unlocker</a></td></tr>
+<tr><td><a href="http://www.duplexsecure.com/">SCSI Pass Through Direct</a></td></tr>
+<tr><td><a href="http://www.partitionwizard.com/">Partition Wizard</a></td></tr>
+<tr><td><a href="http://www.ghisler.com/">Total Commander</a></td></tr>
+<tr><td><a href="http://notepad-plus.sourceforge.net/uk/site.htm">Notepad++</a></td></tr>
+<tr><td><a href="http://cdburnerxp.se/">CDBurnerXP</a></td></tr>
+<tr><td><a href="http://www.imgburn.com/">ImgBurn</a></td></tr>
+<tr><td><a href="http://www.nliteos.com/">nLite</a></td></tr>
+<tr><td><a href="http://beeblebrox.org/">HashTab</a></td></tr>
+<tr><td><a href="http://get.adobe.com/uk/reader/">Adobe Reader</a></td></tr>
+<tr><td><a href="http://www.openoffice.org/">OpenOffice</a></td></tr>
+<tr><td><a href="http://www.irfanview.com/">IrfanView</a></td></tr>
+<tr><td><a href="http://picasa.google.com/">Google Picasa</a></td></tr>		
+<tr><td><a href="http://www.videolan.org/">VideoLAN Player</a></td></tr>
+<tr><td><a href="http://www.free-codecs.com/download/k_lite_codec_pack.htm">K-Lite Codec Pack</a></td></tr>
+<tr><td><a href="http://www.free-codecs.com/download/K-Lite_Codec_Pack_64-bit.htm">K-Lite Codec Pack 64-bit</a></td></tr>
+<tr><td><a href="http://www.free-codecs.com/download/QT_Lite.htm">QT Lite</a></td></tr>
+<tr><td><a href="http://www.aimp2.us/">AIMP2</a></td></tr>
+<tr><td><a href="http://www.graphcalc.com/">GraphCalc</a></td></tr>
+<tr><td><a href="http://keepass.info/">KeePass Password Safe</a></td></tr>
+<tr><td><a href="http://www.truecrypt.org/">TrueCrypt</a></td></tr>
+<tr><td><a href="https://www.dropbox.com/">Dropbox</a></td></tr>
+<tr><td><a href="http://www.activestate.com/activeperl/">Perl</a></td></tr>
+<tr><td><a href="http://www.python.org/">Python</a></td></tr>
+<tr><td><a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a></td></tr>
+<tr><td><a href="http://winscp.net/eng/index.php">WinSCP</a></td></tr>
+<tr><td><a href="http://www.open.collab.net/downloads/subversion/">Collabnet Subversion Client</a></td></tr>
+<tr><td><a href="http://tortoisesvn.tigris.org/">TortoiseSVN</a></td></tr>
+<tr><td><a href="http://www.visualsvn.com/server/">VisualSVN</a></td></tr>
+<tr><td><a href="http://code.google.com/p/msysgit/">Git</a></td></tr>
+<tr><td><a href="http://www.gimp.org/">GIMP</a></td></tr>
+<tr><td><a href="http://www.blender.org/">Blender</a></td></tr>
+<tr><td><a href="http://java.sun.com/javase/downloads/index.jsp">Java JDK</a></td></tr>
+<tr><td><a href="http://download.eclipse.org/eclipse/downloads/">Eclipse SDK</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/modeling/emf/">Eclipse Modeling Framework (EMF)</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/modeling/mdt/?project=xsd#xsd">Eclipse XML Schema Definition (XSD)</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/gef/">Eclipse Graphical Editing Framework (GEF)</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/datatools/downloads.php">Eclipse Data Tools Platform (DTP)</a></td></tr>
+<tr><td><a href="http://download.eclipse.org/webtools/downloads/">Eclipse Web Tools Platform (WTP)</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/webtools/wst/main.php">Eclipse Web Standard Tools (WST)</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/dltk/">Eclipse Dynamic Languages Toolkit (DLTK)</a></td></tr>
+<tr><td><a href="http://www.junit.org/">JUnit</a></td></tr>
+<tr><td><a href="http://ant.apache.org/">Ant</a></td></tr>
+<tr><td><a href="http://maven.apache.org/">Maven</a></td></tr>
+<tr><td><a href="http://logging.apache.org/log4j/">Apache log4j</a></td></tr>
+<tr><td><a href="http://code.google.com/p/guava-libraries/">Guava: Google Core Library</a></td></tr>
+<tr><td><a href="http://java.sun.com/products/javamail/">JavaMail</a></td></tr>
+<tr><td><a href="http://one-jar.sourceforge.net/">One-JAR</a></td></tr>
+<tr><td><a href="http://www.json.org/java/">JSON in Java</a></td></tr>
+<tr><td><a href="http://ws.apache.org/axis/">Apache Axis</a></td></tr>
+<tr><td><a href="http://poi.apache.org/">Apache POI</a></td></tr>
+<tr><td><a href="http://itextpdf.com/">iText</a></td></tr>
+<tr><td><a href="https://xhtmlrenderer.dev.java.net/">Flying Saucer</a></td></tr>
+<tr><td><a href="http://jtidy.sourceforge.net/">JTidy</a></td></tr>
+<tr><td><a href="http://developer.android.com/sdk/index.html">Android SDK</a></td></tr>
+<tr><td><a href="http://tomcat.apache.org/">Apache Tomcat</a></td></tr>
+<tr><td><a href="http://httpd.apache.org/">Apache HTTP Server</a></td></tr>
+<tr><td><a href="http://netbeans.org/">NetBeans</a></td></tr>
+<tr><td><a href="http://php.net/index.php">PHP</a></td></tr>
+<tr><td><a href="http://www.eclipse.org/pdt/">Eclipse PHP Development Tools (PDT)</a></td></tr>
+<tr><td><a href="http://phing.info/trac/">Phing</a></td></tr>
+<tr><td><a href="http://framework.zend.com/">Zend Framework</a></td></tr>
+<tr><td><a href="http://www.dojotoolkit.org/">Dojo Toolkit</a></td></tr>
+<tr><td><a href="http://jquery.com/">jQuery</a></td></tr>
+<tr><td><a href="http://www.fiddler2.com/fiddler2/">Fiddler</a></td></tr>
+<tr><td><a href="http://www.charlesproxy.com/">Charles</a></td></tr>
+<tr><td><a href="http://www.oxygenxml.com/">oXygen XML Editor</a></td></tr>
+<tr><td><a href="http://www.wireshark.org/">Wireshark</a></td></tr>
+<tr><td><a href="http://wb.mysql.com/">MySQL Workbench</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/downloads/details.aspx?familyid=08E52AC2-1D62-45F6-9A4A-4B76A8564A2B&displaylang=en">Microsoft SQL Server Management Studio</a></td></tr>
+<tr><td><a href="http://www.oracle.com/technology/products/database/sql_developer/index.html">Oracle SQL Developer</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/windows/internet-explorer/default.aspx">Internet Explorer</a></td></tr>
+<tr><td><a href="http://www.opera.com/">Opera</a></td></tr>
+<tr><td><a href="http://www.apple.com/safari/">Safari</a></td></tr>
+<tr><td><a href="http://www.google.com/chrome">Google Chrome</a></td></tr>
+<tr><td><a href="http://www.mozilla-europe.org/en/firefox/">Firefox</a></td></tr>
+<tr><td><a href="https://addons.mozilla.org/en-US/firefox/">Add-ons  for Firefox</a></td></tr>
+<tr><td><a href="http://www.mozillamessaging.com/en-GB/thunderbird/">Thunderbird</a></td></tr>
+<tr><td><a href="http://www.adobe.com/products/flashplayer/">Flash Player</a></td></tr>
+<tr><td><a href="http://get.adobe.com/shockwave/">Shockwave Player</a></td></tr>
+<tr><td><a href="http://www.silverlight.net/">Silverlight</a></td></tr>
+<tr><td><a href="http://www.freedownloadmanager.org/">Free Download Manager</a></td></tr>
+<tr><td><a href="http://www.emule-project.net/home/perl/general.cgi?l=1">eMule</a></td></tr>
+<tr><td><a href="http://www.utorrent.com/">uTorrent</a></td></tr>
+<tr><td><a href="http://www.skype.com/intl/en-gb/home">Skype</a></td></tr>
+<tr><td><a href="http://www.daemon-tools.cc/eng/home">DAEMON Tools Lite</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/express/">Visual Studio Express</a></td></tr>
+<tr><td>Windows Kernel Mode Tools</td></tr>
+<tr><td><a href="http://www.vmware.com/products/server/">VMware Server</a></td></tr>
+<tr><td><a href="http://dev.mysql.com/">MySQL Community Server</a></td></tr>
+<tr><td><a href="http://www.microsoft.com/express/database/">Microsoft SQL Server Express</a></td></tr>
+<tr><td><a href="http://www.oracle.com/technology/software/products/database/xe/index.html">Oracle Express Edition</a></td></tr>
+<tr><td><a href="http://www.cpuid.com/">CPU-Z</a></td></tr>
+<tr><td><a href="http://www.techpowerup.com/gpuz/">GPU-Z</a></td></tr>
+<tr><td><a href="http://www.eset.com/home/smart-security">ESET Smart Security</a></td></tr>
+</table>
+
+
+*Screenshots*
+
+1. Options - the first system boot
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_01.png]
+
+2. VMware Tools installation
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_02.png]
+
+3. Programs installation
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_03.png]
+
+4. Defragmenting files after installation of second bit of programs and just before proceeding to the next step
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_04.png]
+
+5. Log-in screen
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_05.png]
+
+6. Desktop
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_06.png]
+
+7. Installation log file
+
+[http://osbuild.googlecode.com/svn/trunk/winxp/screenshots/installation_07.png]

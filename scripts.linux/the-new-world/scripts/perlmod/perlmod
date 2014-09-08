@@ -1,0 +1,472 @@
+#!/usr/bin/perl -w
+
+############################################################################
+#    Copyright (C) 2009 by Geo Varghese : http://www.seofreetools.net/     #
+#    sendtogeo@gmail.com                                                   #
+#                                                                          #
+#    This program is free software; you can redistribute it and#or modify  #
+#    it under the terms of the GNU General Public License as published by  #
+#    the Free Software Foundation; either version 2 of the License, or     #
+#    (at your option) any later version.                                   #
+#                                                                          #
+#    This program is distributed in the hope that it will be useful,       #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#    GNU General Public License for more details.                          #
+#                                                                          #
+#    You should have received a copy of the GNU General Public License     #
+#    along with this program; if not, write to the                         #
+#    Free Software Foundation, Inc.,                                       #
+#    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
+############################################################################
+$version = "1.2.0";
+$mod_cmd = shift || "";
+
+use IO::Dir;
+use ExtUtils::Packlist;
+use ExtUtils::Installed;
+use HTML::Entities;
+
+my $installed = ExtUtils::Installed->new();
+$cpan_url = "http://search.cpan.org";
+
+# function to print vesion of perlmod
+sub printVersion(){
+	print 
+qq|
+GNU \033[1mPerlmod\033[0m $version
+
+\033[1mCopyright\033[0m (C) 2009 by \033[1mGeo Varghese\033[0m : \033[1mwww.seofreetools.net\033[0m
+This is free software; see the source for copying conditions.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+\033[1mwww.seofreetools.net\033[0m
+
+|;
+}
+
+# function to print help of perlmod
+sub printHelp(){
+	print 
+qq|
+\033[1mUsage\033[0m: perlmod [options] [module1] [module2] ...
+
+\033[1mOptions:\033[0m
+
+-i, install, --install		Install perl modules automatically
+-d, delete, --delete		Uninstall perl modules from the system
+-f, file, --file		Print all files related to a module
+-h, help, --help		Print help about perlmod
+-l, list, --list		List all perl modules installed in system
+-m, module, --module		List version of module installed in system
+-c, cpan, --cpan		Search for a perl module in cpan.org
+-s, search, --search		Search for a perl module installed in system
+-v, version, --version		Shows perlmod version
+
+
+\033[1mExamples:\033[0m
+
+install 			=> perlmod -i Date::Calc SOAP::Parser Authen::NTLM::HTTP
+uninstall			=> perlmod -d Date::Calc
+module files			=> perlmod -f Date::Calc
+module details			=> perlmod -m Date::Calc
+list all modules		=> perlmod -l
+search in cpan.org 		=> perlmod -c Date::Calc
+search for installed module 	=> perlmod -s Date::Calc
+perlmod help			=> perlmod -h
+perlmod version			=> perlmod -v
+
+\033[1mCopyright\033[0m (C) 2009 by \033[1mGeo Varghese\033[0m : \033[1mwww.seofreetools.net\033[0m
+This is free software; see the source for copying conditions.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+|;
+}
+
+# function to print module version
+sub printModuleVesion(){
+	my($search_module) = @_;
+	@modules = $installed->modules();
+	foreach my $module( @modules ){
+		if($module =~ /^$search_module$/i){
+			my $module_version = $installed->version($module) || "???";
+			print(&textBold("Found module '$module' Version $module_version\n"));
+			exit;
+		}
+	}
+	print(&textBold("Module '$search_module' not found.\n"));
+}
+
+# function to check empty directory
+sub emptydir($) {
+	my ($dir) = @_;
+	my $dh = IO::Dir->new($dir) || return(0);
+	my @count = $dh->read();
+	$dh->close();
+	return(@count == 2 ? 1 : 0);
+}
+
+# function to delete module from system
+sub deleteInstalledModule(){
+	my($search_module) = @_;
+	@modules = $installed->modules();
+	foreach my $module( @modules ){
+		if($module =~ /^$search_module$/i){
+			my $module_version = $installed->version($module) || "???";
+			print(&textBold("Found module $module Version $module_version\n"));
+			print(&textBold("Do you want to delete $module? y/n :"));
+			my $r = <STDIN>; chomp($r);
+			if ($r && $r =~ /^y/i) {
+
+				print "yes";
+				# Remove all the files
+				foreach my $file (sort($installed->files($module))) {
+					print("rm $file\n");
+					unlink($file);
+				}
+				my $pf = $installed->packlist($module)->packlist_file();
+				print("rm $pf\n");
+				unlink($pf);
+				foreach my $dir (sort($installed->directory_tree($module))) {
+					if (emptydir($dir)) {
+						print("rmdir $dir\n");
+						rmdir($dir);
+					}
+				}
+				print(&textBold("\nModule '$module' deleted successfully.\n\n"));
+			}			
+			exit;
+		}
+	}
+	print(&textBold("Module '$search_module' not found.\n"));
+}
+
+
+# function to list installed modules
+sub listInstalledModules(){
+	@modules = $installed->modules();
+	print(&textBold("\nInstalled modules are:\n\n"));
+	foreach my $module( @modules ){
+		my $module_version = $installed->version($module) || "???";
+		print("$module (version $module_version)\n");
+	}
+}
+
+# function to search module in installed modules
+sub searchInstalledModules(){
+	my($search_module) = @_;
+	@modules = $installed->modules();
+	print(&textBold("Search results are:\n"));
+	$flag = 0;
+	foreach my $module( @modules ){
+		if($module =~ /$search_module/i){
+			my $module_version = $installed->version($module) || "???";
+			print("$module (version $module_version)\n");
+			$flag = 1;
+		}
+	}
+	if(!$flag){
+		print("No results found.\n");
+	}
+}
+
+# function to list all files of a module
+sub listModuleFiles(){
+	my($search_module) = @_;
+	@modules = $installed->modules();
+	foreach my $module( @modules ){
+		if($module =~ /^$search_module$/i){
+			@files = $installed->files($module, 'all');
+			print(&textBold("All files in module '$module' are:\n   "), join("\n   ", @files), "\n");
+			exit;
+		}
+	}
+	print(&textBold("Module '$search_module' not found.\n"));
+}
+
+if( ($mod_cmd eq "-v") || ($mod_cmd eq "version") || ($mod_cmd eq "--version")){
+	&printVersion();
+}elsif(($mod_cmd eq "-vh")){
+	print $version;
+
+}elsif( ($mod_cmd eq "-m") || ($mod_cmd eq "module") || ($mod_cmd eq "--module") ){
+
+	while($module = shift){
+		&printModuleVesion($module);
+	}
+
+}elsif( ($mod_cmd eq "-l") || ($mod_cmd eq "list") || ($mod_cmd eq "--list") ){
+
+	&listInstalledModules();
+
+}elsif( ($mod_cmd eq "-c") || ($mod_cmd eq "cpan") || ($mod_cmd eq "--cpan") ){
+	
+	
+	if($keyword = shift){
+		@search_results = &searchCpanModules($keyword);
+		print(&textBold("\nSearch results for '$keyword' are:\n\n   "), join("\n   ", @search_results), "\n\n");
+	}else{
+		print &textBold("\nPlease enter any search keyword after the command\n\n");
+		exit;
+	}
+
+}elsif( ($mod_cmd eq "-f") || ($mod_cmd eq "file") || ($mod_cmd eq "--file") ){
+	if($module = shift){
+		&listModuleFiles($module);
+	}
+
+}elsif( ($mod_cmd eq "-s") || ($mod_cmd eq "search") || ($mod_cmd eq "--search") ){
+
+	while($module = shift){
+		&searchInstalledModules($module);
+	}
+
+}elsif( ($mod_cmd eq "-d") || ($mod_cmd eq "delete") || ($mod_cmd eq "--delete") ){
+	if($module = shift){
+		&deleteInstalledModule($module);
+	}
+
+}elsif( ($mod_cmd eq "-i") || ($mod_cmd eq "install") ){
+
+	# the steps to install a module
+	$main_module = "";
+	$install_dir = "perlmod_install";
+	chdir('/tmp');
+	`rm -rf $install_dir`;
+	@installed_modules = ();
+	
+	# taking perl modules from command line one by one
+	while($module = shift){
+		my $ret;
+	
+		if($module eq '') {next;}	
+		$main_module = $module = &formatModuleName($module);
+	
+		$ret = &isModuleInstalled($module);
+		if($ret ne 'installed'){
+			&installModule($module);
+		}else{
+			print &textBold("====================================================================\n $module already installed in the system \n====================================================================\n");
+			
+			@modules = $installed->modules();
+			foreach my $new_module( @modules ){
+				if($new_module =~ /^$module$/i){
+					my $module_version = $installed->version($new_module) || "???";
+					print(&textBold("Found module '$new_module' Version $module_version\n"));
+					$module = $new_module;
+					last;
+				}
+			}
+
+			print(&textBold("Do you want to reinstall '$module' ? y/n :"));
+			my $r = <STDIN>; chomp($r);
+			if ($r && $r =~ /^y/i) {
+				&installModule($module);
+			}
+			
+		}
+	
+		foreach $module (@installed_modules){ 
+			print &textBold("\n====================================================================\nModule $module Installed Successfully..						   \n=====================================================================\n");
+		} 
+	}
+}else{
+	&printHelp();
+}
+
+
+# function to search modules in cpan.org
+sub searchCpanModules(){
+	my($module) = @_;
+	$check_module = &formatModuleName($module);
+	$module =~ s/:/%3A/g;
+	
+	$url = "$cpan_url/search?query=$module&mode=all";
+	$html = &getContentUrl($url);
+	my @search_results = ();
+	while($html =~ /.*?<a href=".*?"><b>(.+?)<\/b><\/a>/i){
+		$html = $';
+		push (@search_results, $1);
+	}
+	return @search_results;
+}
+
+# func to print the text bold
+sub textBold(){
+	my($str) = @_;
+	return "\033[1m$str\033[0m";
+}
+
+# function to install perl module
+sub installModule(){
+	my($module) = @_;
+
+	$check_module = &formatModuleName($module);
+	$module =~ s/:/%3A/g;
+	
+	$url = "$cpan_url/search?query=$module&mode=all";
+	print "$url\n";
+	$html = &getContentUrl($url);
+
+	#if($html =~ /<!--results-->.*?href="(.*?)"><b>$check_module<\/b>/i){
+	if($html =~ /.*<a href="(.*?)"><b>($check_module)<\/b><\/a>/i){
+
+		$url = "$cpan_url$1";
+		$check_module = $2;
+		print "$url\n";
+		$html = &getContentUrl($url);
+
+		if($html =~ /Download:.*?href="(.*?)"/i){
+			print "matched";
+			@url_tmp = split('/', $1);
+			$tar_file = $url_tmp[$#url_tmp];
+			print $download_url = $cpan_url."/".$1;
+
+			`mkdir $install_dir`;
+			chdir($install_dir);
+			`wget $download_url`;
+			`tar -zxf $tar_file`;
+			if($dir_name = &getDirectoryName()){
+				print "\nDirectory Name: $dir_name\n";
+				chdir($dir_name);
+				system("perl Makefile.PL");
+				`make`;
+				`make install`;
+				chdir('../../');
+				`rm -rf $install_dir`;
+				$ret = &isModuleInstalled($check_module);
+				if($ret eq 'installed'){					
+					push (@installed_modules, $check_module);  
+					if($check_module ne $main_module){
+						print "\nMain Module".$main_module."\n";
+						$ret = &isModuleInstalled($main_module);
+						if($ret ne 'installed'){
+							$install_module = &getBaseClass($ret,$main_module);
+							if($install_module eq "failed"){
+								print "\n================================================================\nModule $main_module Installation Failed..!! \n=================================================================\n";
+								return 0;
+							}else{
+								if($install_module ne ""){
+									&installModule($install_module);
+									return 0;
+								}
+							}
+						}						
+					}
+					return 1;
+				}else{
+					$install_module = &getBaseClass($ret,$check_module);
+					if($install_module eq "failed"){
+						print "\n================================================================\nModule $check_module Installation Failed..!! \n=================================================================\n";
+						return 0;
+					}else{
+						if($install_module ne ""){
+							&installModule($install_module);
+							return 0;
+						}
+					}				
+				}				
+			}
+			
+		}
+	}
+
+	print "\n================================================================\n\033[1m Module '$check_module' Not Found in Cpan.org..!!\033[0m \n=================================================================\n";
+
+	
+	@search_results = &searchCpanModules($check_module);
+	print(&textBold("\nRelated modules for '$check_module' are:\n\n   "), join("\n   ", @search_results), "\n");
+	print "\n";
+
+}
+
+# func to find dependencies of current module
+sub getBaseClass(){
+	my($ret,$check_module) = @_;
+	print "\n".$ret;
+	$install_m = "";
+	if($ret !~ /Can't locate (.*?) in /){		
+		if($ret !~ /Base class package "(.*?)" is empty/){
+			if($ret =~ /via package "(.*?)" at /){
+				$install_m = $1;
+			}
+		}else{
+			$install_m = $1;
+		}
+	}else{
+		$install_m = $1;
+	}
+
+	print "\n$install_m\n";
+
+	$install_module = &formatModuleName($install_m);
+	if(($install_m eq "") || ($install_module eq $check_module)){
+		return "failed";
+	}
+
+	if(grep /^$install_module$/, @installed_modules){
+		return "failed";
+	}
+	return $install_module;
+	
+}
+
+# function to format module name
+sub formatModuleName(){
+	my($module) = @_;
+	$module =~ s/\/+/\//g;
+	$module =~ s/\//::/g;
+	$module =~ s/:+/::/g;
+	$module =~ s/\.pm//ig;
+	return $module;	
+}
+
+# func to check module installed in system
+sub isModuleInstalled(){
+	my($module) = @_;
+
+	`perl -e "use $module" 2>out.txt`;
+	open (OUT, "out.txt");
+	$file = "";
+	while(<OUT>){
+		$file .= $_;
+	}
+	close (OUT);
+	`rm out.txt`;
+
+	if($file eq ""){
+		return 'installed';
+	}else{
+		@modules = $installed->modules();
+		foreach my $new_module( @modules ){
+			if($new_module =~ /^$module$/i){
+				return 'installed';
+			}
+		}
+		return $file;
+	}
+}
+
+# func to get content of a url
+sub getContentUrl(){
+	my($url) = @_;
+	$content = `wget --tries=45 -nv --force-html -O - $url`;
+	$content =~ s/\n//g;
+	$content =~ s/\r//g;
+	$content =~ s/\r\n//g;
+	return decode_entities($content);
+	
+}
+
+# func to get perl module directory from a folder
+sub getDirectoryName(){
+	@files = <*>;
+	foreach $file (@files) {
+		if (-d $file) {
+			return $file;
+		}
+	}
+	return 0;
+}

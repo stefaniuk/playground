@@ -1,0 +1,14 @@
+<NotepadPlus>
+    <InternalCommands>
+        <Shortcut id="42024" Ctrl="no" Alt="yes" Shift="yes" Key="83" />
+        <Shortcut id="42016" Ctrl="yes" Alt="no" Shift="no" Key="85" />
+        <Shortcut id="42017" Ctrl="yes" Alt="no" Shift="yes" Key="85" />
+        <Shortcut id="45002" Ctrl="no" Alt="yes" Shift="yes" Key="70" />
+        <Shortcut id="45008" Ctrl="no" Alt="yes" Shift="yes" Key="69" />
+        <Shortcut id="44022" Ctrl="no" Alt="yes" Shift="yes" Key="87" />
+    </InternalCommands>
+    <Macros />
+    <UserDefinedCommands />
+    <PluginCommands />
+    <ScintillaKeys />
+</NotepadPlus>

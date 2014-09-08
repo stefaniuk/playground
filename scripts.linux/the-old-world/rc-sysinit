@@ -1,0 +1,16 @@
+#!/bin/bash
+
+rm -f /lxc/rootfs.ubuntu/etc/init/rc-sysinit
+cat << 'EOF' > /lxc/rootfs.ubuntu/init/rc-sysinit
+#!/bin/bash
+# Whatever is needed to clear out old daemon/service pids from your container
+rm -f $(find /var/run -name '*pid')
+rm -f /var/lock/apache/*
+
+route add default gw 192.168.0.1
+
+exit 0
+
+EOF
+
+chmod a+x /lxc/rootfs.ubuntu/etc/init/rc-sysinit

@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ESET>
+ <SECTION ID="1000103">
+  <SETTINGS>
+   <SCANNERS>
+    <SCANNER ID="1010100">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="1" TYPE="DWORD" />
+      <NODE NAME="@In-depth scan" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+      <NODE NAME="@Shellext scan" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+      <NODE NAME="@Smart scan" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1010101">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1010102">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1010104">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1020100">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1020101">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1020102">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1020200">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+    <SCANNER ID="1030200">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SignaturesEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="HeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedHeuristicsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdwareEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UnwantedEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UnsafeEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FileEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SectorEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SfxEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RtpEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MailEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MemoryEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MaxArchiveLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxScanFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MaxTempFileSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanObjectTimeout" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="CleanLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogAllEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SmartEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Extensions" TYPE="SUBNODE">
+        <NODE NAME="AddExtensions" VALUE="|*|" TYPE="STRING" />
+        <NODE NAME="RemoveExtensions" VALUE="" TYPE="STRING" />
+        <NODE NAME="ExcludeExtensions" VALUE="" TYPE="STRING" />
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </SCANNER>
+   </SCANNERS>
+   <PLUGINS>
+    <PLUGIN ID="1000600">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="AntistealthEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SelfdefenceEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanUnwantedApp" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ElevationFlags" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="WUWarningLevel" VALUE="3" TYPE="DWORD" />
+       <NODE NAME="AutoDeleteLogs" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogsLifetime" VALUE="5A" TYPE="DWORD" />
+       <NODE NAME="AutoOptimizeLogs" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LogsOptimizePercent" VALUE="19" TYPE="DWORD" />
+       <NODE NAME="LogsDefaultFilter" VALUE="8000001F" TYPE="DWORD" />
+       <NODE NAME="PlainTextLog" VALUE="" TYPE="STRING" />
+       <NODE NAME="DefaultMessageAccount" VALUE="Administrator" TYPE="STRING" />
+       <NODE NAME="RAClientEnabled" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="RAClientInterval" VALUE="5" TYPE="DWORD" />
+       <NODE NAME="EWAID" VALUE="AAAAAAAAAAA=" TYPE="BINARY" />
+       <NODE NAME="RAClientServer" VALUE="" TYPE="STRING" />
+       <NODE NAME="RAClientPort" VALUE="8AE" TYPE="DWORD" />
+       <NODE NAME="RAClientPassword" VALUE="U9bh6Z7wzfJuZHathsgoda0xGrx7+O0MCd0z3YDKOkxSSBVQlW/5DIuzmRb6xx2xTRNL7T4RpuLRQ+qTCgBo7VN8xfQENzCm/Yw5LeC4acw=" TYPE="PASS" />
+       <NODE NAME="RAClientDisNonEncConn" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RAClientServerAlt" VALUE="" TYPE="STRING" />
+       <NODE NAME="RAClientPortAlt" VALUE="8AE" TYPE="DWORD" />
+       <NODE NAME="RAClientPasswordAlt" VALUE="U9bh6Z7wzfJuZHathsgoda0xGrx7+O0MCd0z3YDKOkxSSBVQlW/5DIuzmRb6xx2xTRNL7T4RpuLRQ+qTCgBo7VN8xfQENzCm/Yw5LeC4acw=" TYPE="PASS" />
+       <NODE NAME="RAClientDisNonEncConnAlt" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SampleEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SampleSendType" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="StatisticsEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="StatisticSendType" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SampleTarget" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SampleLog" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SampleExclude" VALUE="*.doc|*.rtf|*.xl?|*.dbf|*.mdb|*.sxw|*.sxc" TYPE="STRING" />
+       <NODE NAME="SampleMail" VALUE="" TYPE="STRING" />
+       <NODE NAME="SMTP_Enabled" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SMTP_Flags" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SMTP_Server" VALUE="" TYPE="STRING" />
+       <NODE NAME="SMTP_SenderAddress" VALUE="" TYPE="STRING" />
+       <NODE NAME="SMTP_Address" VALUE="" TYPE="STRING" />
+       <NODE NAME="SMTP_Username" VALUE="" TYPE="STRING" />
+       <NODE NAME="SMTP_Password" VALUE="" TYPE="PASS" />
+       <NODE NAME="Winpopup_Enabled" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Winpopup_Address" VALUE="" TYPE="STRING" />
+       <NODE NAME="Winpopup_Timeout" VALUE="3C" TYPE="DWORD" />
+       <NODE NAME="MsgFormatVirus" VALUE="%TimeStamp% - Module %Scanner% - Threat Alert triggered on computer %ComputerName%:  %InfectedObject% contains %VirusName%." TYPE="STRING" />
+       <NODE NAME="MsgFormatError" VALUE="%TimeStamp% - During execution of %ProgramName% on the computer %ComputerName%, the following warning occurred: %ErrorDescription%" TYPE="STRING" />
+       <NODE NAME="MsgMinStatusSend" VALUE="40000000" TYPE="DWORD" />
+       <NODE NAME="MsgMinStatusLog" VALUE="10000000" TYPE="DWORD" />
+       <NODE NAME="ProxyEnabled" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ProxyAddress" VALUE="" TYPE="STRING" />
+       <NODE NAME="ProxyPort" VALUE="C38" TYPE="DWORD" />
+       <NODE NAME="ProxyUser" VALUE="" TYPE="STRING" />
+       <NODE NAME="ProxyPassword" VALUE="" TYPE="PASS" />
+       <NODE NAME="QuarantineUpdateScan" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="IncomingEmailTagLevel" VALUE="2" TYPE="DWORD" />
+       <NODE NAME="IncomingEmailSubjectModify" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OutgoingEmailTagLevel" VALUE="2" TYPE="DWORD" />
+       <NODE NAME="OutgoingEmailSubjectModify" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="EmailSubjectFormat" VALUE="[virus %VIRUSNAME%]" TYPE="STRING" />
+       <NODE NAME="LockPassword" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="IgnoreUserSettings" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="GraphicMode" VALUE="FFFFFFFF" TYPE="DWORD" />
+       <NODE NAME="ShowSplash" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="PageMode" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SimpleMenu" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AdvancedMenu" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ShowMenu" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ShowToolTips" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ShowFocus" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ShowAlert" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SilentMode" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="FullScreenMode" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ShowMomentaryMessageBox" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MomentaryMessageBoxDuration" VALUE="78" TYPE="DWORD" />
+       <NODE NAME="ShowDesktopAlert" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="DesktopAlertDuration" VALUE="A" TYPE="DWORD" />
+       <NODE NAME="DesktopAlertTransparency" VALUE="14" TYPE="DWORD" />
+       <NODE NAME="ShowBalloon" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="BalloonDuration" VALUE="A" TYPE="DWORD" />
+       <NODE NAME="ShowAlertStatus" VALUE="10000000" TYPE="DWORD" />
+       <NODE NAME="AnimateControls" VALUE="FFFFFFFF" TYPE="DWORD" />
+       <NODE NAME="AnimateControlsSpeed" VALUE="5" TYPE="DWORD" />
+       <NODE NAME="AnimateIcons" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="PlaySound" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ShowSchedulerSystemTasks" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SupportMail" VALUE="" TYPE="STRING" />
+       <NODE NAME="SupportCompany" VALUE="" TYPE="STRING" />
+       <NODE NAME="SupportCountry" VALUE="FFFFFFFF" TYPE="DWORD" />
+       <NODE NAME="Scheduler" TYPE="SUBNODE">
+        <TASK>
+         <NODE NAME="Name" VALUE="Log maintenance" TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000600" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="2" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="16DA0" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+        </TASK>
+        <TASK>
+         <NODE NAME="Name" VALUE="Regular automatic update" TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000400" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="3C" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="64" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+        </TASK>
+        <TASK>
+         <NODE NAME="Name" VALUE="Automatic update after dial-up connection" TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000400" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="4" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="20001" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="65" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+        </TASK>
+        <TASK>
+         <NODE NAME="Name" VALUE="Automatic update after user logon" TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000400" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="4" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="50001" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="66" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+        </TASK>
+        <TASK>
+         <NODE NAME="Name" VALUE="Automatic startup file check " TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="2" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000600" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="4" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="50000" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="3" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+         <PARAMS>
+          <SCHEDULED_TASK PLUGIN="1000600" ACTION="2" DESCRIPTION="">
+           <DATA>
+            <NODE NAME="thread_priority" VALUE="FFFFFFFE" TYPE="DWORD" />
+            <NODE NAME="scan_level" VALUE="1" TYPE="DWORD" />
+           </DATA>
+          </SCHEDULED_TASK>
+         </PARAMS>
+        </TASK>
+        <TASK>
+         <NODE NAME="Name" VALUE="Automatic startup file check " TYPE="STRING" />
+         <NODE NAME="ActionCode" VALUE="2" TYPE="DWORD" />
+         <NODE NAME="ModuleID" VALUE="1000600" TYPE="DWORD" />
+         <NODE NAME="TriggerType" VALUE="4" TYPE="DWORD" />
+         <NODE NAME="TriggerSettings" VALUE="30000" TYPE="DWORD" />
+         <NODE NAME="StartFailSettings" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="Enabled" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="LastExec" VALUE="FFFFFFFF" TYPE="DWORD" />
+         <NODE NAME="Flags" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="RegId" VALUE="4" TYPE="DWORD" />
+         <NODE NAME="DeleteThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="EnableThis" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="DisableThis" VALUE="0" TYPE="DWORD" />
+         <PARAMS>
+          <SCHEDULED_TASK PLUGIN="1000600" ACTION="2" DESCRIPTION="">
+           <DATA>
+            <NODE NAME="thread_priority" VALUE="FFFFFFFE" TYPE="DWORD" />
+            <NODE NAME="scan_level" VALUE="FFF" TYPE="DWORD" />
+           </DATA>
+          </SCHEDULED_TASK>
+         </PARAMS>
+        </TASK>
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000100">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="1" TYPE="DWORD" />
+      <NODE NAME="Active" VALUE="@In-depth scan" TYPE="STRING" />
+      <NODE NAME="@In-depth scan" TYPE="SUBNODE">
+       <NODE NAME="AdsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LowBackgroundPriority" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="PreserveFileTimesEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AutoScroll" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="FinishWindow" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Targets" VALUE="" TYPE="STRING" />
+      </NODE>
+      <NODE NAME="@Shellext scan" TYPE="SUBNODE">
+       <NODE NAME="AdsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LowBackgroundPriority" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="PreserveFileTimesEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AutoScroll" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="FinishWindow" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Targets" VALUE="" TYPE="STRING" />
+      </NODE>
+      <NODE NAME="@Smart scan" TYPE="SUBNODE">
+       <NODE NAME="AdsEnable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LowBackgroundPriority" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="PreserveFileTimesEnable" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AutoScroll" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="FinishWindow" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Targets" VALUE="" TYPE="STRING" />
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000101">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="DiskFloppy" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="DiskLocal" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="DiskNetwork" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanOpen" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanExecute" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanCreate" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanNetworkOnClose" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanOnAccess" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanShutdown" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OptimizeScan" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Autostart" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OnOpen_RuntimeArchives" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OnOpen_AutoExecArchives" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OnOpen_AdvanceHeuristic" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanExecuteAH" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="DiskFloppyOnExecuteAH" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="BlockRemovableDevices" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="DefaultArchSettings" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ArchiveDepth" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ArchiveMaxFilesize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AllowedDevices" VALUE="" TYPE="STRING" />
+       <NODE NAME="USBDevicesLikeDisk" VALUE="" TYPE="STRING" />
+       <NODE NAME="RemovableDevicesList" TYPE="SUBNODE">
+       </NODE>
+       <NODE NAME="ExceptionDevicesList" TYPE="SUBNODE">
+       </NODE>
+      </NODE>
+     </PROFILES>
+     <SETTINGS>
+      <NODE NAME="Reload" VALUE="0" TYPE="DWORD" />
+     </SETTINGS>
+    </PLUGIN>
+    <PLUGIN ID="1000102">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="ScanIncoming" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanOutgoming" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanReading" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ConvertPlainText" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanMarked" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="ScanPlainText" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="ScanRTF" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="BuildRescan" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MoveMessage" VALUE="3" TYPE="DWORD" />
+       <NODE NAME="MoveFolder" VALUE="Infected Items" TYPE="STRING" />
+       <NODE NAME="IsEnabled" VALUE="1" TYPE="DWORD" />
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000103">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="Enable" VALUE="1" TYPE="DWORD" />
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000200">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="ProxyEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="RedirectBy" VALUE="2" TYPE="DWORD" />
+       <NODE NAME="gui_SeeApplicationHow" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AdvancedMode" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="gui_RuleShowLevel" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AllowChangeSignedFile" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="DontAskForTrustedZone" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SslUseMode" VALUE="2" TYPE="DWORD" />
+       <NODE NAME="AskIfRootCertIsUnknown" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AskIfCertIsNotTrusted" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="HttpsScanMode" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="Pop3sScanMode" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AddRootCertToBrowsers" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SslCompatibleMode" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="BlockSslV2" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="LearningMode" TYPE="SUBNODE">
+        <NODE NAME="TrustedIn" TYPE="SUBNODE">
+         <NODE NAME="AddApplication" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddLocalPort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemotePort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemoteAddress" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="MaxSameRules" VALUE="3" TYPE="DWORD" />
+        </NODE>
+        <NODE NAME="TrustedOut" TYPE="SUBNODE">
+         <NODE NAME="AddApplication" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddLocalPort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemotePort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemoteAddress" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="MaxSameRules" VALUE="3" TYPE="DWORD" />
+        </NODE>
+        <NODE NAME="UntrustedIn" TYPE="SUBNODE">
+         <NODE NAME="AddApplication" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddLocalPort" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddRemotePort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemoteAddress" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="MaxSameRules" VALUE="3" TYPE="DWORD" />
+        </NODE>
+        <NODE NAME="UntrustedOut" TYPE="SUBNODE">
+         <NODE NAME="AddApplication" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddLocalPort" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="AddRemotePort" VALUE="1" TYPE="DWORD" />
+         <NODE NAME="AddRemoteAddress" VALUE="0" TYPE="DWORD" />
+         <NODE NAME="MaxSameRules" VALUE="3" TYPE="DWORD" />
+        </NODE>
+        <NODE NAME="LearningEndTime" VALUE="0" TYPE="DWORD" />
+       </NODE>
+       <NODE NAME="InstallationLevel" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AllowOnlyWhiteListUrl" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="pop3_enable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="pop3_write" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="pop3_wouldblock_fix" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="pop3_ports" VALUE="110" TYPE="STRING" />
+       <NODE NAME="http_enable" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="http_autodetect" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="http_auto_block" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="http_auto_passive" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="http_auto_passive_size" VALUE="800" TYPE="DWORD" />
+       <NODE NAME="http_auto_passive_timeout_enabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="http_auto_passive_timeout_value" VALUE="37" TYPE="DWORD" />
+       <NODE NAME="http_block_suspicious_url" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="http_ports" VALUE="80, 8080, 3128" TYPE="STRING" />
+       <NODE NAME="HttpsPortsStr" VALUE="443" TYPE="STRING" />
+       <NODE NAME="Pop3sPortsStr" VALUE="995" TYPE="STRING" />
+       <NODE NAME="UrlSets" TYPE="SUBNODE">
+        <NODE NAME="UrlSet" TYPE="SUBNODE" DELETE="0">
+         <NODE NAME="Name" TYPE="STRING" VALUE="List of addresses excluded from filtering" />
+         <NODE NAME="Desc" TYPE="STRING" VALUE="" />
+         <NODE NAME="Masks" TYPE="STRING" VALUE="" />
+         <NODE NAME="Type" TYPE="DWORD" VALUE="0" />
+         <NODE NAME="Flags" TYPE="DWORD" VALUE="5" />
+        </NODE>
+        <NODE NAME="UrlSet" TYPE="SUBNODE" DELETE="0">
+         <NODE NAME="Name" TYPE="STRING" VALUE="List of blocked addresses/masks" />
+         <NODE NAME="Desc" TYPE="STRING" VALUE="" />
+         <NODE NAME="Masks" TYPE="STRING" VALUE="" />
+         <NODE NAME="Type" TYPE="DWORD" VALUE="1" />
+         <NODE NAME="Flags" TYPE="DWORD" VALUE="5" />
+        </NODE>
+        <NODE NAME="UrlSet" TYPE="SUBNODE" DELETE="0">
+         <NODE NAME="Name" TYPE="STRING" VALUE="List of allowed addresses" />
+         <NODE NAME="Desc" TYPE="STRING" VALUE="" />
+         <NODE NAME="Masks" TYPE="STRING" VALUE="" />
+         <NODE NAME="Type" TYPE="DWORD" VALUE="2" />
+         <NODE NAME="Flags" TYPE="DWORD" VALUE="5" />
+        </NODE>
+       </NODE>
+       <NODE NAME="EPFWDATA" TYPE="XML">
+        <OPTIONS>
+         <OPTION OPTNAME="Level" VALUE="20" />
+         <OPTION OPTNAME="FileShareEnabled" DESC="Allow file and printer sharing in the Trusted zone" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="UPNPEnabled" DESC="Allow UPNP in the Trusted zone" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="RPCEnabled" DESC="Allow incoming RPC communication in the Trusted zone" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="RDPEnabled" DESC="Allow remote desktop in the Trusted zone" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="IGMPEnabled" DESC="Allow incoming streams from the Internet via the IGMP protocol" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="EnabledLongTCPInactivity" DESC="Maintain inactive TCP connections" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="EnableBridging" DESC="Enable communication for bridged connections" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="LogAllBlockedPackets" DESC="Log all blocked connections" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="LogIncomWorms" DESC="Log blocked incoming worm attacks" TYPE="BOOL" VALUE="0" />
+         <OPTION OPTNAME="PwsCodeRedEnabled" DESC="CodeRed worm detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="PwsSqlSlammerEnabled" DESC="SqlSlammer worm detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="PwsRpcEnabled" DESC="RPC/DCOM attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="PwsSasserEnabled" DESC="Sasser worm detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseARPPoisoning" DESC="ARP Poisoning attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseDNSPoisoning" DESC="DNS Poisoning attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseTCPPortScann" DESC="TCP Port Scanning attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseUDPPortScann" DESC="UDP Port Scanning attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseSMBRelay" DESC="SMB Relay attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseICMP" DESC="ICMP protocol attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseICMPHiddenChannel" DESC="Covert data in ICMP protocol detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="EnableDefenseTCPFlood" DESC="TCP protocol overload detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="BlockIpAfterAttackDetect" DESC="Block unsafe address after attack detection" TYPE="BOOL" VALUE="1" />
+         <OPTION OPTNAME="DetectAppChanging" DESC="Enable detection of application modifications" TYPE="BOOL" VALUE="1" />
+        </OPTIONS>
+        <ZONES>
+        </ZONES>
+        <RULES>
+        </RULES>
+        <PE_MODULES>
+        </PE_MODULES>
+        <BROWSERS>
+        </BROWSERS>
+       </NODE>
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000300">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="SmonEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SpamSubjectPrefixFlag" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SpamSubjectPrefix" VALUE="[SPAM]" TYPE="STRING" />
+       <NODE NAME="MoveSpamMsgToSpamfolder" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="SpamFolderNameFlag" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SpamFolderName" VALUE="" TYPE="STRING" />
+       <NODE NAME="SetSpamMsgAsRead" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="SetReclassifiedHamMsgAsUnread" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UseGlobalAddressLists" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="AddToWLFromAddressBook" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AddToWLFromSentMails" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AddToWLFromNotSpamMsgs" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="AddToELOwnAccountsAddresses" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="UserWhiteList" TYPE="XML" />
+       <NODE NAME="UserBlackList" TYPE="XML" />
+       <NODE NAME="UserExceptionList" TYPE="XML" />
+       <NODE NAME="GlobalWhiteList" TYPE="XML" />
+       <NODE NAME="GlobalBlackList" TYPE="XML" />
+       <NODE NAME="GlobalExceptionList" TYPE="XML" />
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+    <PLUGIN ID="1000400">
+     <PROFILES>
+      <NODE NAME="Enable" VALUE="1" TYPE="DWORD" />
+      <NODE NAME="Active" VALUE="@My profile" TYPE="STRING" />
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="UpdateType" VALUE="22" TYPE="DWORD" />
+       <NODE NAME="SelectedServer" VALUE="AUTOSELECT" TYPE="STRING" />
+       <NODE NAME="Username" VALUE="" TYPE="STRING" />
+       <NODE NAME="Password" VALUE="" TYPE="PASS" />
+       <NODE NAME="UseProxy" VALUE="2" TYPE="DWORD" />
+       <NODE NAME="Proxy" VALUE="" TYPE="STRING" />
+       <NODE NAME="ProxyPort" VALUE="C38" TYPE="DWORD" />
+       <NODE NAME="ProxyUsername" VALUE="" TYPE="STRING" />
+       <NODE NAME="ProxyPassword" VALUE="" TYPE="PASS" />
+       <NODE NAME="LanUserType" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="LanUsername" VALUE="" TYPE="STRING" />
+       <NODE NAME="LanPassword" VALUE="" TYPE="PASS" />
+       <NODE NAME="DisconnectLan" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="Restart" VALUE="200" TYPE="DWORD" />
+       <NODE NAME="NotifyBeforeUpdate" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="NotifyBeforeUpdateSize" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="UseDevelModules" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="DontShowNotofication" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorEnabled" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorFolder" VALUE="" TYPE="STRING" />
+       <NODE NAME="MirrorMode" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorUsername" VALUE="" TYPE="STRING" />
+       <NODE NAME="MirrorPassword" VALUE="" TYPE="PASS" />
+       <NODE NAME="MirrorEnableHTTP" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="MirrorHTTPPort" VALUE="8AD" TYPE="DWORD" />
+       <NODE NAME="MirrorHTTPThreadNumbers" VALUE="6" TYPE="DWORD" />
+       <NODE NAME="MirrorHTTPAuthorizationMethode" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorHTTPHostName" VALUE="" TYPE="STRING" />
+       <NODE NAME="MirrorLocalUserType" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorLocalUserName" VALUE="" TYPE="STRING" />
+       <NODE NAME="MirrorLocalUserPassword" VALUE="" TYPE="PASS" />
+       <NODE NAME="MirrorDisconnectLan" VALUE="0" TYPE="DWORD" />
+       <NODE NAME="MirrorSelectedPCUs" VALUE="" TYPE="STRING" />
+      </NODE>
+     </PROFILES>
+     <SETTINGS>
+      <SERVERS>
+      </SERVERS>
+      <NODE NAME="SerialNumber" VALUE="" TYPE="STRING" />
+      <NODE NAME="CountryID" VALUE="FFFFFFFF" TYPE="DWORD" />
+      <NODE NAME="FirstName" VALUE="" TYPE="STRING" />
+      <NODE NAME="LastName" VALUE="" TYPE="STRING" />
+      <NODE NAME="CompanyName" VALUE="" TYPE="STRING" />
+      <NODE NAME="EmailAddress" VALUE="" TYPE="STRING" />
+      <NODE NAME="PhoneNumber" VALUE="" TYPE="STRING" />
+      <NODE NAME="Note" VALUE="" TYPE="STRING" />
+      <NODE NAME="USCACountryID" VALUE="" TYPE="STRING" />
+      <NODE NAME="Address1" VALUE="" TYPE="STRING" />
+      <NODE NAME="Address2" VALUE="" TYPE="STRING" />
+      <NODE NAME="City" VALUE="" TYPE="STRING" />
+      <NODE NAME="ZipPostalCode" VALUE="" TYPE="STRING" />
+      <NODE NAME="RenewalReminders" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="ProductUpdates" VALUE="0" TYPE="DWORD" />
+      <NODE NAME="ResellerInfoPartnerEmail" VALUE="" TYPE="STRING" />
+      <NODE NAME="ResellerInfoSubPartnerEmail" VALUE="" TYPE="STRING" />
+      <NODE NAME="ResellerInfoPartnerCode" VALUE="" TYPE="STRING" />
+     </SETTINGS>
+    </PLUGIN>
+    <PLUGIN ID="1000800">
+     <PROFILES>
+      <NODE NAME="@My profile" TYPE="SUBNODE">
+       <NODE NAME="OutlookIntegrationEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="OEIntegrationEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="WLMIntegrationEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="TBIntegrationEnabled" VALUE="1" TYPE="DWORD" />
+       <NODE NAME="DisableInboxChangesChecking" VALUE="0" TYPE="DWORD" />
+      </NODE>
+     </PROFILES>
+    </PLUGIN>
+   </PLUGINS>
+   <CLIENT>
+    <NODE NAME="GraphicMode" VALUE="FFFFFFFF" TYPE="DWORD" />
+    <NODE NAME="ShowSplash" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="PageMode" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="SimpleMenu" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="AdvancedMenu" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="ShowMenu" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="ShowToolTips" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="ShowFocus" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="ShowAlert" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="AlertPosition1" VALUE="10B0267" TYPE="DWORD" />
+    <NODE NAME="AlertPosition2" VALUE="15F0267" TYPE="DWORD" />
+    <NODE NAME="SilentMode" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="FullScreenMode" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="ShowMomentaryMessageBox" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="MomentaryMessageBoxDuration" VALUE="3C" TYPE="DWORD" />
+    <NODE NAME="LastWindowPosition" VALUE="FFFFFFFF" TYPE="DWORD" />
+    <NODE NAME="ShowDesktopAlert" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="DesktopAlertPosition1" VALUE="FFFFFFFF" TYPE="DWORD" />
+    <NODE NAME="DesktopAlertPosition2" VALUE="FFFFFFFF" TYPE="DWORD" />
+    <NODE NAME="DesktopAlertDuration" VALUE="A" TYPE="DWORD" />
+    <NODE NAME="DesktopAlertTransparency" VALUE="14" TYPE="DWORD" />
+    <NODE NAME="ShowBalloon" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="BalloonDuration" VALUE="A" TYPE="DWORD" />
+    <NODE NAME="ShowAlertStatus" VALUE="10000000" TYPE="DWORD" />
+    <NODE NAME="AnimateControls" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="AnimateControlsSpeed" VALUE="9" TYPE="DWORD" />
+    <NODE NAME="AnimateIcons" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="PlaySound" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="ShowSchedulerSystemTasks" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="SupportFirstName" VALUE="" TYPE="STRING" />
+    <NODE NAME="SupportLastName" VALUE="" TYPE="STRING" />
+    <NODE NAME="SupportMail" VALUE="" TYPE="STRING" />
+    <NODE NAME="SupportCompany" VALUE="" TYPE="STRING" />
+    <NODE NAME="SupportCountry" VALUE="FFFFFFFF" TYPE="DWORD" />
+   </CLIENT>
+   <SHELLEXT>
+    <NODE NAME="Installed" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="Active" VALUE="1" TYPE="DWORD" />
+    <NODE NAME="Type" VALUE="0" TYPE="DWORD" />
+    <NODE NAME="NotifyMultiFilesCount" VALUE="8" TYPE="DWORD" />
+   </SHELLEXT>
+  </SETTINGS>
+ </SECTION>
+</ESET>

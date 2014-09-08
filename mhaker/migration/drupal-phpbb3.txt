@@ -1,0 +1,40 @@
+set phpbb style to "prosilver-embed"
+enable phpbbforum module permissions
+    access phpbb forum: all
+    access phpbb comments: all
+    post phpbb comments: authenticated
+    create phpbb forum topics: authenticated
+set garland theme
+theme: remove logo
+theme: remove site name
+theme: remove site slogan
+theme: remove shortcut icon
+theme: do not use the default logo
+theme: do not use the default shortcut icon
+remove "search" block
+remove "navigation" block
+remove "powered by drupal" block
+remove "system help" block
+set "user login" block to the right
+set "main menu" block to the left
+set "phpbbforum: new forum posts" block to the content
+configure "phpbbforum: new forum posts" block
+    show block on specific pages: only the listed pages
+        <front>
+configure "phpbbforum: hidden authentication" block
+    show block on specific pages: all pages except those listed
+        user/reset/*
+        user/password
+configure "main menu" block
+    show block on specific pages: all pages except those listed
+        phpbbforum
+        forum
+        phpbbforum/*
+        forum/*
+configure "user login" block
+    show block on specific pages: all pages except those listed
+        phpbbforum
+        forum
+        phpbbforum/*
+        forum/*
+clear cached data in drupal

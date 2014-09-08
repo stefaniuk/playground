@@ -1,0 +1,56 @@
+Installation root directory:
+============================
+
+	/srv
+
+Application directory structure:
+================================
+
+	/srv/[application]/
+		bin
+		conf
+		log
+
+Pid files:
+==========
+
+	/srv/[application]/log/[application].pid
+
+Log files:
+==========
+
+	rsyslog daemon should be used to capture all the logs produced by a service.
+
+	1) File names
+		[application].log
+		[application].err
+
+	2) Location
+
+		/var/log/
+		/srv/[application]/log/ (symbolic links)
+
+List of the most important software and services:
+=================================================
+
+OpenSSL
+MySQL
+Apache HTTPD
+PHP
+phpMyAdmin
+ProFTPD
+Postfix
+Dovecot
+
+Users and groups:
+=================
+
+mysql:mysql			UID=510 GID=510
+apache:apache		UID=520 GID=520
+proftpd:proftpd		UID=530 GID=530
+postfix:postfix		UID=540 GID=540
+postdrop			GID=541
+dovecot:dovecot		UID=550 GID=550
+dovenull:dovenull	UID=551 GID=551
+jail				GID=10000
+[user:group]		MIN_UID=10001 MAX_UID=19999, MIN_GID=10001 MAX_GID=19999

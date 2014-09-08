@@ -1,0 +1,59 @@
+      lxc-start 1301858926.515 INFO     lxc_conf - tty's configured
+      lxc-start 1301858926.515 DEBUG    lxc_start - sigchild handler set
+      lxc-start 1301858926.515 INFO     lxc_start - 'vm0' is initialized
+      lxc-start 1301858926.553 DEBUG    lxc_conf - instanciated vlan ' vlan1000', ifindex is '4'
+      lxc-start 1301858926.583 DEBUG    lxc_cgroup - using cgroup mounted at '/cgroup'
+      lxc-start 1301858926.583 DEBUG    lxc_cgroup - '/cgroup/16566' renamed to '/cgroup/vm0'
+      lxc-start 1301858926.653 DEBUG    lxc_conf - move 'eth0' to '16566'
+      lxc-start 1301858926.653 INFO     lxc_conf - 'vm0' hostname has been setup
+      lxc-start 1301858926.654 DEBUG    lxc_conf - mac address '4a:49:43:49:79:bd' on 'eth0' has been setup
+      lxc-start 1301858926.655 DEBUG    lxc_conf - 'eth0' has been setup
+      lxc-start 1301858926.655 INFO     lxc_conf - network has been setup
+      lxc-start 1301858926.655 DEBUG    lxc_cgroup - using cgroup mounted at '/cgroup'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.deny' set to 'a'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 1:3 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 1:5 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 5:1 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 5:0 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 4:0 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 4:1 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 1:9 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 1:8 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 136:* rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 5:2 rwm'
+      lxc-start 1301858926.655 DEBUG    lxc_conf - cgroup 'devices.allow' set to 'c 254:0 rwm'
+      lxc-start 1301858926.655 INFO     lxc_conf - cgroup has been setup
+      lxc-start 1301858926.655 INFO     lxc_conf - mount points have been setup
+      lxc-start 1301858926.655 INFO     lxc_conf - console '/dev/pts/0' mounted to '/usr/local/containers/vm0/rootfs/dev/console'
+      lxc-start 1301858926.655 INFO     lxc_conf - 6 tty(s) has been setup
+      lxc-start 1301858926.656 DEBUG    lxc_conf - temporary mountpoint for old rootfs is './lxc-oldrootfs-e2aQKC'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - pivot_root syscall to '/lxc-oldrootfs-e2aQKC' successful
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/dev/pts'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/dev/shm'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/sys/fs/fuse/connections'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/sys/kernel/debug'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/sys/kernel/security'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/proc'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/var/run'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/var/lock'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/lib/init/rw'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/cgroup'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/console'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty1'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty2'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty3'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty4'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty5'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/usr/local/containers/vm0/rootfs/dev/tty6'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/dev'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC/sys'
+      lxc-start 1301858926.656 DEBUG    lxc_conf - umounted '/lxc-oldrootfs-e2aQKC'
+      lxc-start 1301858926.656 INFO     lxc_conf - pivoted to '/tmp/lxc-rwFvtEo'
+      lxc-start 1301858926.656 INFO     lxc_conf - created new pts instance
+      lxc-start 1301858926.656 DEBUG    lxc_conf - capabilities has been setup
+      lxc-start 1301858926.656 NOTICE   lxc_conf - 'vm0' is setup.
+      lxc-start 1301858926.656 NOTICE   lxc_start - exec'ing '/bin/bash'
+      lxc-start 1301858926.657 NOTICE   lxc_start - '/bin/bash' started with pid '16566'
+      lxc-start 1301858926.657 DEBUG    lxc_utils - closing fd '1'
+      lxc-start 1301858926.657 DEBUG    lxc_utils - closing fd '0'
+      lxc-start 1301858926.657 DEBUG    lxc_utils - closed all inherited file descriptors

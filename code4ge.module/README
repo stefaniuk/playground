@@ -1,0 +1,15 @@
+How to setup a module?
+=======================
+
+In the projects folder execute following commands:
+
+git clone git@github.com:stefaniuk/code4ge.jsf.git
+git clone git@github.com:stefaniuk/code4ge.cmf.git
+cd code4ge.cmf
+ant prepare
+cd ..
+git clone git@github.com:stefaniuk/code4ge.module.git
+mv code4ge.module module_name
+cd module_name
+ant setup
+ant link

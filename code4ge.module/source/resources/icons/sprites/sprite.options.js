@@ -1,0 +1,4 @@
+sprite = {
+	options: [
+	]
+};
