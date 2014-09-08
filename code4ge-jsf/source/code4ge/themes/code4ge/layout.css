@@ -1,0 +1,25 @@
+/*
+    Variables
+*/
+/* variables: font */
+/* variables: form element */
+/* variable class: font */
+/*
+    Layout
+*/
+* {
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  _font-size: 75%;
+  color: #444444;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+.display-onready {
+  display: none;
+}

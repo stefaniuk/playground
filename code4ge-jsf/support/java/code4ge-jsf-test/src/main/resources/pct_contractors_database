@@ -1,0 +1,133 @@
+HID_ROWID	PCT CODE	PCT NAME	COUNT GP	DUPLICATE GP	COUNT OPTICIAN	DUPLICATE OPTICIAN	COUNT DENTIST	DUPLICATE DENTIST	PERCENTAGE DULICATE
+5A3	5A3	South Gloucestershire	229	1	61	0	0	0	0.34
+5F5	5F5	Salford Teaching	176	1	30	0	0	0	0.49
+5FE	5FE	Portsmouth City Teaching	189	2	33	1	103	0	0.92
+5FL	5FL	Bath and North East Somerset	216	0	44	2	0	0	0.77
+5GC	5GC	NHS Luton	203	4	0	0	0	0	1.97
+5H1	5H1	Hammersmith & Fulham	200	8	0	0	0	0	4.00
+5HG	5HG	Ashton Leigh and Wigan	225	1	45	0	0	0	0.37
+5HP	5HP	Blackpool	109	1	31	0	68	0	0.48
+5HQ	5HQ	Bolton	213	3	74	0	0	0	1.05
+5HX	5HX	Ealing	347	10	11	0	0	0	2.79
+5HY	5HY	Hounslow	202	15	0	0	0	0	7.43
+5J2	5J2	Warrington	172	12	49	0	0	0	5.43
+5J4	5J4	Knowsley	127	5	11	0	0	0	3.62
+5J5	5J5	Oldham	157	0	42	0	119	5	1.57
+5J9	5J9	Darlington	81	0	0	0	0	0	0.00
+5JX	5JX	Bury PCT	148	2	34	0	0	0	1.10
+5K3	5K3	Swindon	182	3	44	2	82	2	2.27
+5K5	5K5	Brent	320	6	45	0	0	0	1.64
+5K6	5K6	Harrow	133	11	111	0	0	0	4.51
+5K7	5K7	Camden	415	77	83	1	0	0	15.66
+5K8	5K8	Islington	287	57	62	1	0	0	16.62
+5K9	5K9	Croydon	335	7	81	0	205	1	1.29
+5KF	5KF	Gateshead	193	0	0	0	0	0	0.00
+5KG	5KG	South Tyneside	130	0	0	0	0	0	0.00
+5KL	5KL	Sunderland Teaching	239	2	0	0	0	0	0.84
+5KM	5KM	Middlesbrough	134	0	0	0	0	0	0.00
+5L1	5L1	Southampton City	264	2	44	0	101	0	0.49
+5L3	5L3	Medway Teaching	229	0	24	0	153	2	0.49
+5LA	5LA	Kensington and Chelsea	207	6	0	0	0	0	2.90
+5LC	5LC	Westminster	229	9	0	0	0	0	3.93
+5LG	5LG	Wandsworth Teaching	368	18	53	0	164	0	3.08
+5LH	5LH	Tameside and Glossop	181	2	48	0	0	0	0.87
+5LQ	5LQ	Brighton and Hove Teaching	264	2	61	0	131	0	0.44
+5M1	5M1	South Birmingham	388	8	21	0	142	0	1.45
+5M2	5M2	Shropshire County	322	6	64	0	141	0	1.14
+5M6	5M6	Richmond & Twickenham	198	6	40	0	80	0	1.89
+5M7	5M7	Sutton & Merton	387	6	81	0	175	1	1.09
+5M8	5M8	North Somerset	215	0	46	0	0	0	0.00
+5MD	5MD	Coventry PCT	249	10	59	0	0	0	3.25
+5MK	5MK	Telford and Wrekin	140	7	35	0	70	0	2.86
+5MV	5MV	Wolverhampton City	211	0	0	0	0	0	0.00
+5MX	5MX	Heart of Birmingham Teaching	271	8	106	1	125	1	1.99
+5N1	5N1	Leeds PCT	735	0	201	0	1	0	0.00
+5N3	5N3	Wakefield District PCT	343	1	62	0	0	0	0.25
+5N4	5N4	Sheffield PCT	633	2	1	0	0	0	0.32
+5NA	5NA	Redbridge	197	6	0	0	0	0	3.05
+5NC	5NC	Waltham Forest	235	11	0	0	0	0	4.68
+5ND	5ND	County Durham PCT	500	0	0	0	0	0	0.00
+5NF	5NF	North Lancashire PCT	855	0	61	0	149	1	0.09
+5NG	5NG	Central Lancashire PCT	300	3	90	0	200	4	1.19
+5NH	5NH	East Lancashire PCT	276	1	60	0	211	4	0.91
+5NJ	5NJ	Sefton PCT	253	1	37	0	0	0	0.34
+5NK	5NK	Wirral PCT	380	3	45	0	0	0	0.71
+5NL	5NL	Liverpool PCT	584	4	84	1	0	0	0.75
+5NM	5NM	Halton & St. Helens PCT	284	9	42	0	0	0	2.76
+5NN	5NN	Western Cheshire PCT	281	7	66	0	0	0	2.02
+5NP	5NP	Central & Eastern Cheshire PCT	439	8	121	0	0	0	1.43
+5NQ	5NQ	Heywood, Middleton & Rochdale PCT	169	1	43	1	0	0	0.94
+5NR	5NR	Trafford PCT	165	2	59	0	0	0	0.89
+5NV	5NV	North Yorkshire & York PCT	866	4	0	0	0	0	0.46
+5NW	5NW	East Riding of Yorkshire PCT	263	1	0	0	0	0	0.38
+5NX	5NX	Hull PCT	180	0	39	0	0	0	0.00
+5NY	5NY	Bradford & Airedale PCT	549	4	152	0	0	0	0.57
+5P1	5P1	South East Essex PCT	243	0	60	0	0	0	0.00
+5P2	5P2	NHS Bedfordshire	340	14	0	0	0	0	4.12
+5P5	5P5	Surrey PCT	1355	57	273	6	593	6	3.11
+5P6	5P6	West Sussex PCT	841	8	150	1	467	3	0.82
+5P7	5P7	East Sussex Downs & Weald PCT	335	1	59	1	175	0	0.35
+5P8	5P8	Hastings & Rother PCT	159	2	30	0	87	0	0.72
+5P9	5P9	West Kent PCT	634	8	123	0	345	3	1.00
+5PE	5PE	Dudley PCT	248	3	1	0	124	0	0.80
+5PG	5PG	Birmingham East & North PCT	365	10	1	0	166	0	1.88
+5PH	5PH	North Staffordshire PCT	136	17	0	0	52	3	10.64
+5PJ	5PJ	Stoke on Trent PCT	156	9	0	0	76	4	5.60
+5PK	5PK	South Staffordshire PCT	451	7	0	0	0	0	1.55
+5PL	5PL	Worcestershire PCT	532	8	46	1	0	0	1.56
+5PM	5PM	Warwick PCT	458	17	105	0	0	0	3.02
+5PN	5PN	Peterborough PCT	119	1	37	0	0	0	0.64
+5PP	5PP	Cambridgeshire PCT	535	3	105	0	0	0	0.47
+5PQ	5PQ	Norfolk PCT	650	31	148	0	0	0	3.88
+5PR	5PR	Great Yarmouth & Waveney PCT	163	19	30	0	0	0	9.84
+5PT	5PT	Suffolk PCT	427	2	101	0	0	0	0.38
+5PV	5PV	West Essex PCT	235	2	40	0	0	0	0.73
+5PW	5PW	North East Essex PCT	280	4	0	0	0	0	1.43
+5PX	5PX	Mid Essex PCT	266	0	0	0	0	0	0.00
+5PY	5PY	South West Essex PCT	249	0	0	0	0	0	0.00
+5QA	5QA	Eastern & Coastal Kent PCT	680	9	111	0	361	1	0.87
+5QC	5QC	Hampshire PCT	1276	13	201	1	607	6	0.96
+5QD	5QD	Buckinghamshire PCT	542	15	122	0	248	1	1.75
+5QE	5QE	Oxfordshire PCT	727	11	114	0	345	3	1.18
+5QF	5QF	Berkshire West PCT	438	8	107	3	207	9	2.66
+5QG	5QG	Berkshire East PCT	389	8	88	1	241	0	1.25
+5QH	5QH	Gloucestershire PCT	557	2	0	0	0	0	0.36
+5QJ	5QJ	Bristol PCT	518	1	133	1	0	0	0.31
+5QK	5QK	Wiltshire PCT	502	5	78	3	223	1	1.12
+5QL	5QL	Somerset PCT	450	5	105	2	0	0	1.26
+5QM	5QM	Dorset PCT	403	2	0	0	0	0	0.50
+5QN	5QN	Bournemouth & Poole PCT	395	2	0	0	0	0	0.51
+5QP	5QP	Cornwall & Isles of Scilly PCT	555	3	75	4	0	0	1.11
+5QQ	5QQ	Devon PCT	860	7	167	3	420	2	0.83
+5QR	5QR	Redcar and Cleveland	110	0	0	0	0	0	0.00
+5QT	5QT	Isle of Wight Healthcare	134	0	22	0	64	0	0.00
+TAC	TAC	Northumberland Care Trust	386	0	0	0	0	0	0.00
+TAK	TAK	Bexley Care Trust	178	8	42	0	121	1	2.64
+TAL	TAL	Torbay Care Trust	124	0	17	0	7	0	0.00
+5QV	5QV	NHS Hertfordshire	852	15	0	0	0	0	1.76
+5QW	5QW	Solihull Primary Care Trust	203	7	53	0	90	0	2.02
+7A6	7A6	Aneurin Bevan LHB	471	0	146	36	240	0	4.20
+7A1	7A1	Betsi Cadwaladr ULHB	654	0	219	19	418	0	1.47
+7A7	7A7	Powys Teaching LHB	165	0	46	32	80	0	11.00
+7A3	7A3	Abertawe Bro Morgannwg ULHB	453	0	125	41	279	0	4.78
+7A2	7A2	Hywel Dda LHB	318	0	78	33	170	0	5.83
+7A5	7A5	Cwm Taf LHB	229	0	69	40	166	0	8.62
+7A4	7A4	Cardiff & Vale LHB	426	0	156	40	287	0	4.60
+TAP	TAP	Blackburn with Darwen Teaching Care Trust Plus	119	4	43	0	86	0	1.61
+5M3	5M3	Walsall Teaching PCT	179	1	0	0	0	0	0.56
+5A5	5A5	Kingston	198	8	56	2	79	1	3.30
+5A7	5A7	Bromley	277	6	2	0	164	0	1.35
+5A8	5A8	Greenwich Teaching	217	4	27	0	169	4	1.94
+5A9	5A9	Barnet	340	15	116	1	0	0	3.51
+TAN	TAN	North East Lincolnshire	115	1	0	0	0	0	0.87
+5AT	5AT	Hillingdon	200	2	0	0	0	0	1.00
+5C1	5C1	Enfield	188	14	58	0	0	0	5.69
+5C9	5C9	Haringey Teaching	182	20	47	0	0	0	8.73
+5CN	5CN	Herefordshire	191	6	0	0	0	0	3.14
+5CQ	5CQ	Milton Keynes	210	4	69	0	110	3	1.80
+5D7	5D7	Newcastle	305	0	0	0	0	0	0.00
+5D8	5D8	North Tyneside	195	1	0	0	0	0	0.51
+5D9	5D9	Hartlepool	73	0	0	0	0	0	0.00
+5E1	5E1	Stockton-on-Tees	154	0	0	0	0	0	0.00
+5EF	5EF	North Lincolnshire	129	1	0	0	0	0	0.78
+5F1	5F1	Plymouth Teaching	243	0	44	0	137	0	0.00

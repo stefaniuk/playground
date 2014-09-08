@@ -1,0 +1,312 @@
+/* requires parameters.less */
+
+/*
+	widget styles
+*/
+
+.form-widget {
+
+	display: inline-block;
+	margin-top: 3px;
+
+	/* fix input node */
+	.dijitInputField {
+		margin-top: 2px !important;
+		height: @form-input-height - 6;
+		.font;
+	}
+
+	/* fix input node */
+	.dijitInputInner {
+		height: @form-input-height - 8;
+	}
+
+	/* fix validation node */
+	.dijitValidationContainer {
+		height: @form-input-height - 2;
+		background-repeat: no-repeat;
+	}
+
+	/* fix drop-down arrow node */
+	.dijitArrowButtonContainer {
+		margin-top: 1px;
+		margin-right: 1px;
+		height: @form-input-height - 1;
+		border-left-width: 0 !important;
+	}
+
+	/* fix drop-down arrow node */
+	input.dijitInputField {
+		height: @form-input-height - 8 !important;
+	}
+
+	/* fix drop-down arrow node while open */
+	.dijitHasDropDownOpen {
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+	}
+
+	/* fix disappearing cursor at the end of input for IE */
+	.dijitInputContainer .dijitInputInner {
+		padding-right: 1px !important;
+	}
+
+}
+
+.form-widget-labelonleft {
+
+	width: @form-label-width + @form-input-width;
+
+	.form-label-text {
+		width: @form-label-width - 4; /* -4px padding */
+		padding: 4px 4px 0 0;
+	}
+
+	.form-textarea-input {
+		resize: none; /* don't allow to resize textarea if label is on the left hand side */
+	}
+}
+
+.form-widget-labelontop {
+
+	width: @form-input-width;
+
+	.form-label-text {
+		padding: 2px 0 4px 2px;
+	}
+}
+
+.form-label-text {
+	float: left;
+	clear: right;
+	display: inline;
+	height: @font-size;
+	.font;
+}
+
+.form-input {
+	width: @form-input-width - 2; /* -2px border */
+	height: @form-input-height; /* it doesn't include +2px border */
+	.rca-small;
+}
+
+.form-textbox-placeholder {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+    cursor: text;
+    line-height: @font-size;
+    font-size: @font-size;
+	color: lighten(@font-color, 50%);
+}
+
+.form-textarea-input {
+	overflow-x: hidden;
+	width: @form-input-width - 6; /* -2px border, -4px padding */
+	height: @font-size * 8; /* it doesn't include +2px border and +4px padding */
+	padding: 2px;
+	.font;
+}
+
+.form-textreadonly-input {
+	display: inline-block;
+	*display: inline;
+	padding-top: 4px;
+	width: @form-input-width;
+	height: @font-size + 6; /* smaller than an editable widget */
+	vertical-align: top;
+	.font;
+}
+
+.form-break-line {
+    clear: both;
+    display: block;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    width: 0;
+}
+
+.form-move-fromto-list {
+	height: 200px;
+	width: 100%;
+}
+
+.form-move-fromto-list-select-wrapper {
+	float: left;
+}
+
+.form-move-fromto-list-select {
+	width: 255px;
+	height: 200px;
+	overflow: auto;
+}
+
+.form-move-fromto-list-buttons {
+	float: left;
+	padding: 10em 0.5em 0 0.5em;
+}
+
+/*
+	editor styles
+*/
+
+.form-editor-control {
+	height: @form-button-height + 6;
+	padding-bottom: 2px;
+}
+
+.form-editor .form-label-text {
+	float: left;
+	padding-top: (@form-button-height + 6 - @font-size) / 2;
+}
+
+.form-widget-labelontop .form-label-text {
+	padding-right: 10px;
+}
+
+.form-editor-view {
+	padding: 0 !important;
+}
+
+/*
+	button styles
+*/
+
+.form-button {
+
+	position: relative;
+	height: @form-button-height + 2;  /* +2px border */
+
+	/* set height of button node */
+	.dijitButtonNode {
+		float: left;
+		margin: 0;
+		padding: 0 !important;
+		height: @form-button-height;
+	}
+
+	/* set padding of button label */
+	.dijitButtonContents {
+		padding: 3px 0 3px 0;
+		height: @form-button-height - 6;
+	}
+
+	.dijitButtonText {
+		height: @font-size;
+		line-height: @font-size;
+	}
+
+	/* set button busy icon */
+	.dojoxBusyButtonIcon {
+		width: 10px;
+		height: 10px;
+		vertical-align: middle;
+		margin-left: 4px;
+		background-image: url("../../images/loading.gif");
+		background-repeat: no-repeat;
+	}
+
+}
+
+.form-button-control {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
+.form-button-message {
+	position: absolute;
+	top: 0;
+	padding-top: 5px;
+	opacity: 0;
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+/*
+	group styles
+*/
+
+.form-group {
+	overflow: hidden;
+	border: 1px solid;
+	display: block;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-color: @form-group-border-color;
+}
+
+.form-group-legend {
+	margin-left: 10px;
+}
+
+.form-group-icon {
+	background: transparent none no-repeat scroll center;
+	width: 15px;
+	height: 15px;
+	float: left;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.form-group-icon-opened {
+	margin: 0;
+	background-image: url("../../images/opened.gif");
+}
+
+.form-group-icon-closed {
+	margin: 0;
+	background-image: url("../../images/closed.gif");
+}
+
+.form-group-label {
+	margin-left: 3px;
+	color: @form-group-label-color;
+}
+
+.form-group-icon-collapsed {
+	border-left-color: transparent !important;
+	border-right-color: transparent !important;
+	border-width: 1px 1px 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.form-group-content {
+	overflow: hidden;
+}
+
+/*
+	wizard styles
+*/
+
+.form-wizard {
+	position: relative;
+	border: 1px solid @form-wizard-border-color;
+	.rca-small;
+}
+
+.form-wizard-title {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+.form-wizard-buttons-top {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+}
+
+.form-wizard-buttons-bottom {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+}
+
+.form-wizard-container > * {
+	margin-top: 39px;
+	margin-bottom: 39px;
+}

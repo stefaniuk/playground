@@ -1,0 +1,13 @@
+{
+	SMDVersion: '2.0',
+	additionalParameters: 'false',
+	contentType: 'application/json',
+	envelope: 'JSON-RPC-2.0',
+	transport: 'POST',
+	services: {
+		call: {
+			parameters: [{ type: 'object' }],
+			returns: { type: 'any' }
+		}
+	}
+}

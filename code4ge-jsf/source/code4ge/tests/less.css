@@ -1,0 +1,5 @@
+@color: blue;
+span {
+    color: @color;
+    font-weight: bold;
+}

@@ -1,0 +1,45 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Code4ge JSF - Test: Chart Bars</title>
+    <link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" type="text/css" href="../../themes/code4ge/code4ge.css" />
+    <style type="text/css">
+        html, body {
+            overflow: visible !important;
+        }
+    </style>
+    <script type="text/javascript"
+        src="../../../dojo/dojo.js"
+        data-dojo-config="async: 1, parseOnLoad: true, locale: 'en'"
+    ></script>
+    <script type="text/javascript">
+        require([
+            'code4ge/main',
+            'code4ge/chart/ChartBars',
+            'code4ge/data/JsonRpcStore'
+        ]);
+    </script>
+</head>
+<body>
+    <div
+        data-dojo-type="code4ge.chart.ChartBars"
+        data-dojo-props="store:'data/store.json',query:{symbol:'*'},field:'price'"
+    ></div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+/* horizontal center outer */
+.hco {
+    margin: 0 auto;
+    padding: 0;
+    position: relative;
+    left: 50%;
+    float: left;
+}
+
+/* horizontal center inner */
+.hci {
+    position: relative;
+    right: 50%;
+    float: left;
+}
+
+/* vertical center outer */
+.vco {
+    display: table;
+    /*width: 100%;*/ /* bad things happen */
+    height: 100%;
+    #position: relative;
+    overflow: hidden;
+}
+
+/* vertical center middle */
+.vcm {
+    display: table-cell;
+    width:100%;
+    #top: 50%;
+    #position: absolute;
+    vertical-align: middle;
+}
+
+/* vertical center inner */
+.vci {
+    width:100%;
+    #top: -50%;
+    #position: relative;
+}
+
+/* horizontal positioning container */
+.hpc {
+    overflow: hidden;
+    text-align: center;
+}
+
+/* horizontal positioning 2/1 */
+.hp21 {
+    float: left;
+    width: 50%;
+    height: 100%;
+    text-align: left;
+}
+
+/* horizontal positioning 2/2 */
+.hp22 {
+    float: right;
+    width: 50%;
+    height: 100%;
+    text-align: right;
+}
+
+/* horizontal positioning 3/1 */
+.hp31 {
+    clear: left;
+    float: left;
+    width: 33.33%;
+    height: 100%;
+    text-align: left;
+}
+
+/* horizontal positioning 3/2 */
+.hp32 {
+    display: inline;
+    clear: none;
+    float: left;
+    width: 33.33%;
+    height: 100%;
+    text-align: center;
+}
+
+/* horizontal positioning 3/3 */
+.hp33 {
+    clear: right;
+    float: right;
+    width: 33.33%;
+    height: 100%;
+    text-align: right;
+}

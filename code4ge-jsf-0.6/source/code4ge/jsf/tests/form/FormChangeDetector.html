@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Form Change Detector</title>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/debug.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>-->
+	<link rel="stylesheet" type="text/css" href="../../../../build/960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Form');
+		dojo.require('code4ge.jsf.FormChangeDetector');
+		dojo.require('code4ge.jsf.FormDateBox');
+		dojo.require('code4ge.jsf.FormPassword');
+		dojo.require('code4ge.jsf.FormSelectBox');
+		dojo.require('code4ge.jsf.FormTextArea');
+		dojo.require('code4ge.jsf.FormTextBox');
+		dojo.require('code4ge.jsf.FormTimeBox');
+
+		var detect = function() {
+			var form = dijit.byId('form');
+			var changeDetector = form.get('changeDetector');
+
+			// initial
+			var initial = changeDetector.getInitialValues();
+			var str = '';
+			for(var name in initial) {
+				str += name + ': ' + initial[name] + '<br />';
+			}
+			dojo.byId('initial').innerHTML = str;
+
+			// current
+			var current = changeDetector.getCurrentValues();
+			var str = '';
+			for(var name in current) {
+				str += name + ': ' + current[name] + '<br />';
+			}
+			dojo.byId('current').innerHTML = str;
+
+			// changed
+			var changed = changeDetector.getChangedValues();
+			var str = '';
+			for(var name in changed) {
+				str += name + ': ' + changed[name] + '<br />';
+			}
+			dojo.byId('changed').innerHTML = str;
+
+			// changed from-to
+			var changedFromTo = changeDetector.getChangedFromToValues();
+			var str = '';
+			for(var name in changedFromTo) {
+				str += name + ': ' + changedFromTo[name].from + ' => ' + changedFromTo[name].to + '<br />';
+			}
+			dojo.byId('changedFromTo').innerHTML = str;
+		}
+
+		code4ge.ready(function() {
+			var form = dijit.byId('form');
+			form.set('values', {
+				selectbox: 'N',
+				passwordConfirm: 'secret'
+			});
+			detect();
+		});
+	</script>
+</head>
+<body class="claro">
+
+	<input type="button" value="Detect changes" onclick="detect()" />
+
+	<div id="form" data-dojo-type="code4ge.jsf.Form">
+		<div class="container_12">
+			<input type="hidden" name="id" value="100" />
+			<select data-dojo-type="code4ge.jsf.FormSelectBox" data-dojo-props="name:'selectbox',label:'Select'">
+				<option value=""></option>
+				<option value="Y">Yes</option>
+				<option value="N">No</option>
+			</select>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormTextArea" data-dojo-props="name:'textarea',label:'Textarea',value:'This is a text area.'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormTextBox" data-dojo-props="name:'textbox1',label:'Textbox 1',value:'This is a text box.'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormTextBox" data-dojo-props="name:'textbox2',label:'Textbox 2',readOnly:true,value:'test'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormDateBox" data-dojo-props="name:'datebox',label:'Date'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormTimeBox" data-dojo-props="name:'timebox',label:'Timebox'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormPassword" data-dojo-props="name:'password',label:'Password',confirm:'passwordConfirm'"></div>
+			<div class="clear"></div>
+			<div data-dojo-type="code4ge.jsf.FormPassword" data-dojo-props="name:'passwordConfirm',label:'PasswordConfirm'" id="passwordConfirm"></div>
+			<div class="clear"></div>
+		</div>
+	</div>
+
+	<br/>
+
+	<table style="width:100%">
+		<tr>
+			<td style="width:25%"><b>Initial values</b></td>
+			<td style="width:25%"><b>Current values</b></td>
+			<td style="width:25%"><b>Changed values</b></td>
+			<td style="width:25%"><b>Changed from-to values</b></td>
+		</tr>
+		<tr>
+			<td><div id="initial"></div></td>
+			<td><div id="current"></div></td>
+			<td><div id="changed"></div></td>
+			<td><div id="changedFromTo"></div></td>
+		</tr>
+	</table>
+
+</body>
+</html>

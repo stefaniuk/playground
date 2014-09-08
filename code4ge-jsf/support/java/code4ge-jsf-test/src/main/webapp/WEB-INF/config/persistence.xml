@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
+
+    <!--<context:property-placeholder location="jdbc.properties" />-->
+
+    <!-- earthquakes.db -->
+    <bean id="sqliteDataSourceEarthquakes" class="org.springframework.jdbc.datasource.SingleConnectionDataSource">
+        <property name="driverClassName" value="org.sqlite.JDBC" />
+        <property name="url" value="jdbc:sqlite:d:/projects/code4ge-jsf/support/java/code4ge-jsf-test/target/code4ge-jsf-test/WEB-INF/classes/earthquakes.db" />
+    </bean>
+
+    <!-- pctcontractors.db -->
+    <bean id="sqliteDataSourcePCTContractors" class="org.springframework.jdbc.datasource.SingleConnectionDataSource">
+        <property name="driverClassName" value="org.sqlite.JDBC" />
+        <property name="url" value="jdbc:sqlite:d:/projects/code4ge-jsf/support/java/code4ge-jsf-test/target/code4ge-jsf-test/WEB-INF/classes/pctcontractors.db" />
+    </bean>
+
+    <!-- EarthquakeDao -->
+    <bean id="earthquakeDao" class="com.code4ge.jsf.test.model.earthquake.EarthquakeDao">
+        <property name="dataSource" ref="sqliteDataSourceEarthquakes" />
+    </bean>
+
+    <!-- PCTContractorsDao -->
+    <bean id="pctContractorsDao" class="com.code4ge.jsf.test.model.nhs.PCTContractorsDao">
+        <property name="dataSource" ref="sqliteDataSourcePCTContractors" />
+    </bean>
+
+</beans>

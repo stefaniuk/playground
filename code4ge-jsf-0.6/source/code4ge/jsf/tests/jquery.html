@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - jQuery</title>
+	<link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../themes/default/default.css" />
+	<script type="text/javascript" src="../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript">
+		dojo.require('code4ge.jsf.base');
+		dojo.require('jquery.jquery-uncompressed');
+		$(function() {
+			console.log('jquery: I\'m ready too!');
+		});
+		code4ge.ready(function() {
+			console.log('code4ge: I\'m ready!');
+			$('#version').html('jQuery version: ' + $().jquery);
+		});
+	</script>
+</head>
+<body class="claro">
+	<div id="version"></div>
+</body>
+</html>

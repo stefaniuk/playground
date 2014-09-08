@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - code4ge.ready</title>
+	<script type="text/javascript" src="../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript">
+		dojo.require('code4ge.jsf.base');
+	</script>
+	<script type="text/javascript">
+		code4ge.ready(function() { console.log('My web page initialisation code. Order does not matter.'); });
+		code4ge.ready(function() { console.log('I want this to be run last!'); }, 10);
+		code4ge.ready(function() { console.log('I want this to be run first!'); }, -10);
+		dojo.ready(function() {
+			console.log('How cool is this!!!');
+		});
+	</script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,191 @@
+/*
+    Variables
+*/
+/* variables: font */
+/* variables: form element */
+/* variable class: font */
+/*
+    Form
+*/
+/*
+    form generic widget classes
+*/
+.form-widget {
+  display: inline-block;
+  margin-top: 3px;
+  /* fix textbox input node */
+
+  /* fix textbox input element */
+
+  /* fix textarea input element */
+
+  /* fix validation node */
+
+  /* fix drop-down arrow node */
+
+  /* fix drop-down arrow node */
+
+  /* fix drop-down arrow node while open */
+
+  /* fix disappearing cursor at the end of input for IE */
+
+}
+.form-widget .dijitInputField {
+  margin-top: 2px !important;
+  height: 16.4px;
+}
+.form-widget .dijitInputInner {
+  height: 14.399999999999999px;
+  font-size: 12px;
+  _font-size: 75%;
+  color: #444444;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+.form-widget .dijitTextBox {
+  font-size: 12px;
+  _font-size: 75%;
+  color: #444444;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+.form-widget .dijitValidationContainer {
+  height: 20.4px;
+  background-repeat: no-repeat;
+}
+.form-widget .dijitArrowButtonContainer {
+  margin-top: 1px;
+  margin-right: 1px;
+  height: 21.4px;
+  border-left-width: 0 !important;
+}
+.form-widget input.dijitInputField {
+  height: 14.399999999999999px !important;
+}
+.form-widget .dijitHasDropDownOpen {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.form-widget .dijitInputContainer .dijitInputInner {
+  padding-right: 1px !important;
+}
+.form-widget-labelonleft {
+  width: 340px;
+}
+.form-widget-labelonleft .form-element-label {
+  width: 96px;
+  /* -4px padding */
+
+  padding: 4px 4px 0 0;
+}
+.form-widget-labelonleft .form-textarea-input {
+  resize: none;
+  /* don't allow to resize textarea if label is on the left hand side */
+
+}
+.form-widget-labelontop {
+  width: 240px;
+}
+.form-widget-labelontop .form-element-label {
+  padding: 2px 0 4px 2px;
+}
+.form-element-label {
+  float: left;
+  clear: right;
+  display: inline;
+  height: 12px;
+  font-size: 12px;
+  _font-size: 75%;
+  color: #444444;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+.form-element-input {
+  width: 238px;
+  /* -2px border */
+
+  height: 22.4px;
+  /* it doesn't include +2px border */
+
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -opera-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  border-radius: 4px;
+}
+.form-element-input-readonly {
+  display: inline-block;
+  *display: inline;
+  padding: 4px 2px 0 2px;
+  width: 240px;
+  height: 20px;
+  vertical-align: top;
+  font-size: 12px;
+  _font-size: 75%;
+  color: #444444;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+/*
+    FormLabel
+*/
+.form-label {
+  padding-top: 4px;
+  height: 20.4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/*
+    FormTextBox
+*/
+.form-textbox-input-placeholder {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  cursor: text;
+  line-height: 12px;
+  font-size: 12px;
+  color: #c3c3c3;
+}
+/*
+    FormTextArea
+*/
+.form-textarea-input {
+  overflow-x: hidden;
+  width: 234px;
+  /* -2px border, -4px padding */
+
+  height: 96px;
+  /* it doesn't include +2px border and +4px padding */
+
+  padding: 2px;
+}
+/*
+    FormDateBox/FormTimeBox
+*/
+.form-widget-labelonleft .form-datebox-input, .form-widget-labelonleft .form-timebox-input {
+  width: 250px;
+}
+.form-widget-labelontop .form-datebox-input, .form-widget-labelontop .form-timebox-input {
+  width: 150px;
+}
+.dijitCalendarContainer {
+  width: 200px !important;
+}
+.dijitTimePicker {
+  max-width: 250px !important;
+}
+.dijitArrowButtonContainer, .dijitArrowButtonInner {
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -opera-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  border-radius: 4px;
+}
+/*
+    other styles
+*/
+.form-break-line {
+  clear: both;
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  width: 0;
+}

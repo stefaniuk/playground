@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - TextScroll</title>
+	<style type="text/css">
+		#wrapper {
+			float: left;
+			position: relative;
+			width: 100%;
+			overflow: hidden;
+		}
+		#content {
+			position: relative;
+			width: 200px;
+			overflow: hidden;
+		}
+	</style>
+	<script type="text/javascript">
+		var content;
+		var interval;
+		var delay = 50;
+		window.onload = function() {
+			init();
+		}
+		function init() {
+			content = document.getElementById('content');
+			interval = setInterval('scrolling()', delay);
+			content.onmouseover = function() {
+				clearInterval(interval);
+			};
+			content.onmouseout = function() {
+				interval = setInterval('scrolling()', delay);
+			}
+		}
+		function scrolling() {
+			content.scrollLeft++;
+			var origin = content.scrollLeft++;
+			if(origin == content.scrollLeft) {
+				setTimeout('content.scrollLeft=0', 1000)
+			}
+		}
+	</script>
+</head>
+<body>
+    <div id="wrapper">
+    	<div id="content">aaaaaaaaabbbbbbbbbbbbbcccccccccccccdddddddddddx</div>
+    </div>
+</body>
+</html>

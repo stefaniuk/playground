@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Grid JSON-RPC</title>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/Grid.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>-->
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/Grid.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-grid.js.uncompressed.js"></script>
+	<style type="text/css">
+ 		#grid {
+			width: 99%;
+			height: 90%;
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Grid');
+		var layout = [{
+			cells: [
+				{ field: 'name', name: 'Name', datatype: 'string', width: 50, editable: true },
+				{ field: 'message', name: 'Message', datatype: 'string', width: 20, editable: true },
+				{ field: 'date', name: 'Date', datatype: 'string', width: 15, editable: true }
+			]
+		}];
+		var plugins = {
+			indirectSelection: true,
+			pagination: {
+				pageSizeArr: ['10', '25', '50', '100', 'All'],
+				description: '30%',
+				sizeSwitch: '260px',
+				pageStepper: '30em',
+				gotoButton: true,
+				maxPageStep: 5,
+				position: 'bottom'
+			}
+		};
+		var grid;
+		code4ge.ready(function() {
+			grid = new code4ge.jsf.Grid({
+				id: 'grid',
+				structure: layout,
+				plugins : plugins,
+				store: 'support/data.php'
+			});
+			dojo.byId('grid').appendChild(grid.domNode);
+			dojo.connect(grid.store, 'onDelete', function(result) {
+				grid.selection.clear();
+				grid.render();
+			});
+		});
+		code4ge.ready(function() {
+			grid.startup();
+		}, 1000);
+		function refreshItems() {
+			grid.render();
+		}
+		function saveItems() {
+			grid.store.save();
+		}
+		function deleteItems() {
+			var selected = grid.selection.getSelected();
+			for(var i = 0; i < selected.length; i++) {
+				grid.store.deleteItem(selected[i]);
+				grid.store.save();
+			}
+		}
+	</script>
+</head>
+<body class="claro displayOnReady">
+	<div>
+		<input type="button" value="refresh" onclick="refreshItems()" />
+		<input type="button" value="save" onclick="saveItems()" />
+		<input type="button" value="delete" onclick="deleteItems()" />
+	</div>
+	<div id="grid"></div>
+</body>
+</html>
+

@@ -1,0 +1,36 @@
+<div class="nhs-daterange">
+    <div
+        class="nhs-daterange-range-slider"
+        data-dojo-type="dojox.form.HorizontalRangeSlider"
+        data-dojo-props="showButtons: false"
+        data-dojo-attach-point="rangeSlider"
+    ></div>
+    <div class="nhs-daterange-from-to">
+        <label for="${id}_fromDate">From:</label>
+        <input
+            id="${id}_fromDate"
+            class="nhs-daterange-from"
+            data-dojo-type="nhs/CalendarTextBox"
+            data-dojo-props="
+                type: 'text',
+                name: '${id}_fromDate',
+                required: true
+            "
+            data-dojo-attach-point="dateFrom"
+            data-dojo-attach-event="onChange: _onFromDateChange, onValueSelected: _onFromDateChange"
+        />
+        <label for="${id}_toDate">To:</label>
+        <input
+            id="${id}_toDate"
+            class="nhs-daterange-to"
+            data-dojo-type="nhs/CalendarTextBox"
+            data-dojo-props="
+                type: 'text',
+                name: '${id}_toDate',
+                required: true
+            "
+            data-dojo-attach-point="dateTo"
+            data-dojo-attach-event="onChange: _onToDateChange, onValueSelected: _onToDateChange"
+        />
+    </div>
+</div>

@@ -1,0 +1,26 @@
+.letter .page {
+	width: 21.00cm;
+	padding: 1.50cm 3.00cm 1.50cm 3.00cm;
+	font-family: Arial;
+	font-size: 11pt;
+	line-height: 1.33;
+	color: black;
+	background: white;
+}
+.letter table {
+	width: 100%;
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+.letter th {
+	padding: 0;
+	border: 1px solid black;
+}
+.letter td {
+	line-height: 3.5;
+	padding: 0;
+	border: 1px solid black;
+}
+.letter .placeholder {
+	background-color: yellow;
+}

@@ -1,0 +1,82 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+body.claro {
+	color: #444444;
+	font-family: Verdana,Arial,Helvetica,sans-serif;
+	font-size: 12px;
+	_font-size: 75%;
+}
+
+.displayOnReady {
+	display: none;
+}
+
+/* layout: two columns fixed spread */
+
+.layout-two-fixed-spread .layout-header-container {
+	text-align: center;
+}
+
+.layout-two-fixed-spread .layout-header {
+	margin: 0 auto;
+	margin-left: auto;
+	padding: 0;
+	width: 980px;
+	text-align: left;
+}
+
+.layout-two-fixed-spread .layout-content-container {
+	float: left;
+	width: 100%;
+	text-align: center;
+}
+
+.layout-two-fixed-spread .layout-content-container2 {
+	margin: 0 auto;
+	width: 980px;
+}
+
+.layout-two-fixed-spread .layout-content-container3 {
+	float: left;
+	margin-left: auto;
+	width: 980px;
+}
+
+.layout-two-fixed-spread .layout-left {
+	display: inline;
+	clear: left;
+	float: left;
+	margin: 0;
+	padding: 0;
+	width: 250px;
+	text-align: left;
+}
+
+.layout-two-fixed-spread .layout-content {
+	display: inline;
+	float: right;
+	margin: 0;
+	padding: 0;
+	width: 730px;
+	text-align: left;
+}
+
+.layout-two-fixed-spread .layout-footer-container {
+	clear: left;
+}
+
+.layout-two-fixed-spread .layout-footer {
+	margin: 0 auto;
+	padding: 0;
+	width: 980px;
+	text-align: center;
+}

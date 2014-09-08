@@ -1,0 +1,27 @@
+<html>
+<head>
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:false,locale:'en'"></script>
+	<script type="text/javascript">
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.JsonRpcStore');
+	</script>
+	<script type="text/javascript">
+		dojo.ready(function() {
+			var registry = code4ge.get('jsonrpcstore.registry');
+			// store 1
+			registry.add({ url: 'data', target: 'store1' });
+			var store1 = registry.get('data/store1');
+			store1.fetch({
+				query: { id: '*' }
+			});
+			// store 2
+			var store2 = registry.get('data/store2');
+			store2.fetch({
+				query: { id: '*' }
+			});
+		});
+	</script>
+</head>
+<body>
+</body>
+</html>

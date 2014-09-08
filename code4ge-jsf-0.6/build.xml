@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="code4ge.jsf" default="minify" basedir=".">
+
+	<property file="build.properties" />
+
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+	<!-- ============================================ -->
+	<!-- detect operating system                      -->
+	<!-- ============================================ -->
+	<condition property="os.windows">
+		<os family="windows" />
+	</condition>
+	<condition property="os.unix">
+		<os family="unix" />
+	</condition>
+	<target name="detect-windows" if="os.windows">
+		<property name="os.script.ext" value="bat" />
+	</target>
+	<target name="detect-unix" if="os.unix">
+		<property name="os.script.ext" value="sh" />
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/generate.sprites.sh" /></exec>
+		<exec executable="chmod"><arg line="+x ${basedir}/scripts/git.revision.sh" /></exec>
+	</target>
+	<target name="detect-os" depends="detect-windows, detect-unix" />
+
+	<!-- ============================================ -->
+	<!-- target: get-revision                         -->
+	<!-- ============================================ -->
+	<target name="get-revision" depends="detect-os">
+		<exec executable="${basedir}/scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+		<propertyregex property="vcs.revision" input="${temp}" select="\1">
+			<regexp pattern="([0-9]*)" />
+		</propertyregex>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: init                                 -->
+	<!-- ============================================ -->
+	<target name="init" depends="get-revision">
+		<!-- set properties -->
+		<tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+		<property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+		<property name="profile.file.name" value="${basedir}/source/code4ge/jsf/build.profile.js" />
+		<property name="build.file.name" value="${basedir}/build/${ant.project.name}-${project.version.full}" />
+		<!-- print out properties -->
+		<echo>Date: ${build.date}</echo>
+		<echo>Project name: ${ant.project.name}</echo>
+		<echo>Project version: ${project.version.full}</echo>
+		<echo>Dojo Toolkit version: ${dojotoolkit.version}</echo>
+		<!-- requirements -->
+		<available file="${basedir}/source/util/buildscripts/build.${os.script.ext}" property="buildscript.present" />
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: clean                                -->
+	<!-- ============================================ -->
+	<target name="clean" depends="init">
+		<delete dir="${basedir}/source/build" />
+		<delete dir="${basedir}/source/dojo" />
+		<delete dir="${basedir}/source/dijit" />
+		<delete dir="${basedir}/source/dojox" />
+		<delete dir="${basedir}/source/util" />
+		<delete file="${basedir}/${log.file}" />
+		<delete><fileset dir="${basedir}/build/" includes="**/*.zip" /></delete>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: prepare                              -->
+	<!-- ============================================ -->
+	<target name="prepare" depends="clean">
+		<unzip src="${basedir}/externals/dojo-release-${dojotoolkit.version}-src.zip" dest="${basedir}/source" />
+		<move file="${basedir}/source/dojo-release-${dojotoolkit.version}-src/dojo" todir="${basedir}/source" />
+		<move file="${basedir}/source/dojo-release-${dojotoolkit.version}-src/dijit" todir="${basedir}/source" />
+		<move file="${basedir}/source/dojo-release-${dojotoolkit.version}-src/dojox" todir="${basedir}/source" />
+		<move file="${basedir}/source/dojo-release-${dojotoolkit.version}-src/util" todir="${basedir}/source" />
+		<delete dir="${basedir}/source/dojo-release-${dojotoolkit.version}-src" />
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: generate-sprites                     -->
+	<!-- "prepare" must be run manually               -->
+	<!-- ============================================ -->
+	<target name="generate-sprites" depends="init">
+		<exec executable="${basedir}/scripts/generate.sprites.${os.script.ext}">
+			<arg line="${basedir}" />
+			<arg line="${basedir}/source/code4ge/jsf/icons/sprites/sprite.options.js" />
+		</exec>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- (DEFAULT) target: minify                     -->
+	<!-- "prepare" must be run manually               -->
+	<!-- ============================================ -->
+	<target name="minify" depends="generate-sprites" if="buildscript.present">
+		<exec executable="chmod"><arg line="+x ${basedir}/source/util/buildscripts/build.sh" /></exec>
+		<!-- save project version in the source code -->
+		<copy file="${basedir}/source/code4ge/jsf/base.js" tofile="${basedir}/base.js.bak" />
+		<replace
+			file="${basedir}/source/code4ge/jsf/base.js"
+			token="major: 0, minor: 0, revision: 0, flag: 'dev'"
+			value="major: ${project.version.major}, minor: ${project.version.minor}, revision: ${vcs.revision}, flag: '${project.version.flag}'"
+		/>
+		<!-- minify -->
+		<echo>Build profile: ${profile.file.name}</echo>
+		<echo>Minifying...</echo>
+		<exec dir="${basedir}/source/util/buildscripts/" executable="${basedir}/source/util/buildscripts/build.${os.script.ext}" output="${basedir}/${log.file}">
+			<arg line="profileFile=${profile.file.name}" />
+			<arg line="releaseDir=${basedir}/source/" />
+			<arg line="releaseName=build" />
+			<arg line="action=clean,release" />
+			<arg line="mini=true" />
+			<arg line="copyTests=false" />
+			<arg line="stripConsole=all" />
+			<arg line="optimize=shrinksafe" />
+			<arg line="cssOptimize=comments" />
+			<arg line="version=${project.version.full}" />
+		</exec>
+		<!-- copy the license -->
+		<copy file="${basedir}/LICENSE" todir="${basedir}/source/build/code4ge/jsf" />
+		<!-- copy 960gs -->
+		<mkdir dir="${basedir}/source/build/960gs" />
+		<copy file="${basedir}/source/960gs/reset.css" todir="${basedir}/source/build/960gs" />
+		<copy file="${basedir}/source/960gs/text.css" todir="${basedir}/source/build/960gs" />
+		<copy file="${basedir}/source/960gs/960.css" todir="${basedir}/source/build/960gs" />
+		<copy file="${basedir}/source/960gs/LICENSE" todir="${basedir}/source/build/960gs" />
+		<!-- copy css3pie -->
+		<mkdir dir="${basedir}/source/build/css3pie" />
+		<copy file="${basedir}/source/css3pie/PIE.htc" todir="${basedir}/source/build/css3pie" />
+		<copy file="${basedir}/source/css3pie/PIE.js" todir="${basedir}/source/build/css3pie" />
+		<copy file="${basedir}/source/css3pie/LICENSE" todir="${basedir}/source/build/css3pie" />
+		<!-- copy flowplayer -->
+		<mkdir dir="${basedir}/source/build/flowplayer" />
+		<copy file="${basedir}/source/flowplayer/flowplayer.js" todir="${basedir}/source/build/flowplayer" />
+		<copy file="${basedir}/source/flowplayer/flowplayer.controls.swf" todir="${basedir}/source/build/flowplayer" />
+		<copy file="${basedir}/source/flowplayer/flowplayer.swf" todir="${basedir}/source/build/flowplayer" />
+		<copy file="${basedir}/source/flowplayer/LICENSE" todir="${basedir}/source/build/flowplayer" />
+		<!-- copy jquery -->
+		<mkdir dir="${basedir}/source/build/jquery" />
+		<copy file="${basedir}/source/jquery/jquery.js" todir="${basedir}/source/build/jquery" />
+		<copy file="${basedir}/source/jquery/LICENSE" todir="${basedir}/source/build/jquery" />
+		<!-- less -->
+		<mkdir dir="${basedir}/source/build/less" />
+		<copy file="${basedir}/source/less/less.js" todir="${basedir}/source/build/less" />
+		<copy file="${basedir}/source/less/LICENSE" todir="${basedir}/source/build/less" />
+		<!-- modernizr -->
+		<mkdir dir="${basedir}/source/build/modernizr" />
+		<copy file="${basedir}/source/modernizr/modernizr.js" todir="${basedir}/source/build/modernizr" />
+		<copy file="${basedir}/source/modernizr/LICENSE" todir="${basedir}/source/build/modernizr" />
+		<!-- clean up -->
+		<move file="${basedir}/base.js.bak" tofile="${basedir}/source/code4ge/jsf/base.js" />
+		<delete>
+			<fileset dir="${basedir}/source/build" includes="**/build.profile.js" />
+		</delete>
+	</target>
+
+	<!-- ============================================ -->
+	<!-- target: release                              -->
+	<!-- "prepare" must be run manually               -->
+	<!-- ============================================ -->
+	<target name="release" depends="minify" if="buildscript.present">
+
+		<!-- save project version in the source code -->
+		<copy file="${basedir}/source/code4ge/jsf/base.js" tofile="${basedir}/base.js.bak" />
+		<replace
+			file="${basedir}/source/code4ge/jsf/base.js"
+			token="major: 0, minor: 0, revision: 0, flag: 'dev'"
+			value="major: ${project.version.major}, minor: ${project.version.minor}, revision: ${vcs.revision}, flag: '${project.version.flag}'"
+		/>
+
+		<!-- release source -->
+		<delete file="${build.file.name}-src.zip" />
+		<copy file="${basedir}/LICENSE" todir="${basedir}/source/code4ge/jsf" />
+		<zip destfile="${build.file.name}-src.zip">
+			<fileset dir="${basedir}/source">
+				<!-- 960gs -->
+				<include name="960gs/reset.css" />
+				<include name="960gs/text.css" />
+				<include name="960gs/960.css" />
+				<include name="960gs/LICENSE" />
+				<!-- css3pie -->
+				<include name="css3pie/PIE.htc" />
+				<include name="css3pie/PIE.js" />
+				<include name="css3pie/LICENSE" />
+				<!-- flowplayer -->
+				<include name="flowplayer/flowplayer.js" />
+				<include name="flowplayer/flowplayer.controls.swf" />
+				<include name="flowplayer/flowplayer.swf" />
+				<include name="flowplayer/LICENSE" />
+				<!-- jquery -->
+				<include name="jquery/jquery.js" />
+				<include name="jquery/LICENSE" />
+				<!-- less -->
+				<include name="less/less.js" />
+				<include name="less/LICENSE" />
+				<!-- modernizr -->
+				<include name="modernizr/modernizr.js" />
+				<include name="modernizr/LICENSE" />
+				<!-- main -->
+				<include name="code4ge/jsf/**" />
+				<exclude name="code4ge/jsf/tests/**" />
+				<exclude name="**/.git*" />
+				<exclude name="**/build.profile.js" />
+				<exclude name="**/package.js" />
+			</fileset>
+		</zip>
+		<delete file="${basedir}/source/code4ge/jsf/LICENSE" />
+
+		<!-- release minified source -->
+		<delete file="${build.file.name}.zip" />
+		<zip destfile="${build.file.name}.zip">
+			<fileset dir="${basedir}/source">
+				<!-- 960gs -->
+				<include name="build/960gs/reset.css" />
+				<include name="build/960gs/text.css" />
+				<include name="build/960gs/960.css" />
+				<include name="build/960gs/LICENSE" />
+				<!-- css3pie -->
+				<include name="build/css3pie/PIE.htc" />
+				<include name="build/css3pie/PIE.js" />
+				<include name="build/css3pie/LICENSE" />
+				<!-- flowplayer -->
+				<include name="build/flowplayer/flowplayer.js" />
+				<include name="build/flowplayer/flowplayer.controls.swf" />
+				<include name="build/flowplayer/flowplayer.swf" />
+				<include name="build/flowplayer/LICENSE" />
+				<!-- jquery -->
+				<include name="build/jquery/jquery.js" />
+				<include name="build/jquery/LICENSE" />
+				<!-- less -->
+				<include name="build/less/less.js" />
+				<include name="build/less/LICENSE" />
+				<!-- modernizr -->
+				<include name="build/modernizr/modernizr.js" />
+				<include name="build/modernizr/LICENSE" />
+				<!-- main -->
+				<include name="build/code4ge/jsf/**" />
+				<exclude name="**/.git*" />
+				<exclude name="**/build.profile.js" />
+				<exclude name="**/package.js" />
+			</fileset>
+		</zip>
+
+		<!-- clean up -->
+		<move file="${basedir}/base.js.bak" tofile="${basedir}/source/code4ge/jsf/base.js" />
+
+	</target>
+
+</project>

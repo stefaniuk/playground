@@ -1,0 +1,21 @@
+/* fix select box drop-down arrow container */
+.dijitArrowButtonContainer {
+	margin-top: 1px;
+	margin-right: 1px;
+}
+
+/* fix select box drop-down arrow container while open */
+.dijitHasDropDownOpen {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+/* fix editor background color (padding for rounded corners) */
+.dijitEditor {
+	background-color: #FEFEFE;
+}
+
+/* fix input area width of editor while previewing HTML source of the content */
+.dijitEditorIFrameContainer textarea {
+	width: 100% !important;
+}

@@ -1,0 +1,51 @@
+.nhs-filter {
+    padding: 3px 0 3px 0;
+}
+
+.nhs-filter-group {
+	overflow: hidden;
+	border: 1px solid;
+	display: block;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-color: #B5BCC7;
+}
+
+.nhs-filter-group-legend {
+	margin-left: 10px;
+}
+
+.nhs-filter-group-icon {
+	background: transparent none no-repeat scroll center;
+	width: 15px;
+	height: 15px;
+	float: left;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.nhs-filter-group-icon-opened {
+	margin: 0;
+	background-image: url("../../images/opened.gif");
+}
+
+.nhs-filter-group-icon-closed {
+	margin: 0;
+	background-image: url("../../images/closed.gif");
+}
+
+.nhs-filter-group-label {
+	margin-left: 3px;
+	color: #444444;
+}
+
+.nhs-filter-group-icon-collapsed {
+	border-left-color: transparent !important;
+	border-right-color: transparent !important;
+	border-width: 1px 1px 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.nhs-filter-group-content {
+	overflow: hidden;
+}

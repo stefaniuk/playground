@@ -1,0 +1,16 @@
+<div class="form-widget form-textbox">
+    <div class="form-element-label" dojoAttachPoint="_label">${label}</div>${!_linebreak}
+    <input
+        name="${name}"
+        type="text"
+        value="${value}" ${!promptMessage} ${!invalidMessage}
+        dojoType="${inputClass}"
+        dojoAttachPoint="_input"
+        class="form-element-input form-textbox-input"
+        required="${required}" ${!regExp} ${!regExpGen}
+        selectOnClick="${selectOnClick}"
+        trim="${trim}"
+        maxLength="${maxlength}"
+        tabindex="${tabindex}"
+    />
+</div>

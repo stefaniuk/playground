@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Code4ge JSF - Test: JSON Store</title>
+    <script type="text/javascript"
+        src="../../../dojo/dojo.js"
+        data-dojo-config="async: 1"
+    ></script>
+    <script type="text/javascript">
+        require([
+            'dojo',
+            'code4ge/main',
+            'code4ge/data/JsonRpcStore'
+        ],
+        function(dojo, code4ge) {
+
+            var registry = code4ge.get('jsonrpcstore.registry');
+
+            // store 1
+            registry.add({ url: 'resources', target: 'jsonrpcstore-data1' });
+            var store1 = registry.get('resources/jsonrpcstore-data1');
+            store1.fetch({
+                query: { id: '*' }
+            });
+
+            // store 2
+            var store2 = registry.get({ url: 'resources', target: 'jsonrpcstore-data2' });
+            store2.fetch({
+                query: { id: '*' }
+            });
+
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

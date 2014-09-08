@@ -1,0 +1,32 @@
+.popup {
+	position: absolute;
+}
+
+.popup-border {
+	position: relative;
+	padding: 0;
+	border-style: solid;
+	z-index: 1000;
+	_width: 0; /* IE */
+	border-color: fadeout(@popup-border-color, @popup-border-opacity * 100);
+	border-width: @popup-border-width;
+	.rca-medium;
+}
+
+.popup-content {
+	position: relative;
+	clear: both;
+	overflow: hidden;
+	z-index: 1000;
+	background-color: fadeout(@popup-background-color, @popup-background-opacity * 100);
+	color: @popup-text-color;
+}
+
+.popup-icon {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: -35px -35px 0 0;
+	cursor: pointer;
+	z-index: 1001;
+}

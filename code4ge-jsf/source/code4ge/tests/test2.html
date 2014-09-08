@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Code4ge JSF - Test 2 (AMD Loader)</title>
+    <script type="text/javascript"
+        src="../../dojo/dojo.js"
+        data-dojo-config="async: 1, isDebug: true, cacheBust: new Date()"
+    ></script>
+    <script type="text/javascript">
+        require([ 'dojo', 'code4ge/main' ], function(dojo, code4ge) {
+            console.log(code4ge.version);
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

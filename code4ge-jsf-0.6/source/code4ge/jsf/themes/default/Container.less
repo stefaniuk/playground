@@ -1,0 +1,23 @@
+.container {
+	position: absolute;
+}
+
+.container-border {
+	position: relative;
+	padding: 0;
+	border-style: solid;
+	z-index: 1000;
+	_width: 0; /* IE */
+	border-color: fadeout(@container-border-color, @container-border-opacity * 100);
+	border-width: @container-border-width;
+	.rca-medium;
+}
+
+.container-content {
+	position: relative;
+	clear: both;
+	overflow: hidden;
+	z-index: 1000;
+	background-color: fadeout(@container-background-color, @container-background-opacity * 100);
+	color: @container-text-color;
+}

@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - _Popup</title>
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js"></script>-->
+	<style type="text/css">
+		.css3pie {
+			behavior: url("../../../../css3pie/PIE.htc");
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf._Popup');
+		code4ge.ready(function() {
+			new code4ge.jsf._Popup({}, dojo.byId('popup-simple1'));
+			new code4ge.jsf._Popup({ centralise: false }, dojo.byId('popup-simple2'));
+		});
+	</script>
+	<!--[if IE]><script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script><![endif]-->
+</head>
+<body class="claro">
+	<div>
+		Historically, galaxies have been categorized according to their apparent shape (usually referred to as their visual morphology). A common form is the elliptical galaxy, which has an ellipse-shaped light profile. Spiral galaxies are disk-shaped assemblages with dusty, curving arms. Galaxies with irregular or unusual shapes are known as irregular galaxies, and typically result from disruption by the gravitational pull of neighboring galaxies. Such interactions between nearby galaxies, which may ultimately result in galaxies merging, may induce episodes of significantly increased star formation, producing what is called a starburst galaxy. Small galaxies that lack a coherent structure could also be referred to as irregular galaxies. There are probably more than 170 billion (1.7 × 1011) galaxies in the observable universe. Most galaxies are 1,000 to 100,000 parsecs in diameter and are usually separated by distances on the order of millions of parsecs (or megaparsecs). Intergalactic space (the space between galaxies) is filled with a tenuous gas of an average density less than one atom per cubic meter. The majority of galaxies are organized into a hierarchy of associations called clusters, which, in turn, can form larger groups called superclusters. These larger structures are generally arranged into sheets and filaments, which surround immense voids in the universe. Although it is not yet well understood, dark matter appears to account for around 90% of the mass of most galaxies. Observational data suggests that supermassive black holes may exist at the center of many, if not all, galaxies. They are proposed to be the primary cause of active galactic nuclei found at the core of some galaxies. The Milky Way galaxy appears to harbor at least one such object within its nucleus.
+		<input type="button" value="Popup 1" onclick="dijit.byId('popup-simple1').show()" />
+		<input type="button" value="Popup 2" onclick="dijit.byId('popup-simple2').show()" />
+	</div>
+	<div id="popup-simple1" style="position:absolute;width:300px">
+		A galaxy is a massive, gravitationally bound system that consists of stars and stellar remnants, an interstellar medium of gas dust, and an important but poorly understood component tentatively dubbed dark matter. The name is from the Greek root galaxias, literally meaning "milky", a reference to the Milky Way galaxy. Typical galaxies range from dwarfs with as few as ten million (107) stars, up to giants with a hundred trillion (1014) stars, all orbiting the galaxy's center of mass. Galaxies may contain many star systems, star clusters, and various interstellar clouds. The Sun is one of the stars in the Milky Way galaxy; the Solar System includes the Earth and all the other objects that orbit the Sun.
+	</div>
+	<div id="popup-simple2" style="position:absolute;top:50px;left:50px;width:300px">
+		A galaxy is a massive, gravitationally bound system that consists of stars and stellar remnants, an interstellar medium of gas dust, and an important but poorly understood component tentatively dubbed dark matter. The name is from the Greek root galaxias, literally meaning "milky", a reference to the Milky Way galaxy. Typical galaxies range from dwarfs with as few as ten million (107) stars, up to giants with a hundred trillion (1014) stars, all orbiting the galaxy's center of mass. Galaxies may contain many star systems, star clusters, and various interstellar clouds. The Sun is one of the stars in the Milky Way galaxy; the Solar System includes the Earth and all the other objects that orbit the Sun.
+	</div>
+</body>
+</html>

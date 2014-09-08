@@ -1,0 +1,19 @@
+{
+    name: 'Code4ge JSF',
+    version: '0.0.0dev',
+    directories: {
+        lib: '.'
+    },
+    main: 'main',
+    description: 'Code4ge JSF is a JavaScript framework build on top of the Dojo Toolkit.',
+    licenses: [
+        {
+            type: 'BSD',
+            url: 'https://raw.github.com/stefaniuk/code4ge.jsf/0.7/LICENSE'
+        }
+    ],
+    bugs: 'https://github.com/stefaniuk/code4ge.jsf/issues',
+    keywords: [ 'JavaScript', 'Dojo', 'Toolkit', 'Code4ge', 'JSF' ],
+    homepage: 'https://github.com/stefaniuk/code4ge.jsf',
+    dojoBuild: 'code4ge.profile.js'
+}

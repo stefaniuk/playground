@@ -1,0 +1,3 @@
+Enclose the content of the file with the following statement:
+
+define("less/less",[],function(){/*code*/});

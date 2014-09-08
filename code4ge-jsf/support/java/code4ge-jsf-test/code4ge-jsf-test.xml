@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context
+    docBase="d:\projects\code4ge-jsf\support\java\code4ge-jsf-test\src\main\webapp\"
+    workDir="d:\projects\code4ge-jsf\support\java\code4ge-jsf-test\target\code4ge-jsf-test\WEB-INF\work\"
+    path="/code4ge-jsf-test"
+    privileged="true"
+    reloadable="true"
+/>

@@ -1,0 +1,10 @@
+[
+	{name:'Alabama',label:'Alabama', abbreviation:'AL'},
+	{name:'Alaska',label:'Alaska',abbreviation:'AK'},
+	{name:'AmericanSamoa',label:'AmericanSamoa',abbreviation:'AS'},
+	{name:'Arizona',label:'Arizona',abbreviation:'AZ'},
+	{name:'Arkansas',label:'Arkansas',abbreviation:'AR'},
+	{name:'ArmedForcesEurope',label:'ArmedForcesEurope',abbreviation:'AE'},
+	{name:'ArmedForcesPacific',label:'ArmedForcesPacific',abbreviation:'AP'},
+	{name:'ArmedForcestheAmericas',label:'ArmedForcestheAmericas',abbreviation:'AA'}
+]

@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Code4ge JSF - Test: Encryption</title>
+    <link rel="stylesheet" type="text/css" href="../../../960gs/960.css" />
+    <link rel="stylesheet" type="text/css" href="../../../960gs/debug.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" type="text/css" href="../../themes/code4ge/code4ge.css" />
+    <script type="text/javascript"
+        src="../../../dojo/dojo.js"
+        data-dojo-config="async: 1, parseOnLoad: true, locale: 'en'"
+    ></script>
+    <script type="text/javascript">
+        require([
+            'dojo',
+            'dijit/dijit',
+            'code4ge/main',
+            'code4ge/encryption/main',
+            'code4ge/form/FormTextBox',
+            'code4ge/form/FormTextArea'
+        ],
+        function(dojo, dijit, code4ge, encryption) {
+            code4ge.ready(function() {
+
+                // hash
+                var wht = dijit.byId('hash_text');
+                var wBASE64enc = dijit.byId('base64enc');
+                var wBASE64dec = dijit.byId('base64dec');
+                var wMD5 = dijit.byId('md5');
+                var wSHA1 = dijit.byId('sha1');
+                dojo.connect(wht, 'onEvent', function() {
+                    wBASE64enc.set('value', encryption.base64.encode(wht.get('value')));
+                    wBASE64dec.set('value', encryption.base64.decode(wBASE64enc.get('value')));
+                    wMD5.set('value', encryption.md5(wht.get('value')));
+                    wSHA1.set('value', encryption.sha1(wht.get('value')));
+                });
+                wht.set('value', 'Code4ge JSF');
+                
+                var wpass = dijit.byId('password');
+                wpass.set('value', encryption.random(32));
+            });
+        });
+    </script>
+</head>
+<body>
+    <div dojoType="code4ge.form.FormTextBox" label="Text" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="hash_text"></div>
+    <div class="clear"></div>
+    <div dojoType="code4ge.form.FormTextBox" readOnly="true" label="BASE64 (enc)" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="base64enc"></div>
+    <div class="clear"></div>
+    <div dojoType="code4ge.form.FormTextBox" readOnly="true" label="BASE64 (dec)" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="base64dec"></div>
+    <div class="clear"></div>
+    <div dojoType="code4ge.form.FormTextBox" readOnly="true" label="MD5" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="md5"></div>
+    <div class="clear"></div>
+    <div dojoType="code4ge.form.FormTextBox" readOnly="true" label="SHA1" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="sha1"></div>
+    <div class="clear"></div>
+    <div dojoType="code4ge.form.FormTextArea" readOnly="true" label="Password" labelOnTop="false" labelWidth="90px" inputWidth="400px" id="password"></div>
+    <div class="clear"></div>
+</body>
+</html>

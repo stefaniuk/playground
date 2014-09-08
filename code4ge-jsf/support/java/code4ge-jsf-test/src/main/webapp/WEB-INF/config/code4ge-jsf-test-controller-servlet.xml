@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<!-- load MVC configuration -->
+	<import resource="mvc.xml" />
+
+	<!-- make use of annotation based configuration -->
+	<context:component-scan base-package="com.code4ge.jsf.test" />
+	<context:annotation-config />
+
+	<!-- load persistence beans -->
+	<import resource="persistence.xml" />
+
+	<!-- JSON-RPC service server -->
+	<bean id="jsonServiceServer" class="com.code4ge.json.service.JsonServiceServer" />
+
+	<!-- load service beans -->
+	<import resource="services.xml" />
+
+	<!-- load store beans -->
+	<import resource="stores.xml" />
+
+	<!-- load other beans -->
+	<import resource="beans.xml" />
+
+    <!-- configuration -->
+    <bean id="properties" class="com.code4ge.jsf.util.Configuration">
+        <property name="properties">
+            <props>
+                <prop key="mvc.config.dir">/WEB-INF/config</prop>
+                <prop key="mvc.layouts.dir">/WEB-INF/layouts</prop>
+                <prop key="mvc.views.dir">/WEB-INF/views</prop>
+                <prop key="ui.bootstrap.dojo.url">/dojo</prop>
+                <prop key="ui.bootstrap.dojo.locale">en-gb</prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>

@@ -1,0 +1,235 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CSS Reporting (Dojo Toolkit)</title>
+    <style type="text/css">
+        @import "../../build/dojo/resources/dojo.css";
+        @import "../../build/dojo/resources/dnd.css";
+        @import "../../build/dijit/themes/claro/claro.css";
+        @import "../../build/dojox/layout/resources/ExpandoPane.css";
+        @import "../../build/dojox/form/resources/RangeSlider.css";
+        @import "../../build/dojox/widget/Calendar/Calendar.css";
+        @import "../../build/dojox/grid/resources/Grid.css";
+        @import "../../build/dojox/grid/resources/claroGrid.css";
+        @import "../../build/nhs/themes/nhs/nhs.css";
+    </style>
+    <script type="text/javascript" src="../../build/dojo/dojo.js" data-dojo-config="async: 0, parseOnLoad: true, locale: 'en'"></script>
+    <script type="text/javascript" src="../../build/nhs/nhs.js" data-dojo-config="async: 0, parseOnLoad: true, locale: 'en'"></script>
+    <script type="text/javascript">
+
+        // load required "classes"
+        require([
+            'dijit/layout/BorderContainer',
+            'dijit/layout/ContentPane',
+            'dojox/layout/ExpandoPane',
+            'nhs/ControlSettings',
+            'dojox/widget/DataPresentation',
+            'dojox/charting/themes/Claro'
+        ], function() {
+
+            //
+            // settings object is used to configure the control panel on the
+            // right hand side of the screen. The presenation widget is data
+            // driven, so any change made to the settings object will be
+            // reflected on the screen.
+            //
+            settings = {
+                categories: [
+                    { name: 'assay', label: 'Assay', items: [
+                        { label: 'Assay 1', name: 'assay1', checked: true },
+                        { label: 'Assay 2', name: 'assay2', checked: true },
+                        { label: 'Assay 3', name: 'assay3', checked: true },
+                        { label: 'Assay 4', name: 'assay4', checked: true },
+                        { label: 'Assay 5', name: 'assay5', checked: true },
+                        { label: 'Assay 6', name: 'assay6', checked: true }
+                    ]},
+                    { name: 'outcome', label: 'Outcome', items: [
+                        { label: '0', name: 'o0', checked: true },
+                        { label: '9', name: 'o9', checked: true },
+                        { label: 'U', name: 'ou', checked: true }
+                    ]},
+                    { name: 'hpvType', label: 'HPV Type', items: [
+                        { label: 'HR16', name: 'hr16', checked: true },
+                        { label: 'HR18', name: 'hr18', checked: true },
+                        { label: 'HROther', name: 'hrother', checked: true }
+                    ]},
+                    { name: 'ageRange', label: 'Age Range', items: [
+                        { label: '0-24', name: 'ar_0_24', checked: true },
+                        { label: '25-34', name: 'ar_25_34', checked: true },
+                        { label: '35-49', name: 'ar_35_49', checked: true },
+                        { label: '50-64', name: 'ar_50_64', checked: true },
+                        { label: '65+', name: 'ar_65p', checked: true }
+                    ]}
+                ],
+                daterange: {
+                    from: '01/2010',
+                    to: '08/2012'
+                },
+                daterangeCategory: 'ageRange',
+                groupByCategories: [ 'assay', 'outcome' ]
+            };
+
+            //
+            // getRandomData generates random data to be used later to
+            // create series.
+            //
+            getRandomData = function(settings) {
+                var getCategoryByName = function(name) {
+                    for(var i=0; i<settings.categories.length; i++) {
+                        var cat = settings.categories[i];
+                        if(cat.name == name) {
+                            return cat;
+                        }
+                    }
+                    return null;
+                }
+                var result = [];
+                var k = settings.groupByCategories.length;
+                if(k==1) {
+                }
+                else if(k==2) {
+                    var cat1 = getCategoryByName(settings.groupByCategories[0]);
+                    var cat2 = getCategoryByName(settings.groupByCategories[1]);
+                    for(var j=0,cj=0; j<cat2.items.length; j++) {
+                        if(!cat2.items[j].checked) {
+                            continue;
+                        }
+                        console.log(cj, cat2.name);
+                        result[cj] = [];
+                        for(var i=0,ci=0; i<cat1.items.length; i++) {
+                            if(!cat1.items[i].checked) {
+                                continue;
+                            }
+                            console.log(cj, ci, cat1.name);
+                            result[cj][ci] = Math.floor(Math.random() * 30);
+                            ci++;
+                        }
+                        cj++;
+                    }
+                }
+                console.log('getRandomData: ', result);
+                return result;
+            }
+
+            //
+            // prepareData function converts data to a format required by
+            // the presentation widget.
+            //
+            prepareData = function(settings, data) {
+                var result = {
+                    range: [],
+                    series: []
+                };
+                // 1st grouping category
+                var cat1 = settings.categories[0];
+                for(var i=0; i<cat1.items.length; i++) {
+                    result.range.push(cat1.items[i].label);
+                }
+                // 2nd grouping category
+                var cat2 = settings.categories[1];
+                for(var i=0; i<cat2.items.length; i++) {
+                    result.series.push({ legend: cat2.items[i].label, values: data[i] });
+                }
+                console.log('prepareData: ', result);
+                return result;
+            }
+
+            //
+            // makeSeries function creates series object based on the current
+            // settings.
+            //
+            makeSeries = function(settings, data) {
+                var result = [
+                    { datapoints: 'range', name: settings.categories[0].label, type: 'range', chart: false },
+                ];
+                for(var i=0; i<data.series.length; i++) {
+                    result.push({ datapoints: 'series[' + i + '].values', namefield: 'series[' + i + '].legend' });
+                }
+                console.log('makeSeries: ', result);
+                return result;
+            }
+
+            //
+            // Following bit of code is executed after page is load.
+            //
+            dojo.ready(function() {
+
+                // get data
+                var data = prepareData(settings, getRandomData(settings));
+                var series = makeSeries(settings, data);
+
+                // create data presentation widget (chart, legend and grid)
+                var dp = new dojox.widget.DataPresentation('chart', {
+                    type: 'chart',
+                    chartType: 'ClusteredColumns',
+                    legendNode: 'legend',
+                    gridNode: 'grid',
+                    data: data,
+                    series: series,
+                    animate: true,
+                    theme: 'dojox.charting.themes.Claro'
+                });
+                var chart = dp.chartWidget;
+
+                // set data presentation settings in the control panel
+                var cs = dijit.byId('control_settings');
+                cs.set('settings', settings);
+                cs.set('dataPresentation', dp);
+                cs.set('getDataFunc', function() { var s = cs.get('settings'); return prepareData(s, getRandomData(s)); });
+
+                // adjust screen on resize
+                dojo.query('.display-onready').removeClass('display-onready');
+                var resizeChart = function() {
+                    dojo.fadeOut({ node: 'chart' }).play();
+                    setTimeout(function() {
+                        chart.resize();
+                        dojo.fadeIn({ node: 'chart' }).play();
+                }, 500); }
+                dijit.byId('container').resize();
+                resizeChart();
+                dojo.connect(dijit.byId('pane_right'), 'resize', resizeChart);
+
+            });
+        });
+    </script>
+</head>
+<body class="claro display-onready">
+    <div id="container" class="container" data-dojo-type="dijit/layout/BorderContainer" data-dojo-props="design:'headline',gutters:true,liveSplitters:false,persist:false">
+        <div id="pane_top" class="pane-top" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'top'">
+            <div class="pane-top-icon"><img src="../images/corp_icon.png" /></div>
+            <div class="pane-top-title">CSS Reporting (Dojo Toolkit)</div>
+            <div class="pane-top-banner"><img align="right" src="../images/corp_banner.png" /></div>
+        </div>
+        <div id="pane_left" class="pane-left" data-dojo-type="dojox/layout/ExpandoPane" data-dojo-props="region: 'left', splitter: true, startExpanded: true, duration: 300, title: 'Settings'">
+            <!-- control settings -->
+            <div id="control_settings" class="control-settings" data-dojo-type="nhs/ControlSettings"></div>
+        </div>
+        <div id="pane_center" class="pane-center" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'">
+            <!-- chart -->
+            <div id="chart" class="chart"></div>
+        </div>
+        <div id="pane_right" class="pane-right" data-dojo-type="dojox/layout/ExpandoPane" data-dojo-props="region: 'right', splitter: true, startExpanded: false, duration: 300, title: 'Data'">
+            <!-- grid -->
+            <div id="grid" class="grid"></div>
+        </div>
+        <div id="pane_bottom" class="pane-bottom" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'bottom'">
+            <!-- legend -->
+            <div class="legend"><div id="legend"></div></div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<div class="form-widget form-button">
+	<button
+		name="${name}"
+		class="form-control form-button-control"
+		dojoType="dojox.form.BusyButton"
+		dojoAttachPoint="_control"
+		dojoAttachEvent="onClick:_onClick"
+		tabindex="${tabindex}"
+	>${label}</button>
+	<div class="form-button-message-container">
+		<div class="form-button-message" dojoAttachPoint="_message"></div>
+	</div>
+</div>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Flowplayer</title>
+	<link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../themes/default/default.css" />
+	<script type="text/javascript" src="../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript">
+		dojo.require('code4ge.jsf.base');
+		dojo.require('flowplayer.flowplayer');
+		code4ge.ready(function() {
+			flowplayer('player', '../../../flowplayer/flowplayer.swf');
+		});
+	</script>
+</head>
+<body class="claro">
+	<a href="http://pseudo01.hddn.com/vod/demo.flowplayervod/flowplayer-700.flv"
+		style="display:block;width:520px;height:330px"
+		id="player"
+	></a>
+</body>
+</html>

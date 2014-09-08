@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Form Wizard</title>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/debug.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>-->
+	<link rel="stylesheet" type="text/css" href="../../../../build/960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-layout.js.uncompressed.js"></script>
+	<style type="text/css">
+		.form-widget {
+			margin-top: 3px;
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.FormWizard');
+		dojo.require('code4ge.jsf.FormTextBox');
+	</script>
+</head>
+<body class="claro">
+	<div dojoType="code4ge.jsf.FormWizard" title="This is a form wizard." style="margin:50px;width:400px">
+		<div dojoType="dojox.widget.WizardPane" style="height:100px">
+			<div name="tb1" dojoType="code4ge.jsf.FormTextBox" label="Textbox 1" value=""></div>
+		</div>
+		<div dojoType="dojox.widget.WizardPane" title="Pane 2" style="height:150px;background-color:green">
+			<div name="tb2" dojoType="code4ge.jsf.FormTextBox" label="Textbox 2" value="textbox 2"></div>
+		</div>
+		<div dojoType="dojox.widget.WizardPane" title="Pane 3" style="height:200px;background-color:blue">
+			<div name="tb3" dojoType="code4ge.jsf.FormTextBox" label="Textbox 3" value="textbox 3"></div>
+		</div>
+	</div>
+</body>
+</html>

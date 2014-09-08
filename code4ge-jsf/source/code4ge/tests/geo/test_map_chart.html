@@ -1,0 +1,297 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Code4ge JSF - Test: Map with chart</title>
+    <link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" type="text/css" href="../../themes/code4ge/code4ge.css" />
+
+    <link rel="stylesheet" type="text/css" href="../../../dojox/grid/enhanced/resources/claro/EnhancedGrid.css" />
+
+    <style type="text/css">
+        html, body {
+            overflow: visible;
+        }
+        .map-container {
+            display: block;
+            width: 600px;
+            height: 400px;
+            border: solid 1px transparent;
+        }
+        .chart-container {
+            display: block;
+            width: 400px;
+            height: 200px;
+            border: solid 1px transparent;
+        }
+        .separator {
+            padding-top: 4px;
+        }
+ 		#grid{
+			width: 100em;
+			height: 200px;
+		}
+    </style>
+    <script type="text/javascript"
+        src="../../../dojo/dojo.js"
+        data-dojo-config="async: 1, parseOnLoad: true, locale: 'en', gfxRenderer:'svg,canvas,vml,silverlight'"
+    ></script>
+    <script type="text/javascript">
+        require([
+            'code4ge/main',
+            'code4ge/geo/Map',
+            'dojox/geo/charting/MouseInteractionSupport',
+            'dojox/geo/charting/KeyboardInteractionSupport',
+            'dojo/data/ItemFileReadStore',
+            'dojox/charting/Chart',
+            'dojox/grid/EnhancedGrid',
+            'dojox/grid/enhanced/plugins/Selector',
+            "dojox/charting/StoreSeries",
+            'dojo/store/Memory',
+            'dojo/store/Observable',
+            "dojo/_base/lang", "dojo/_base/array", "dojo/_base/xhr", "dojo/dom-construct", "dojo/aspect",
+            'dojox/grid/enhanced/plugins/Filter',
+            'dojox/charting/axis2d/Default',
+            'dojox/charting/plot2d/ClusteredBars',
+            'dojox/charting/plot2d/Columns',
+            'dojox/charting/plot2d/Grid'
+        ], function(code4ge, Map, MouseInteractionSupport, KeyboardInteractionSupport, ItemFileReadStore, Chart, EnhancedGrid, Selector, StoreSeries, Memory, Observable,
+                        lang, arr, xhr, domConstruct, aspect) {
+
+
+            map = new Map({
+                shapeData: (dojo.isIE ? 'resources/united_kingdom_map_small.json' : 'resources/united_kingdom_map_large.json')
+            }, dojo.byId('map'));
+            map.setMarkerData('resources/united_kingdom_markers.json');
+            var mouseInteraction = new MouseInteractionSupport(map, { enablePan: true, enableZoom: true });
+            mouseInteraction.connect();
+            var keyboardInteraction = new KeyboardInteractionSupport(map, { enableZoom: true });
+            keyboardInteraction.connect();
+            dojo.connect(window, 'onresize', this, function() { map.resize(true, true); });
+
+            chartStore = new ItemFileReadStore({
+                url: "resources/united_kingdom_data_store.json"
+            });
+
+            var store;
+            xhr.get({
+                url: "resources/united_kingdom_data_store.json",
+                sync: true,
+                handleAs: "json"
+            }).then(function(data){
+                store = Observable(new Memory({data:data}));
+            });
+
+            productSeries = [0,0,0,0,0,0];
+            productList = ["countGp", "duplicateGp","countOptician","duplicateOptician","countDentist","duplicateDentist"];
+
+            chart1 = (new Chart("chart1")).
+                    addAxis("x", {
+                        fixLower: "major",
+                        fixUpper: "major",
+                        minorTicks: false,
+                        includeZero: true,
+                        min:0,
+                        max: 2000,
+                        labelFunc: function(value) {
+                            return value;
+                        }
+                    }).
+                    addAxis("y", {vertical: true, fixLower: "minor", fixUpper: "minor", natural: true,labels: [
+                            { value: 1, text: productList[0] },
+                            { value: 2, text: productList[1] },
+                            { value: 3, text: productList[2] },
+                            { value: 4, text: productList[3] },
+                            { value: 5, text: productList[4] },
+                            { value: 6, text: productList[5] }
+                        ]}).
+                    addPlot("default", { type: "ClusteredBars", gap: 5, animate:{duration: 1000}}).
+                    addSeries("productSeries", productSeries, { stroke: { color: "gray" }, fill: "gray" }).
+                    render();
+
+            map.onFeatureClick = function(feature){
+
+                if (!feature) {
+                    productSeries = [0,0,0,0,0,0];
+                    chart1.updateSeries("productSeries",productSeries);
+                    chart1.render();
+                } else if (!feature.isSelected) {
+                    chartStore.fetchItemByIdentity({
+                        identity: feature.id,
+                        onItem: function(item){
+                            //console.log(item);
+                            for (var i = productList.length - 1; i >= 0; i--){
+                                productSeries[i] = chartStore.getValue(item, productList[i]);
+                            };
+                            chart1.updateSeries("productSeries",productSeries);
+                            var axisx = chart1.getAxis('x');
+
+                            var max_x = 0;
+                            for (var i = 0; i < productSeries.length; i++){
+                                if(productSeries[i] > max_x) {
+                                    max_x = productSeries[i];
+                                }
+                            };
+
+                            chart1.
+                                removeAxis('x').
+                                addAxis("x", {
+                                    fixLower: "major",
+                                    fixUpper: "major",
+                                    minorTicks: false,
+                                    includeZero: true,
+                                    min:0,
+                                    max: max_x,
+                                    labelFunc: function(value) {
+                                        return value;
+                                    }
+                                }).
+                                render();
+
+                            var pctCode = item['pctCode'][0];
+                            console.log(items_ch[pctCode]);
+                            console.log(chart2.series);
+                            //chart2.fireEvent('duplicate', 'onmouseover', items_ch[pctCode]);
+
+                            if(!grid.focus.focusView._focused) {
+                                setTimeout(function() {
+                                    grid.scrollToRow(items_g[pctCode] ? items_g[pctCode] : 0);
+                                    if(items_g[pctCode]) {
+                                        //grid.selection.clear();
+                                        grid.selection.addToSelection(items_g[pctCode]);
+                                    }
+                                }, 500);
+                            }
+                        }
+                    });
+                }
+            };
+
+
+            var templates = {
+                percentageDulicate:   "<strong>{0}</strong>: <strong>low {1}</strong> &ndash; {2} &ndash; {3}"
+            };
+
+            function valTrans(value, object){
+                return {
+                    y: object[value],
+                    tooltip: lang.replace(
+                        templates[value],
+                        arr.map(["percentageDulicate"], function(field){
+                            return object[field];
+                        })
+                    )
+                };
+            }
+
+            chart2 = (new Chart("chart2")).
+                    addAxis("x", {
+                        fixLower: "minor",
+                        fixUpper: "minor",
+                        minorTicks: false,
+                        includeZero: true,
+                        labelFunc: function(value) {
+                            return value;
+                        }
+                    }).
+                    addAxis("y", {vertical: true, fixLower: "minor", fixUpper: "minor", natural: true}).
+                    addPlot("default", { type: "Columns", gap: 5, animate:{duration: 1000}}).
+                    addSeries("duplicate", new StoreSeries(store, {query: {}}, lang.hitch(null, valTrans, "percentageDulicate"))).
+                    render();
+            items_ch = store.index;
+
+
+            layout = [{
+                defaultCell: {
+                    editable: false, sortDesc: true, type: dojox.grid.cells._Widget, autoComplete:true
+                },
+                cells: [
+                    { field: "pctCode", name:"PCT", datatype:"string", width: 4, editable: false},
+                    { field: "pctName", name:"Name", datatype:"string", width: 23, editable: false},
+                    { field: "countGp", name:"All GP", datatype:"number", width: 7, editable: false},
+                    { field: "duplicateGp", name:"Dup. GP", datatype:"number", width: 7, editable: false},
+                    { field: "countOptician", name:"All Optician", datatype:"number", width: 7, editable: false},
+                    { field: "duplicateOptician", name:"Dup. Optician", datatype:"number", width: 8, editable: false},
+                    { field: "countDentist", name:"All Dentist", datatype:"number", width: 7, editable: false},
+                    { field: "duplicateDentist", name:"Dup. Dentist", datatype:"number", width: 8, editable: false},
+                    { field: "percentageDulicate", name:"% Duplicate", datatype:"number", width: 7, editable: false}
+                ]
+            }];
+            plugins = {
+                filter: {
+                    itemsName: 'pcts',
+                    closeFilterbarButton: true,
+                    ruleCount: 8
+                },
+                selector: {
+                    row: 'single',
+                    col: 'disabled',
+                    cell: 'disabled'
+                }
+            };
+
+            items_g = {};
+            code4ge.ready(function() {
+                grid = dijit.byId("grid");
+                dojo.connect(grid, "onFilterDefined", function(rules, rel){
+                    //console.log("Filter changed: ", rules, rel);
+                });
+                dojo.connect(grid, "_onFetchComplete", function(items, req) {
+                    //console.log("_onFetchComplete", items, req);
+                    for(var i=0; i<items.length; i++) {
+                        var pctCode = items[i]['pctCode'][0];
+                        items_g[pctCode] = i;
+                    }
+                    //console.log(items_g);
+                    //grid.scrollToRow(2);
+                });
+                dojo.connect(grid.selection, 'onSelected', function(idx) {
+                    var cell = grid.focus.cell;
+                    var row = grid.getItem(idx);
+                    if(row) {
+                        var pctCode = row['pctCode'][0];
+                        if(!map.mapObj.features[pctCode].isSelected) {
+                            map.deselectAll();
+                            console.log(map.mapObj.features[pctCode]);
+                            map.onFeatureClick(map.mapObj.features[pctCode]);
+                            map.mapObj.features[pctCode].select(true);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <button type="button" onclick="map.fitToMapContents(0,true)">Adjust</button>
+    <table>
+        <tr>
+            <td>
+                <div id="map" class="map-container"></div>
+            </td>
+            <td>
+                <div id="chart1" class="chart-container"></div>
+                <div class="separator"></div>
+                <div id="chart2" class="chart-container"></div>
+            </td>
+        </tr>
+    </table>
+    <div id="gridContainer">
+		<div id="grid" dojoType="dojox.grid.EnhancedGrid" store="chartStore" structure="layout" plugins="plugins" rowsPerPage="200"></div>
+	</div>
+</body>
+</html>

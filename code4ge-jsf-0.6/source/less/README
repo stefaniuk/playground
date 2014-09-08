@@ -1,0 +1,7 @@
+less.js - enclose the whole code with the following statement
+
+if(!dojo._hasResource["less.less"]){dojo._hasResource["less.less"]=true;dojo.provide("less.less");/*code*/}
+
+less-uncompressed.js - add the following line at the top of the file
+
+dojo.provide("less.less-uncompressed");

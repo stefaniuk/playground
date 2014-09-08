@@ -1,0 +1,32 @@
+/* requires parameters.less */
+
+/*
+	mixins
+*/
+
+.font (@fs: @font-size, @fsp: @font-size-percent, @fc: @font-color, @ff: @font-family) {
+	font-size: @fs;
+	_font-size: @fsp;
+	color: @fc;
+	font-family: @ff;
+}
+
+/*
+	styles
+*/
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	.font;
+}
+
+.displayOnReady {
+	display: none;
+}

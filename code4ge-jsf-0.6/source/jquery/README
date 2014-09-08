@@ -1,0 +1,7 @@
+jquery.js - enclose the whole code with the following statement
+
+if(!dojo._hasResource["jquery.jquery"]){dojo._hasResource["jquery.jquery"]=true;dojo.provide("jquery.jquery");/*code*/}
+
+jquery-uncompressed.js - add the following line at the top of the file
+
+dojo.provide("jquery.jquery-uncompressed");

@@ -1,0 +1,20 @@
+<div class="form-widget form-editor" style="display:none;visibility:hidden">
+	<div class="form-editor-control" dojoAttachPoint="_control">
+		<div class="form-label-text" dojoAttachPoint="_label">${label}</div>
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="_editButton">${localization.edit}</button>
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="_previewButton">${localization.preview}</button>
+	</div>
+	<div
+		dojoType="dijit.layout.ContentPane"
+		dojoAttachPoint="_view"
+		class="form-input form-editor-view"
+		style="display:none"
+	></div>
+	<div
+		name="${name}"
+		dojoType="${inputClass}" ${!styleSheets}
+		dojoAttachPoint="_input"
+		class="form-input form-editor-input"
+		style="display:none"
+	></div>
+</div>

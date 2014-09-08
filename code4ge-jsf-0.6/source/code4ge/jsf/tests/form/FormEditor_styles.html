@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Form Editor (styles)</title>
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/debug.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../build/960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form-editor.js.uncompressed.js"></script>-->
+	<style type="text/css">
+		.form-widget {
+			margin-top: 3px;
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Form');
+		dojo.require('code4ge.jsf.FormEditor');
+	</script>
+</head>
+<body class="claro">
+	<div dojoType="code4ge.jsf.Form">
+		<div class="container_16">
+			<div dojoType="code4ge.jsf.FormEditor"
+				id="editor1" name="editor1" class="prefix_2 grid_12"
+				height="190px" label="Editor 1"
+			>
+				<div class="letter">
+					<div class="page">
+						<span class="placeholder">HEADER</span>
+						<p align="right"><span class="placeholder">DATE</span></p>
+						<p>Dear <span class="placeholder">TITLE</span> <span class="placeholder">SURNAME</span></p>
+						<p><b>Letter (message)</b></p>
+						<p>A letter is a written message from one party to another. The role of letters in communication has changed significantly since the 19th century. Historically, letters (in paper form) were the only reliable means of communication between two persons in different locations.</p>
+						<p>As communication technology has diversified, posted letters have become less important as a routine form of communication; they however still remain but in a modified form. For example, the development of the telegraph shortened the time taken to send a letter by transferring the letter as an electrical signal (for example in Morse code) between distant points. At the telegraph office closest to the destination of the letter, the signal was transferred back into a hardcopy format and sent as a normal mail to the person's home. This allowed the normal speed of communication to be drastically shortened for larger and larger distances. This required specialised technicians to encode and decode the letter. The facsimile (fax) machine took this one step further: an entire letter could be completely transferred electrically from the sender's house to the receiver's house by means of the telephone network as an image.</p>
+						<p>Today, the Internet is becoming (or has become) the predominant medium for sending letters. The term e-mail, meaning electronic mail, has entered into everyday speech. By analogy, the term letter is sometimes used for e-mail messages with a formal letter-like format. (And regular letters, since they take longer, are often called "snail-mail.")</p>
+						<p>Historically, letters exist from the time of ancient India, ancient Egypt and Sumer, through Rome, Greece and China, up to the present day. Letters make up several of the books of the Bible. Archives of correspondence, whether for personal, diplomatic, or business reasons, serve as primary sources for historians.</p>
+						<p>I hope to hear from you soon.</p>
+						<p><br />
+							Kind regards<br /><br />
+							Yours sincerely
+							<br /><br /><br /><br /><br />
+							<span class="placeholder">SENDER_NAME</span><br />
+							<span class="placeholder">SENDER_JOB_TITLE</span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="clear"></div>
+			<div dojoType="code4ge.jsf.FormEditor" styleSheets="FormEditor_styles.css"
+				id="editor2" name="editor2" class="prefix_4 grid_12"
+				height="210px" label="Editor 2" labelOnTop="false" labelWidth="60px"
+			>
+				<div class="letter">
+					<div class="page">
+						<span class="placeholder">HEADER</span>
+						<p align="right"><span class="placeholder">DATE</span></p>
+						<p>Dear <span class="placeholder">TITLE</span> <span class="placeholder">SURNAME</span></p>
+						<p><b>Letter (message)</b></p>
+						<p>A letter is a written message from one party to another. The role of letters in communication has changed significantly since the 19th century. Historically, letters (in paper form) were the only reliable means of communication between two persons in different locations.</p>
+						<p>As communication technology has diversified, posted letters have become less important as a routine form of communication; they however still remain but in a modified form. For example, the development of the telegraph shortened the time taken to send a letter by transferring the letter as an electrical signal (for example in Morse code) between distant points. At the telegraph office closest to the destination of the letter, the signal was transferred back into a hardcopy format and sent as a normal mail to the person's home. This allowed the normal speed of communication to be drastically shortened for larger and larger distances. This required specialised technicians to encode and decode the letter. The facsimile (fax) machine took this one step further: an entire letter could be completely transferred electrically from the sender's house to the receiver's house by means of the telephone network as an image.</p>
+						<p>Today, the Internet is becoming (or has become) the predominant medium for sending letters. The term e-mail, meaning electronic mail, has entered into everyday speech. By analogy, the term letter is sometimes used for e-mail messages with a formal letter-like format. (And regular letters, since they take longer, are often called "snail-mail.")</p>
+						<p>Historically, letters exist from the time of ancient India, ancient Egypt and Sumer, through Rome, Greece and China, up to the present day. Letters make up several of the books of the Bible. Archives of correspondence, whether for personal, diplomatic, or business reasons, serve as primary sources for historians.</p>
+						<p>I hope to hear from you soon.</p>
+						<p><br />
+							Kind regards<br /><br />
+							Yours sincerely
+							<br /><br /><br /><br /><br />
+							<span class="placeholder">SENDER_NAME</span><br />
+							<span class="placeholder">SENDER_JOB_TITLE</span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+	<div dojoType="code4ge.jsf.Form" readOnly="true">
+		<div class="container_16">
+			<div dojoType="code4ge.jsf.FormEditor"
+				id="editor3" name="editor3" class="prefix_2 grid_12"
+				height="190px" label="Editor 3"
+			>
+				<div class="letter">
+					<div class="page">
+						<span class="placeholder">HEADER</span>
+						<p align="right"><span class="placeholder">DATE</span></p>
+						<p>Dear <span class="placeholder">TITLE</span> <span class="placeholder">SURNAME</span></p>
+						<p><b>Letter (message)</b></p>
+						<p>A letter is a written message from one party to another. The role of letters in communication has changed significantly since the 19th century. Historically, letters (in paper form) were the only reliable means of communication between two persons in different locations.</p>
+						<p>As communication technology has diversified, posted letters have become less important as a routine form of communication; they however still remain but in a modified form. For example, the development of the telegraph shortened the time taken to send a letter by transferring the letter as an electrical signal (for example in Morse code) between distant points. At the telegraph office closest to the destination of the letter, the signal was transferred back into a hardcopy format and sent as a normal mail to the person's home. This allowed the normal speed of communication to be drastically shortened for larger and larger distances. This required specialised technicians to encode and decode the letter. The facsimile (fax) machine took this one step further: an entire letter could be completely transferred electrically from the sender's house to the receiver's house by means of the telephone network as an image.</p>
+						<p>Today, the Internet is becoming (or has become) the predominant medium for sending letters. The term e-mail, meaning electronic mail, has entered into everyday speech. By analogy, the term letter is sometimes used for e-mail messages with a formal letter-like format. (And regular letters, since they take longer, are often called "snail-mail.")</p>
+						<p>Historically, letters exist from the time of ancient India, ancient Egypt and Sumer, through Rome, Greece and China, up to the present day. Letters make up several of the books of the Bible. Archives of correspondence, whether for personal, diplomatic, or business reasons, serve as primary sources for historians.</p>
+						<p>I hope to hear from you soon.</p>
+						<p><br />
+							Kind regards<br /><br />
+							Yours sincerely
+							<br /><br /><br /><br /><br />
+							<span class="placeholder">SENDER_NAME</span><br />
+							<span class="placeholder">SENDER_JOB_TITLE</span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="clear"></div>
+			<div dojoType="code4ge.jsf.FormEditor" styleSheets="FormEditor_styles.css"
+				id="editor4" name="editor4" class="prefix_4 grid_12"
+				height="210px" label="Editor 4" labelOnTop="false" labelWidth="60px"
+			>
+				<div class="letter">
+					<div class="page">
+						<span class="placeholder">HEADER</span>
+						<p align="right"><span class="placeholder">DATE</span></p>
+						<p>Dear <span class="placeholder">TITLE</span> <span class="placeholder">SURNAME</span></p>
+						<p><b>Letter (message)</b></p>
+						<p>A letter is a written message from one party to another. The role of letters in communication has changed significantly since the 19th century. Historically, letters (in paper form) were the only reliable means of communication between two persons in different locations.</p>
+						<p>As communication technology has diversified, posted letters have become less important as a routine form of communication; they however still remain but in a modified form. For example, the development of the telegraph shortened the time taken to send a letter by transferring the letter as an electrical signal (for example in Morse code) between distant points. At the telegraph office closest to the destination of the letter, the signal was transferred back into a hardcopy format and sent as a normal mail to the person's home. This allowed the normal speed of communication to be drastically shortened for larger and larger distances. This required specialised technicians to encode and decode the letter. The facsimile (fax) machine took this one step further: an entire letter could be completely transferred electrically from the sender's house to the receiver's house by means of the telephone network as an image.</p>
+						<p>Today, the Internet is becoming (or has become) the predominant medium for sending letters. The term e-mail, meaning electronic mail, has entered into everyday speech. By analogy, the term letter is sometimes used for e-mail messages with a formal letter-like format. (And regular letters, since they take longer, are often called "snail-mail.")</p>
+						<p>Historically, letters exist from the time of ancient India, ancient Egypt and Sumer, through Rome, Greece and China, up to the present day. Letters make up several of the books of the Bible. Archives of correspondence, whether for personal, diplomatic, or business reasons, serve as primary sources for historians.</p>
+						<p>I hope to hear from you soon.</p>
+						<p><br />
+							Kind regards<br /><br />
+							Yours sincerely
+							<br /><br /><br /><br /><br />
+							<span class="placeholder">SENDER_NAME</span><br />
+							<span class="placeholder">SENDER_JOB_TITLE</span>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+</body>
+</html>

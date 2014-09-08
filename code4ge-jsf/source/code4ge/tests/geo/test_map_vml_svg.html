@@ -1,0 +1,60 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Code4ge JSF - Test: Map</title>
+    <link rel="stylesheet" type="text/css" href="../../../dojo/resources/dojo.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dijit/themes/claro/claro.css" />
+    <link rel="stylesheet" type="text/css" href="../../themes/code4ge/code4ge.css" />
+    <style type="text/css">
+        html, body {
+            overflow: visible;
+        }
+        .map-container {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: solid 1px;
+        }
+    </style>
+    <script type="text/javascript"
+        src="../../../dojo/dojo.js"
+        data-dojo-config="async: 1, parseOnLoad: true, isDebug: true, locale: 'en', gfxRenderer:'svg,vml'"
+    ></script>
+    <script type="text/javascript">
+        require([
+            'code4ge/main',
+            'code4ge/geo/Map',
+            'dojox/geo/charting/MouseInteractionSupport',
+            'dojox/geo/charting/KeyboardInteractionSupport',
+            'dojox/gfx/svg'
+        ], function(code4ge, Map, MouseInteractionSupport, KeyboardInteractionSupport) {
+            var map = new Map({
+                shapeData: (dojo.isIE ? 'resources/nhs/uk_ciphers_map_small.json' : 'resources/nhs/uk_ciphers_map_large.json')
+            }, dojo.byId('map'));
+            map.setMarkerData('resources/nhs/uk_ciphers_markers.json');
+            var mouseInteraction = new MouseInteractionSupport(map, { enablePan: true, enableZoom: true });
+            mouseInteraction.connect();
+            var keyboardInteraction = new KeyboardInteractionSupport(map, { enableZoom: true });
+            keyboardInteraction.connect();
+            dojo.connect(window, 'onresize', this, function() { map.resize(true, true); });
+        });
+    </script>
+</head>
+<body>
+    <div id="map" class="map-container"></div>
+</body>
+</html>

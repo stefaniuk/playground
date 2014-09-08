@@ -1,0 +1,14 @@
+<div class="form-wizard" dojoAttachPoint="wizardNode">
+	<div class="form-wizard-title" dojoAttachPoint="titleNode"></div>
+	<div class="form-wizard-buttons-top" dojoAttachPoint="wizardNav">
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="previousButton">${localization.previous}</button>
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="nextButton">${localization.next}</button>
+	</div>
+	<div dojoType="code4ge.jsf.Form" dojoAttachPoint="form">
+		<div class="form-wizard-container" dojoAttachPoint="containerNode"></div>
+	</div>
+	<div class="form-wizard-buttons-bottom" dojoAttachPoint="wizardNav">
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="doneButton">${localization.send}</button>
+		<button dojoType="dijit.form.Button" type="button" dojoAttachPoint="cancelButton" style="display:none"></button>
+	</div>
+</div>

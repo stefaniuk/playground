@@ -1,0 +1,79 @@
+dijit.byId('control_settings').get('settings');
+
+dijit.byId('control_settings').set('settings',
+{
+    "categories": [{
+        "name": "outcome",
+        "items": [{
+            "name": "o0",
+            "checked": true
+        }, {
+            "name": "o9",
+            "checked": true
+        }, {
+            "name": "ou",
+            "checked": true
+        }]
+    }, {
+        "name": "assay",
+        "items": [{
+            "name": "assay1",
+            "checked": true
+        }, {
+            "name": "assay2",
+            "checked": true
+        }, {
+            "name": "assay3",
+            "checked": true
+        }, {
+            "name": "assay4",
+            "checked": true
+        }, {
+            "name": "assay5",
+            "checked": true
+        }, {
+            "name": "assay6",
+            "checked": true
+        }]
+    }, {
+        "name": "hpvType",
+        "items": [{
+            "name": "hr16",
+            "checked": true
+        }, {
+            "name": "hr18",
+            "checked": true
+        }, {
+            "name": "hrother",
+            "checked": true
+        }]
+    }, {
+        "name": "ageRange",
+        "items": [{
+            "name": "ar_0_24",
+            "checked": false
+        }, {
+            "name": "ar_25_34",
+            "checked": true
+        }, {
+            "name": "ar_35_49",
+            "checked": true
+        }, {
+            "name": "ar_50_64",
+            "checked": true
+        }, {
+            "name": "ar_65p",
+            "checked": false
+        }]
+    }],
+    "daterange": {
+        "from": "2011-01-01T00:00:00.000Z",
+        "to": "2012-07-31T23:00:00.000Z"
+    },
+    "daterangeCategory": "ageRange",
+    "groupByCategories": ["outcome", "assay"]
+}
+);
+
+
+dijit.byId('control_settings').play();

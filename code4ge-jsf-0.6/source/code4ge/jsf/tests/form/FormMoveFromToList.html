@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Form Move From To List</title>
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/debug.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../build/960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form-move-fromto-list.js.uncompressed.js"></script>-->
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Form');
+		dojo.require('code4ge.jsf.FormMoveFromToList');
+		test = function() {
+			var form = dijit.byId('form');
+			console.log(form.get('values'));
+		}
+	</script>
+	<!--[if IE]><script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script><![endif]-->
+</head>
+<body class="claro">
+	<input type="button" value="Get form values" onclick="test()" />
+	<div id="form" dojoType="code4ge.jsf.Form">
+		<div dojoType="code4ge.jsf.FormMoveFromToList" name="fromTo">
+			<select name="from">
+				<option value="11">option 11</option>
+				<option value="12">option 12</option>
+				<option value="13">option 13</option>
+				<option value="14">option 14</option>
+				<option value="15">option 15</option>
+				<option value="16">option 16</option>
+			</select>
+			<select name="to">
+				<option value="21">option 21</option>
+				<option value="22">option 22</option>
+				<option value="23">option 23</option>
+				<option value="24">option 24</option>
+				<option value="25">option 25</option>
+				<option value="26">option 26</option>
+			</select>
+		</div>
+	</div>
+</body>
+</html>

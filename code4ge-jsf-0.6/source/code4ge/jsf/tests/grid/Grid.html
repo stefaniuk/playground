@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Grid</title>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/Grid.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>-->
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/Grid.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-grid.js.uncompressed.js"></script>
+	<script type="text/javascript" src="store.js"></script>
+	<style type="text/css">
+		body {
+			overflow: hidden;
+		}
+ 		#grid {
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Grid');
+		var layout = [{
+			cells: [
+				{ field: 'id', name: 'Identity', datatype: 'number', width: 4, editable: false },
+				{ field: 'Genre', name: 'Genre', datatype: 'string', width: 10 },
+				{ field: 'Artist', name: 'Artist', datatype: 'string', width: 10 },
+				{ field: 'Year', name: 'Year', datatype: 'string', width: 2.5 },
+				{ field: 'Album', name: 'Album', datatype: 'string', width: 10 },
+				{ field: 'Name', name: 'Name', datatype: 'string', width: 8 },
+				{ field: 'Length', name: 'Length', datatype: 'string', width: 4 },
+				{ field: 'Track', name: 'Track', datatype: 'number', width: 3 },
+				{ field: 'Composer', name: 'Composer', datatype: 'string', width: 12 },
+				{ field: 'Download Date', name: 'Download Date', datatype: 'date', width: 12 },
+				{ field: 'Last Played', name: 'Last Played', datatype: 'time', width: 6 },
+				{ field: 'Heard', name: 'Checked', datatype: 'boolean', width: 6 }
+			]
+		}];
+		var plugins = {
+			pagination: {
+				pageSizeArr: ['10', '25', '50', '100', 'All'],
+				description: '30%',
+				sizeSwitch: '260px',
+				pageStepper: '30em',
+				gotoButton: true,
+				maxPageStep: 7,
+				position: 'bottom'
+			}
+		};
+	</script>
+</head>
+<body class="claro">
+	<div id="grid" dojoType="code4ge.jsf.Grid" store="test_store[0]" structure="layout" plugins="plugins"></div>
+</body>
+</html>

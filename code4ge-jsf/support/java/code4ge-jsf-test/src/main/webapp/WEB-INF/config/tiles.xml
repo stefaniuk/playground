@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+    "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+    "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+    <definition name="layout.abstract">
+        <put-attribute name="title" value="Code4ge JSF Example" />
+        <put-attribute name="header" value="/WEB-INF/layouts/header.jsp" />
+        <put-attribute name="content" value="/WEB-INF/layouts/content.jsp" />
+    </definition>
+    <definition name="layout.screen" extends="layout.abstract" template="/WEB-INF/layouts/screen.jsp" />
+</tiles-definitions>

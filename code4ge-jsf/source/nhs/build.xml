@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="nhs" default="minify" basedir=".">
+
+    <target name="init">
+        <property name="config.name" value="../../nhs/config.js" />
+        <property name="profile.name" value="../../nhs/nhs.profile.js" />
+        <available file="${basedir}/source/util/buildscripts/build.bat" property="buildscript.present" />
+    </target>
+
+    <target name="minify" depends="init" if="buildscript.present">
+        <echo>Minifying...</echo>
+        <exec dir="${basedir}/source/util/buildscripts/" executable="${basedir}/source/util/buildscripts/build.bat" output="${basedir}/build.log">
+            <arg line="--dojoConfig ${config.name}" />
+            <arg line="--profile ${profile.name}" />
+            <arg line="--release" />
+        </exec>
+    </target>
+
+</project>

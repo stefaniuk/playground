@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - Form Values</title>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../960gs/debug.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>-->
+	<link rel="stylesheet" type="text/css" href="../../../../build/960gs/960.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-base.js.uncompressed.js"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js.uncompressed.js"></script>
+	<!--[if IE]><script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script><![endif]-->
+	<style type="text/css">
+		.form-widget {
+			margin-top: 3px;
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Form');
+		dojo.require('code4ge.jsf.FormTextBox');
+		test = function() {
+			var form = dijit.byId('form');
+			console.log(form.get('values'));
+		}
+	</script>
+</head>
+<body class="claro">
+	<input type="button" value="Get form values" onclick="test()" />
+	<div id="form" dojoType="code4ge.jsf.Form">
+		<div class="container_12">
+			<input type="hidden" name="id" value="100" />
+			<div dojoType="code4ge.jsf.FormTextBox" name="txt1" label="Textbox 1"></div>
+			<div class="clear"></div>
+			<div dojoType="code4ge.jsf.FormTextBox" name="txt2" label="Textbox 2" readOnly="true" value="test"></div>
+			<div class="clear"></div>
+			<div dojoType="code4ge.jsf.FormTextBox" name="txt3" label="Textbox 3"></div>
+			<div class="clear"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="code4ge-jsf" default="minify" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/build.java.sh" /></exec>
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/compile.css.sh" /></exec>
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/generate.sprites.sh" /></exec>
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/git.revision.sh" /></exec>
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- get properties -->
+        <input
+            message="Which Dojo Toolkit version is going to be used?"
+            validargs="${dojo.version.validargs}"
+            addproperty="build.dojo.version"
+            defaultvalue="${dojo.version.defaultvalue}"
+        />
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="config.file.name" value="${basedir}/source/code4ge/config.js" />
+        <property name="config.name" value="../../code4ge/config.js" />
+        <property name="profile.file.name" value="${basedir}/source/code4ge/code4ge.profile.js" />
+        <property name="profile.name" value="../../code4ge/code4ge.profile.js" />
+        <property name="release.file.name" value="${basedir}/build/${ant.project.name}-${project.version.full}" />
+        <property name="release.latest.file.name" value="${basedir}/build/${ant.project.name}-${project.version.major}.${project.version.minor}-latest" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+        <echo>Dojo Toolkit version: ${build.dojo.version}</echo>
+        <!-- requirements -->
+        <available file="${basedir}/source/util/buildscripts/build.${os.script.ext}" property="buildscript.present" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/source/build" />
+        <delete dir="${basedir}/source/dojo" />
+        <delete dir="${basedir}/source/dijit" />
+        <delete dir="${basedir}/source/dojox" />
+        <delete dir="${basedir}/source/util" />
+        <delete file="${basedir}/${log.file}" />
+        <delete><fileset dir="${basedir}/build/" includes="*.zip,*.jar" excludes="*-latest*.zip,*-latest.jar" /></delete>
+        <!-- unlink resources from src -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/dojo/${build.dojo.version}" />
+        </exec>
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/classes" />
+        </exec>
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/lib" />
+        </exec>
+        <!-- remove directories from src -->
+        <delete dir="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/dojo" />
+        <delete dir="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/log" />
+        <!-- remove targets -->
+        <delete dir="${basedir}/support/java/code4ge-jsf/target" />
+        <delete dir="${basedir}/support/java/code4ge-jsf-test/target" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+        <unzip src="${basedir}/externals/dojo-release-${build.dojo.version}-src.zip" dest="${basedir}/source" />
+        <move file="${basedir}/source/dojo-release-${build.dojo.version}-src/dojo" todir="${basedir}/source" />
+        <move file="${basedir}/source/dojo-release-${build.dojo.version}-src/dijit" todir="${basedir}/source" />
+        <move file="${basedir}/source/dojo-release-${build.dojo.version}-src/dojox" todir="${basedir}/source" />
+        <move file="${basedir}/source/dojo-release-${build.dojo.version}-src/util" todir="${basedir}/source" />
+        <delete dir="${basedir}/source/dojo-release-${build.dojo.version}-src" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: generate-sprites                     -->
+    <!-- "prepare" must be run manually               -->
+    <!-- ============================================ -->
+    <target name="generate-sprites" depends="init">
+        <!--<exec executable="${basedir}/scripts/generate.sprites.${os.script.ext}">
+            <arg line="${basedir}" />
+            <arg line="${basedir}/source/code4ge/icons/sprites/sprite.options.js" />
+        </exec>-->
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: compile-css                          -->
+    <!-- ============================================ -->
+    <target name="compile-css" depends="init">
+        <exec dir="${basedir}/source/dijit/themes/claro/" executable="${basedir}/scripts/compile.css.${os.script.ext}" />
+        <exec dir="${basedir}/source/code4ge/themes/code4ge/" executable="${basedir}/scripts/compile.css.${os.script.ext}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- (DEFAULT) target: minify                     -->
+    <!-- "prepare" must be run manually               -->
+    <!-- ============================================ -->
+    <target name="minify" depends="generate-sprites,compile-css" if="buildscript.present">
+        <!-- set project version -->
+        <copy file="${basedir}/source/code4ge/package.json" tofile="${basedir}/package.json.bak" />
+        <replace
+            file="${basedir}/source/code4ge/package.json"
+            token="0.0.0dev"
+            value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}"
+        />
+        <copy file="${basedir}/source/code4ge/_base/kernel.js" tofile="${basedir}/kernel.js.bak" />
+        <replace
+            file="${basedir}/source/code4ge/_base/kernel.js"
+            token="major: 0, minor: 0, revision: 0, flag: 'dev'"
+            value="major: ${project.version.major}, minor: ${project.version.minor}, revision: ${vcs.revision}, flag: '${project.version.flag}'"
+        />
+        <!-- print info -->
+        <echo>Config file: ${config.file.name}</echo>
+        <echo>Profile file: ${profile.file.name}</echo>
+        <!-- clean -->
+        <echo>Cleaning...</echo>
+        <delete dir="${basedir}/source/build" />
+        <!-- minify -->
+        <echo>Minifying...</echo>
+        <exec executable="chmod"><arg line="+x ${basedir}/source/util/buildscripts/build.sh" /></exec>
+        <exec dir="${basedir}/source/util/buildscripts/" executable="${basedir}/source/util/buildscripts/build.${os.script.ext}" output="${basedir}/${log.file}">
+            <arg line="--dojoConfig ${config.name}" />
+            <arg line="--profile ${profile.name}" />
+            <arg line="--release" />
+        </exec>
+        <!-- copy the license -->
+        <copy file="${basedir}/LICENSE" todir="${basedir}/source/build/code4ge" />
+        <!-- copy less -->
+        <delete dir="${basedir}/source/build/less" />
+        <mkdir dir="${basedir}/source/build/less" />
+        <copy file="${basedir}/source/less/less.js" todir="${basedir}/source/build/less" />
+        <copy file="${basedir}/source/less/LICENSE" todir="${basedir}/source/build/less" />
+        <!-- copy 960gs -->
+        <delete dir="${basedir}/source/build/960gs" />
+        <mkdir dir="${basedir}/source/build/960gs" />
+        <copy file="${basedir}/source/960gs/960.css" todir="${basedir}/source/build/960gs" />
+        <copy file="${basedir}/source/960gs/reset.css" todir="${basedir}/source/build/960gs" />
+        <copy file="${basedir}/source/960gs/text.css" todir="${basedir}/source/build/960gs" />
+        <copy file="${basedir}/source/960gs/LICENSE" todir="${basedir}/source/build/960gs" />
+        <!-- clean up -->
+        <move file="${basedir}/package.json.bak" tofile="${basedir}/source/code4ge/package.json" />
+        <move file="${basedir}/kernel.js.bak" tofile="${basedir}/source/code4ge/_base/kernel.js" />
+        <delete file="${basedir}/source/build/code4ge/config.js" />
+        <delete file="${basedir}/source/build/code4ge/code4ge.profile.js" />
+        <delete>
+            <fileset dir="${basedir}/source/build" includes="**/*.profile.js" />
+        </delete>
+        <delete file="${basedir}/source/build/code4ge/themes/code4ge/compile.js" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- "prepare" must be run manually               -->
+    <!-- ============================================ -->
+    <target name="release" depends="minify" if="buildscript.present">
+
+        <delete>
+            <fileset dir="${basedir}/build" includes="*.zip" />
+        </delete>
+
+        <!-- release minified source -->
+        <zip destfile="${release.file.name}.zip">
+            <fileset dir="${basedir}/source">
+                <!-- less -->
+                <include name="build/less/less.js" />
+                <include name="build/less/LICENSE" />
+                <!-- 960gs -->
+                <include name="build/960gs/960.css" />
+                <include name="build/960gs/reset.css" />
+                <include name="build/960gs/text.css" />
+                <include name="build/960gs/LICENSE" />
+                <!-- main -->
+                <include name="build/code4ge/**" />
+            </fileset>
+        </zip>
+        <!-- create latest minified release -->
+        <copy file="${release.file.name}.zip" tofile="${release.latest.file.name}.zip" />
+
+        <!-- set project version -->
+        <copy file="${basedir}/source/code4ge/package.json" tofile="${basedir}/package.json.bak" />
+        <replace
+            file="${basedir}/source/code4ge/package.json"
+            token="0.0.0dev"
+            value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}"
+        />
+        <copy file="${basedir}/source/code4ge/_base/kernel.js" tofile="${basedir}/kernel.js.bak" />
+        <replace
+            file="${basedir}/source/code4ge/_base/kernel.js"
+            token="major: 0, minor: 0, revision: 0, flag: 'dev'"
+            value="major: ${project.version.major}, minor: ${project.version.minor}, revision: ${vcs.revision}, flag: '${project.version.flag}'"
+        />
+        <!-- release source -->
+        <copy file="${basedir}/LICENSE" todir="${basedir}/source/code4ge" />
+        <zip destfile="${release.file.name}-src.zip">
+            <fileset dir="${basedir}/source">
+                <!-- less -->
+                <include name="less/less.js" />
+                <include name="less/LICENSE" />
+                <!-- 960gs -->
+                <include name="960gs/960.css" />
+                <include name="960gs/reset.css" />
+                <include name="960gs/text.css" />
+                <include name="960gs/LICENSE" />
+                <!-- main -->
+                <include name="code4ge/**" />
+                <exclude name="code4ge/tests/**" />
+            </fileset>
+        </zip>
+        <delete file="${basedir}/source/code4ge/LICENSE" />
+        <!-- clean up -->
+        <move file="${basedir}/package.json.bak" tofile="${basedir}/source/code4ge/package.json" />
+        <move file="${basedir}/kernel.js.bak" tofile="${basedir}/source/code4ge/_base/kernel.js" />
+        <!-- create latest source release -->
+        <copy file="${release.file.name}-src.zip" tofile="${release.latest.file.name}-src.zip" />
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build-java                           -->
+    <!-- ============================================ -->
+    <target name="build-java" depends="init">
+
+        <!-- unlink resources from src -->
+        <!-- dojo -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/dojo/${build.dojo.version}" />
+        </exec>
+        <!-- classes -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/classes" />
+        </exec>
+        <!-- lib -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/remove.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/lib" />
+        </exec>
+
+        <!-- build project -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/build.java.${os.script.ext}" />
+
+        <!-- link resources to src -->
+        <!-- dojo -->
+        <mkdir dir="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/dojo" />
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/create.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/dojo/${build.dojo.version}" />
+            <arg line="${basedir}/source" />
+        </exec>
+        <!-- classes -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/create.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/classes" />
+            <arg line="${basedir}/support/java/code4ge-jsf-test/target/code4ge-jsf-test/WEB-INF/classes" />
+        </exec>
+        <!-- lib -->
+        <exec dir="${basedir}/support/java/" executable="${basedir}/scripts/create.link.${os.script.ext}">
+            <arg line="${basedir}/support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/lib" />
+            <arg line="${basedir}/support/java/code4ge-jsf-test/target/code4ge-jsf-test/WEB-INF/lib" />
+        </exec>
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release-java                         -->
+    <!-- ============================================ -->
+    <target name="release-java" depends="build-java">
+        <copy file="${basedir}/support/java/code4ge-jsf/target/code4ge-jsf-1.0.1.jar" tofile="${basedir}/build/code4ge-jsf-latest.jar" />
+        <copy file="${basedir}/support/java/code4ge-jsf/target/code4ge-jsf-1.0.1.jar" tofile="${basedir}/build/code4ge-jsf-1.0.1.jar" />
+    </target>
+
+</project>

@@ -1,0 +1,15 @@
+.nhs-daterange {
+    margin: 10px 3px 10px 3px;
+}
+
+.nhs-daterange-range-slider {
+    margin-bottom: 15px;
+}
+
+.nhs-daterange-from {
+    width: 82px;
+}
+
+.nhs-daterange-to {
+    width: 82px;
+}

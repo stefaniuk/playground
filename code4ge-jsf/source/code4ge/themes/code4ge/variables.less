@@ -1,0 +1,22 @@
+/*
+    Variables
+*/
+
+/* variables: font */
+@font-size: 12px;
+@font-size-percent: 75%;
+@font-color: #444444;
+@font-family: Verdana,Arial,Helvetica,sans-serif;
+
+/* variables: form element */
+@form-element-label-width: 100px;
+@form-element-input-width: 240px;
+@form-element-input-height: @font-size + 8 + (@font-size / 10 * 2);
+
+/* variable class: font */
+.font (@fs: @font-size, @fsp: @font-size-percent, @fc: @font-color, @ff: @font-family) {
+    font-size: @fs;
+    _font-size: @fsp;
+    color: @fc;
+    font-family: @ff;
+}

@@ -1,0 +1,69 @@
+/* less: mixins */
+
+/* rounded corners all */
+.rca(@r: 4px) {
+	-moz-border-radius: @r;
+	-webkit-border-radius: @r;
+	-opera-border-radius: @r;
+	-khtml-border-radius: @r;
+	border-radius: @r;
+}
+
+/* rounded corners top */
+.rct(@r: 4px) {
+	-moz-border-radius: @r @r 0 0;
+	-webkit-border-radius: @r @r 0 0;
+	-opera-border-radius: @r @r 0 0;
+	-khtml-border-radius: @r @r 0 0;
+	border-radius: @r @r 0 0;
+}
+
+/* rounded corners botom */
+.rcb(@r: 4px) {
+	-moz-border-radius: 0 0 @r @r;
+	-webkit-border-radius: 0 0 @r @r;
+	-opera-border-radius: 0 0 @r @r;
+	-khtml-border-radius: 0 0 @r @r;
+	border-radius: 0 0 @r @r;
+}
+
+/* rounded corners left */
+.rcl(@r: 4px) {
+	-moz-border-radius: @r 0 0 @r;
+	-webkit-border-radius: @r 0 0 @r;
+	-opera-border-radius: @r 0 0 @r;
+	-khtml-border-radius: @r 0 0 @r;
+	border-radius: @r 0 0 @r;
+}
+
+/* rounded corners right */
+.rcr(@r: 4px) {
+	-moz-border-radius: 0 @r @r 0;
+	-webkit-border-radius: 0 @r @r 0;
+	-opera-border-radius: 0 @r @r 0;
+	-khtml-border-radius: 0 @r @r 0;
+	border-radius: 0 @r @r 0;
+}
+
+/*
+	styles
+*/
+
+/* rounded corners (small) */
+.rca-small { .rca; }
+.rct-small { .rct; }
+.rcb-small { .rcb; }
+.rcl-small { .rcl; }
+
+/* rounded corners (medium) */
+.rca-medium { .rca(6px); }
+.rct-medium { .rct(6px); }
+.rcb-medium { .rcb(6px); }
+.rcl-medium { .rcl(6px); }
+
+/* rounded corners (large) */
+.rca-large { .rca(8px); }
+.rct-large { .rct(8px); }
+.rcb-large { .rcb(8px); }
+.rcl-large { .rcl(8px); }
+.rcr-large { .rcr(8px); }

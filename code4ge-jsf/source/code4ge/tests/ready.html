@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Code4ge JSF - Test: code4ge.ready</title>
+    <script type="text/javascript"
+        src="../../dojo/dojo.js"
+        data-dojo-config="isDebug: true, cacheBust: new Date()"
+    ></script>
+    <script type="text/javascript">
+        require([ 'dojo', 'code4ge/main' ], function(dojo, code4ge) {
+            code4ge.ready(function() { console.log('My web page initialisation code. Order doesn\'t matter?'); });
+            code4ge.ready(function() { console.log('I want this to be run last!'); }, 10);
+            code4ge.ready(function() { console.log('I want this to be run first!'); }, -10);
+            dojo.ready(function() {
+                console.log('How cool is this!!!');
+            });
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

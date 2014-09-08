@@ -1,0 +1,76 @@
+<div class="nhs-control-settings">
+    <!-- settings group: date range-->
+    <div class="nhs-control-settings-group br-small">
+        <div class="nhs-control-settings-header">Date Range</div>
+        <!-- date range -->
+        <div
+            id="${id}_daterange"
+            class="nhs-control-settings-daterange"
+            data-dojo-type="nhs/DateRange"
+            data-dojo-attach-point="daterange"
+        ></div>
+        <!-- date range category -->
+        <div class="nhs-control-settings-daterange-category">
+            <label for="${id}_daterange_category">Applies To:</label>
+            <select
+                id="${id}_daterange_category"
+                class="nhs-control-settings-daterange-category-select"
+                data-dojo-type="dijit/form/FilteringSelect"
+                data-dojo-props="
+                    autoComplete: true,
+                    selectOnClick: true
+                "
+                data-dojo-attach-point="daterangeCategory"
+            >
+            </select>
+        </div>
+        <!-- play -->
+        <div class="nhs-control-settings-play">
+            <button
+                type="button"
+                data-dojo-type="dijit/form/Button"
+                data-dojo-attach-point="play"
+                data-dojo-props="iconClass: 'icon-play'"
+            >Play</button>
+        </div>
+    </div>
+    <!-- settings group: categories-->
+    <div class="nhs-control-settings-group br-small">
+        <div class="nhs-control-settings-header">Categories</div>
+        <!-- categories (group by) -->
+        <div class="pos br-small">
+            <label for="${id}_categories_group_by">Group By:</label>
+        </div>
+        <div
+            id="${id}_categories_group_by"
+            class="nhs-control-settings-container"
+            style="overflow: auto"
+            data-dojo-attach-point="filtersNode1"
+        ></div>
+        <!-- categories (do not group by) -->
+        <div class="pos br-small">
+            <label for="${id}_categories_do_not_group_by">Do Not Group By:</label>
+        </div>
+        <div
+            id="${id}_categories_do_not_group_by"
+            class="nhs-control-settings-container"
+            style="overflow: auto"
+            data-dojo-attach-point="filtersNode2"
+        ></div>
+        <!-- info -->
+        <div
+            id="${id}_info"
+            class="nhs-control-settings-info"
+            data-dojo-attach-point="info"
+        ></div>
+        <!-- refresh -->
+        <div class="nhs-control-settings-refresh">
+            <button
+                type="button"
+                data-dojo-type="dijit/form/Button"
+                data-dojo-attach-point="refresh"
+                data-dojo-props="iconClass: 'icon-refresh'"
+            >Refresh</button>
+        </div>
+    </div>
+</div>

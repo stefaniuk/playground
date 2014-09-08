@@ -1,0 +1,129 @@
+@import url("ControlSettings.css");
+@import url("DateRange.css");
+@import url("Filter.css");
+@import url("FilterItem.css");
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+label {
+    color: #444444;
+}
+
+.display-onready {
+    visibility: hidden;
+}
+
+.br-small {
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	-opera-border-radius: 4px;
+	-khtml-border-radius: 4px;
+	border-radius: 4px;
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+}
+
+.pane-top {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -opera-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
+    background-color: #0066cc !important;
+}
+
+.pane-top-title {
+    float: left;
+    width: 60%;
+    padding-top: 10px;
+    text-align: center;
+    color: #ffffff;
+    font-family: Sans-serif;
+    font-size: 1.875em;
+    font-weight: bold;
+}
+
+.pane-top-icon {
+    float: left;
+    width: 20%;
+}
+
+.pane-top-banner {
+    float: right;
+    width: 20%;
+}
+
+.pane-left {
+    width: 250px;
+}
+
+.pane-center {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -opera-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.pane-right {
+    width: 250px;
+}
+
+.pane-bottom {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -opera-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.chart {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.legend {
+    float: right;
+}
+
+.control-settings {
+}
+
+.icon-play {
+    background: url(../../images/play.png) no-repeat;
+    width: 16px;
+    height: 16px;
+    border: none;
+}
+
+.icon-pause {
+    background: url(../../images/pause.png) no-repeat;
+    width: 16px;
+    height: 16px;
+    border: none;
+}
+
+.icon-refresh {
+    background: url(../../images/refresh.png) no-repeat;
+    width: 16px;
+    height: 16px;
+    border: none;
+}
+
+.dojoxExpandoClosed {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -opera-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
+}

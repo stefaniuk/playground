@@ -1,0 +1,16 @@
+How to use it?
+==============
+
+Inside an HTML document define 'css3pie' class in a stylesheet section with
+a relative URL address to the HTML document.
+
+<style type="text/css">
+	.css3pie {
+		behavior: url("../../../../css3pie/PIE.htc");
+	}
+</style>
+
+Known issues
+============
+
+For details see http://css3pie.com/documentation/known-issues/.

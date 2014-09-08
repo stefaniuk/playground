@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - PopupForm</title>
+	<link rel="stylesheet" type="text/css" href="../../../../dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<!--<link rel="stylesheet" type="text/css" href="../../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.css" />
+	<link rel="stylesheet/less" type="text/css" href="../../../../build/code4ge/jsf/themes/default/default.less.css" />
+	<script type="text/javascript" src="../../../../build/dojo/dojo.js" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../../build/code4ge/jsf/code4ge-jsf-form.js"></script>-->
+	<style type="text/css">
+		.css3pie {
+			behavior: url("../../../../css3pie/PIE.htc");
+		}
+	</style>
+	<script type="text/javascript">
+		dojo.require('less.less');
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.Popup');
+		dojo.require('code4ge.jsf.Form');
+		dojo.require('code4ge.jsf.FormTextBox');
+		dojo.require('code4ge.jsf.FormPassword');
+		dojo.declare('custom.Popup', [ code4ge.jsf.Popup ], {
+			templateString: dojo.cache('code4ge.jsf.tests.popup', 'PopupFormTemplate.html'),
+			widgetsInTemplate: true,
+			_onKeyUp: function(event) {
+				console.log('_onKeyUp: ', event);
+			},
+			_onKeyPress: function(event) {
+				console.log('_onKeyPress: ', event);
+			}
+		});
+		var create = function() {
+			var popup = new custom.Popup({
+				width: 'auto'
+			});
+			popup.show();
+		};
+		code4ge.ready(function() {
+			create();
+		});
+	</script>
+	<!--[if IE]><script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script><![endif]-->
+</head>
+<body class="claro">
+</body>
+</html>

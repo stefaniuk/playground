@@ -1,0 +1,16 @@
+<div class="form-widget form-timebox">
+    <div class="form-element-label" dojoAttachPoint="_label">${label}</div>${!_linebreak}
+    <input
+        name="${name}"
+        type="text"
+        value="${value}"
+        dojoType="${inputClass}"
+        dojoAttachPoint="_input"
+        class="form-element-input form-timebox-input"
+        required="${required}" ${!_constraints}
+        selectOnClick="${selectOnClick}"
+        trim="${trim}"
+        maxLength="${maxlength}"
+        tabindex="${tabindex}"
+    />
+</div>

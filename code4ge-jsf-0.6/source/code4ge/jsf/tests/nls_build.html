@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+	<title>Test - NLS Build</title>
+	<link rel="stylesheet" type="text/css" href="../../../build/dojo/resources/dojo.css" />
+	<link rel="stylesheet" type="text/css" href="../../../build/dijit/themes/claro/claro.css" />
+	<link rel="stylesheet" type="text/css" href="../../../build/code4ge/jsf/themes/default/default.css" />
+	<script type="text/javascript" src="../../../build/dojo/dojo.js.uncompressed.js" charset="utf-8" data-dojo-config="parseOnLoad:true,locale:'en'"></script>
+	<script type="text/javascript" src="../../../build/code4ge/jsf/code4ge-jsf.js.uncompressed.js" charset="utf-8"></script>
+</head>
+<body>
+	<input type="button" value="Validate Form" onclick="dijit.byId('form').validate()" />
+	<div id="form" data-dojo-type="code4ge.jsf.Form">
+		<div data-dojo-type="code4ge.jsf.FormPassword" data-dojo-props="label:'Password',confirm:'passwordConfirm'"></div>
+		<div data-dojo-type="code4ge.jsf.FormPassword" data-dojo-props="label:'PasswordConfirm'" id="passwordConfirm"></div>
+	</div>
+</body>
+</html>

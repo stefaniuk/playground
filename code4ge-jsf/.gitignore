@@ -1,0 +1,13 @@
+build/*
+source/build
+source/dijit
+source/dojo
+source/dojox
+source/util
+!build/*-latest.jar
+!build/*-latest.zip
+!build/*-latest-src.zip
+build.log
+support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/classes
+support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/lib
+support/java/code4ge-jsf-test/src/main/webapp/WEB-INF/log

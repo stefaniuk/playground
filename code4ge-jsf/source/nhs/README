@@ -1,0 +1,28 @@
+I. Prepare
+
+    1) Place content of that directory in your DocumentRoot, for example in "d:\tools\apache\htdocs\prototype"
+    2) Download Dojo Toolkit source code http://download.dojotoolkit.org/release-1.8.0/dojo-release-1.8.0-src.zip
+    3) Unpack the archive to "d:\tools\apache\htdocs\prototype\source". This directory shuld contain:
+
+            dijit
+            dojo
+            dojox
+            nhs
+            utils
+
+    4) Open the test page (test_prototype.html) in your browser.
+
+            http://localhost/prototype/nhs/tests/test_prototype.html
+
+II. Minify
+
+    1) Open comand line prompt and change current directory to d:\tools\apache\htdocs\prototype
+    2) Run ant script by executing command:
+
+            "ant" or "ant minify"
+
+       This will take about 3 minutes to complete. Additional directory called
+       "build" should be created in "d:\tools\apache\htdocs\prototype\source"
+    3) Open the test page (test_prototype_build.html) in your browser
+
+            http://localhost/prototype/nhs/tests/test_prototype_build.html

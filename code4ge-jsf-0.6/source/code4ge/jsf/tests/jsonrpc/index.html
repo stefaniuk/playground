@@ -1,0 +1,46 @@
+<html>
+<head>
+	<script type="text/javascript" src="../../../../dojo/dojo.js" data-dojo-config="parseOnLoad:false,locale:'en'"></script>
+	<script type="text/javascript">
+		dojo.require('code4ge.jsf.base');
+		dojo.require('code4ge.jsf.JsonRpc');
+	</script>
+	<script type="text/javascript">
+		var smd = {
+			SMDVersion: '2.0',
+			additionalParameters: 'false',
+			contentType: 'application/json',
+			envelope: 'JSON-RPC-2.0',
+			transport: 'POST',
+			services: {
+				call: {
+					parameters: [{ type: 'object' }],
+					returns: { type: 'any' }
+				}
+			}
+		};
+		dojo.ready(function() {
+			var registry = code4ge.get('jsonrpc.registry');
+			registry.add({ url: 'service.json', smd: smd });
+			var service1 = registry.get('service.json');
+			service1.sync = true;
+			service1.call(0xF1, 'This is just a test 1.').addCallback(function(result) {
+				console.log('Response: ', result);
+			});
+			var service2 = registry.get('service.json');
+			service2.call(0xF2, 'This is just a test 2.').addCallback(function(result) {
+				console.log('Response: ', result);
+			});
+			console.log('This should be the last line in the output if "service.sync==true", the default value is "false".');
+
+			// SMD test
+			var service3 = registry.get('smd.json');
+			service3.call(0xF3, 'This is just a test 3.').addCallback(function(result) {
+				console.log('Response: ', result);
+			});			
+		});
+	</script>
+</head>
+<body>
+</body>
+</html>
