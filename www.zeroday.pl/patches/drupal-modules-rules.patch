@@ -1,0 +1,30 @@
+diff -crB ./source/drupal/sites/all/modules/rules_old/includes/rules.core.inc ./source/drupal/sites/all/modules/rules/includes/rules.core.inc
+*** ./source/drupal/sites/all/modules/rules_old/includes/rules.core.inc	2012-05-01 20:21:40.000000000 +0100
+--- ./source/drupal/sites/all/modules/rules/includes/rules.core.inc	2012-05-01 20:23:44.000000000 +0100
+***************
+*** 199,210 ****
+      $query_conditions =& $query->conditions();
+      foreach ($query_conditions as &$condition) {
+        // Support using 'tags' => array('tag1', 'tag2') as condition.
+!       if ($condition['field'] == 'base.tags') {
+          $query->join('rules_tags', 'rt', 'base.id = rt.id');
+          $condition['field'] = 'rt.tag';
+        }
+        // Support using 'event' => $name as condition.
+!       if ($condition['field'] == 'base.event') {
+          $query->join('rules_trigger', 'tr', "base.id = tr.id");
+          $condition['field'] = 'tr.event';
+        }
+--- 199,210 ----
+      $query_conditions =& $query->conditions();
+      foreach ($query_conditions as &$condition) {
+        // Support using 'tags' => array('tag1', 'tag2') as condition.
+!       if (isset($condition['field']) && $condition['field'] == 'base.tags') {
+          $query->join('rules_tags', 'rt', 'base.id = rt.id');
+          $condition['field'] = 'rt.tag';
+        }
+        // Support using 'event' => $name as condition.
+!       if (isset($condition['field']) && $condition['field'] == 'base.event') {
+          $query->join('rules_trigger', 'tr', "base.id = tr.id");
+          $condition['field'] = 'tr.event';
+        }

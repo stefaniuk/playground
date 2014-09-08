@@ -1,0 +1,20 @@
+diff -crB ./source/drupal/modules/taxonomy_old/taxonomy.module ./source/drupal/modules/taxonomy/taxonomy.module
+*** ./source/drupal/modules/taxonomy_old/taxonomy.module	2012-05-06 11:47:44.960838673 +0100
+--- ./source/drupal/modules/taxonomy/taxonomy.module	2012-05-06 11:49:05.000000000 +0100
+***************
+*** 1136,1142 ****
+      if (isset($conditions['name'])) {
+        $query_conditions = &$query->conditions();
+        foreach ($query_conditions as $key => $condition) {
+!         if ($condition['field'] == 'base.name') {
+            $query_conditions[$key]['operator'] = 'LIKE';
+            $query_conditions[$key]['value'] = db_like($query_conditions[$key]['value']);
+          }
+--- 1136,1142 ----
+      if (isset($conditions['name'])) {
+        $query_conditions = &$query->conditions();
+        foreach ($query_conditions as $key => $condition) {
+!         if (isset($condition['field']) && $condition['field'] == 'base.name') {
+            $query_conditions[$key]['operator'] = 'LIKE';
+            $query_conditions[$key]['value'] = db_like($query_conditions[$key]['value']);
+          }

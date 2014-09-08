@@ -1,0 +1,33 @@
+#!/bin/bash
+
+source $HOST4GE_DIR/conf/includes.sh
+
+USER="zeroday"
+DIR=$HOSTING_ACCOUNTS_DIR/$USER
+HOME_DIR=$DIR/home/$USER
+PUBLIC_DIR=$HOME_DIR/public
+PROJECT_DIR=$HOME_DIR/project
+SOURCE_DIR=$PROJECT_DIR/source
+
+VHOST_IP_ADDRESS="178.79.157.69"
+IS_DEV=$(server_has_role development)
+if [ $(hostname) != "draco" ]; then
+    VHOST_IP_ADDRESS=$IP_ADDRESS
+fi
+DOMAIN_NAME="zeroday.pl"
+DOCUMENT_ROOT=$PUBLIC_DIR/$DOMAIN_NAME
+WWW_USER="httpd"
+
+ADMIN_NAME=$USER
+#ADMIN_PASS=$(get_random_string 32)
+ADMIN_PASS="ef9GzS6fR8dGJB9QjlUmKyivVIJgp6xu"
+
+DATABASE_NAME=$USER
+DATABASE_USER=$USER
+#DATABASE_PASS=$(get_random_string 32)
+DATABASE_PASS="zHfh6k24Mdype5Ds7rOqH8pLTqgxSLc3"
+
+FTP_USER=$USER
+#FTP_PASS=$(get_random_string 32)
+FTP_PASS="1UCVeRztVEJgMyLQIL6hEwJ6FqRHGG3v"
+FTP_DIR=$HOME_DIR

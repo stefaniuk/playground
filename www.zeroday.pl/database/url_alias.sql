@@ -1,0 +1,135 @@
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+DROP TABLE IF EXISTS `url_alias`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `url_alias` (
+  `pid` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'A unique path alias identifier.',
+  `source` varchar(255) NOT NULL DEFAULT '' COMMENT 'The Drupal path this alias is for; e.g. node/12.',
+  `alias` varchar(255) NOT NULL DEFAULT '' COMMENT 'The alias for this path; e.g. title-of-the-story.',
+  `language` varchar(12) NOT NULL DEFAULT '' COMMENT 'The language this alias is for; if ’und’, the alias will be used for unknown languages. Each Drupal path can have an alias for each supported language.',
+  PRIMARY KEY (`pid`),
+  KEY `alias_language_pid` (`alias`,`language`,`pid`),
+  KEY `source_language_pid` (`source`,`language`,`pid`)
+) ENGINE=InnoDB AUTO_INCREMENT=97 DEFAULT CHARSET=utf8 COMMENT='A list of URL aliases for Drupal paths; a user may visit...';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `url_alias` WRITE;
+/*!40000 ALTER TABLE `url_alias` DISABLE KEYS */;
+INSERT INTO `url_alias` VALUES (1,'user/7','uzytkownik/test1','und');
+INSERT INTO `url_alias` VALUES (2,'user/8','uzytkownik/test2','und');
+INSERT INTO `url_alias` VALUES (3,'user/1','uzytkownik/zeroday','und');
+INSERT INTO `url_alias` VALUES (4,'user/9','uzytkownik/3l3ktr0n','und');
+INSERT INTO `url_alias` VALUES (5,'taxonomy/term/1','znaczniki/anonymous','und');
+INSERT INTO `url_alias` VALUES (6,'taxonomy/term/2','znaczniki/file-sharing','und');
+INSERT INTO `url_alias` VALUES (7,'node/1','anonimowi-otwierają-anontune','pl');
+INSERT INTO `url_alias` VALUES (8,'taxonomy/term/3','znaczniki/hacking','und');
+INSERT INTO `url_alias` VALUES (9,'node/2','anonymous-atakuje-oficjalna-stronę-f1','pl');
+INSERT INTO `url_alias` VALUES (10,'taxonomy/term/4','znaczniki/php','und');
+INSERT INTO `url_alias` VALUES (11,'taxonomy/term/5','znaczniki/luka','und');
+INSERT INTO `url_alias` VALUES (12,'taxonomy/term/6','znaczniki/serwer','und');
+INSERT INTO `url_alias` VALUES (13,'taxonomy/term/7','znaczniki/zagrożenie','und');
+INSERT INTO `url_alias` VALUES (14,'node/3','poważna-luka-w-php-w-trybie-cgi','pl');
+INSERT INTO `url_alias` VALUES (15,'taxonomy/term/8','znaczniki/igprs','und');
+INSERT INTO `url_alias` VALUES (16,'taxonomy/term/9','znaczniki/backup','und');
+INSERT INTO `url_alias` VALUES (17,'taxonomy/term/10','znaczniki/ios','und');
+INSERT INTO `url_alias` VALUES (18,'taxonomy/term/11','znaczniki/blackberry','und');
+INSERT INTO `url_alias` VALUES (19,'taxonomy/term/12','znaczniki/truecrypt','und');
+INSERT INTO `url_alias` VALUES (20,'taxonomy/term/13','znaczniki/wpa','und');
+INSERT INTO `url_alias` VALUES (21,'taxonomy/term/14','znaczniki/wpa2','und');
+INSERT INTO `url_alias` VALUES (22,'taxonomy/term/15','znaczniki/łamanie-haseł','und');
+INSERT INTO `url_alias` VALUES (23,'node/4','igprs-odzyskuje-hasł-truecrypta-iphone’-i-sieci-wi-fi','pl');
+INSERT INTO `url_alias` VALUES (24,'taxonomy/term/16','znaczniki/skype','und');
+INSERT INTO `url_alias` VALUES (25,'taxonomy/term/17','znaczniki/ip','und');
+INSERT INTO `url_alias` VALUES (26,'node/5','dziurawy-skype','pl');
+INSERT INTO `url_alias` VALUES (27,'taxonomy/term/18','znaczniki/anonimowi','und');
+INSERT INTO `url_alias` VALUES (28,'taxonomy/term/19','znaczniki/ddos','und');
+INSERT INTO `url_alias` VALUES (29,'node/6','anonimowi-atakuja-rządową-strone-putina','pl');
+INSERT INTO `url_alias` VALUES (30,'taxonomy/term/20','znaczniki/twitter','und');
+INSERT INTO `url_alias` VALUES (31,'taxonomy/term/21','znaczniki/hasł','und');
+INSERT INTO `url_alias` VALUES (32,'taxonomy/term/22','znaczniki/login','und');
+INSERT INTO `url_alias` VALUES (33,'node/7','55000-haseł-twittera-wyciekło','pl');
+INSERT INTO `url_alias` VALUES (34,'taxonomy/term/23','znaczniki/zhc','und');
+INSERT INTO `url_alias` VALUES (35,'taxonomy/term/24','znaczniki/nlvpd','und');
+INSERT INTO `url_alias` VALUES (36,'taxonomy/term/25','znaczniki/hakerzy','und');
+INSERT INTO `url_alias` VALUES (37,'node/8','strona-north-las-vegas-police-department-nlvpd-zhakowana','pl');
+INSERT INTO `url_alias` VALUES (38,'taxonomy/term/26','znaczniki/pirate-pay','und');
+INSERT INTO `url_alias` VALUES (39,'taxonomy/term/27','znaczniki/microsoft','und');
+INSERT INTO `url_alias` VALUES (40,'taxonomy/term/28','znaczniki/torrent','und');
+INSERT INTO `url_alias` VALUES (41,'node/9','pirate-pay-blokuje-torrenty','pl');
+INSERT INTO `url_alias` VALUES (42,'taxonomy/term/29','znaczniki/domena','und');
+INSERT INTO `url_alias` VALUES (43,'taxonomy/term/30','znaczniki/secure','und');
+INSERT INTO `url_alias` VALUES (44,'taxonomy/term/31','znaczniki/artemis','und');
+INSERT INTO `url_alias` VALUES (45,'node/10','domena-najwyższego-poziomu-secure','pl');
+INSERT INTO `url_alias` VALUES (46,'taxonomy/term/32','znaczniki/nvidia-grid','und');
+INSERT INTO `url_alias` VALUES (47,'taxonomy/term/33','znaczniki/chmura','und');
+INSERT INTO `url_alias` VALUES (48,'node/11','nvidia-geforce-grid-chmura-przyspiesza','pl');
+INSERT INTO `url_alias` VALUES (49,'taxonomy/term/34','znaczniki/cert','und');
+INSERT INTO `url_alias` VALUES (50,'taxonomy/term/35','znaczniki/govpl','und');
+INSERT INTO `url_alias` VALUES (51,'node/12','7-polskich-stron-rządowych-bezpieczna','pl');
+INSERT INTO `url_alias` VALUES (52,'taxonomy/term/36','znaczniki/eurowizja','und');
+INSERT INTO `url_alias` VALUES (53,'taxonomy/term/37','znaczniki/azejberdżan','und');
+INSERT INTO `url_alias` VALUES (54,'taxonomy/term/38','znaczniki/cyberwarriors-freedom','und');
+INSERT INTO `url_alias` VALUES (55,'node/13','oficjalna-strona-eurowizji-2012-zhakowana','pl');
+INSERT INTO `url_alias` VALUES (56,'taxonomy/term/39','znaczniki/call-duty','und');
+INSERT INTO `url_alias` VALUES (57,'taxonomy/term/40','znaczniki/malware','und');
+INSERT INTO `url_alias` VALUES (58,'taxonomy/term/41','znaczniki/trojan','und');
+INSERT INTO `url_alias` VALUES (59,'node/14','trojan-w-patchu-call-duty','pl');
+INSERT INTO `url_alias` VALUES (60,'taxonomy/term/42','znaczniki/bill-78','und');
+INSERT INTO `url_alias` VALUES (61,'taxonomy/term/43','znaczniki/government-websites','und');
+INSERT INTO `url_alias` VALUES (62,'node/15','strony-liberalnej-partii-quebec-i-ministerstwa-edukacji-wyłączone','pl');
+INSERT INTO `url_alias` VALUES (63,'taxonomy/term/44','znaczniki/hosting','und');
+INSERT INTO `url_alias` VALUES (64,'node/16','płać-albo-giń','pl');
+INSERT INTO `url_alias` VALUES (65,'taxonomy/term/45','znaczniki/flame','und');
+INSERT INTO `url_alias` VALUES (66,'taxonomy/term/46','znaczniki/robak','und');
+INSERT INTO `url_alias` VALUES (67,'taxonomy/term/47','znaczniki/stuxnet','und');
+INSERT INTO `url_alias` VALUES (68,'taxonomy/term/48','znaczniki/duqu','und');
+INSERT INTO `url_alias` VALUES (69,'node/17','flame-najbardziej-zaawansowany-robak-na-świecie','pl');
+INSERT INTO `url_alias` VALUES (70,'taxonomy/term/49','znaczniki/nasa','und');
+INSERT INTO `url_alias` VALUES (71,'taxonomy/term/50','znaczniki/ssl','und');
+INSERT INTO `url_alias` VALUES (72,'taxonomy/term/51','znaczniki/certyfikat','und');
+INSERT INTO `url_alias` VALUES (73,'node/18','certyfikat-ssl-złamany','pl');
+INSERT INTO `url_alias` VALUES (74,'taxonomy/term/52','znaczniki/bsa','und');
+INSERT INTO `url_alias` VALUES (75,'taxonomy/term/53','znaczniki/raport','und');
+INSERT INTO `url_alias` VALUES (76,'taxonomy/term/54','znaczniki/oprogramowanie','und');
+INSERT INTO `url_alias` VALUES (77,'node/19','używasz-pirackiego-oprogramowania','pl');
+INSERT INTO `url_alias` VALUES (78,'taxonomy/term/55','znaczniki/usa','und');
+INSERT INTO `url_alias` VALUES (79,'taxonomy/term/56','znaczniki/izrael','und');
+INSERT INTO `url_alias` VALUES (80,'node/20','za-stuxnetem-stoją-usa-i-izrael','pl');
+INSERT INTO `url_alias` VALUES (81,'taxonomy/term/57','znaczniki/captcha','und');
+INSERT INTO `url_alias` VALUES (82,'taxonomy/term/58','znaczniki/google','und');
+INSERT INTO `url_alias` VALUES (83,'node/21','captcha-googla-złamana','pl');
+INSERT INTO `url_alias` VALUES (84,'taxonomy/term/59','znaczniki/rozrusznika-serca','und');
+INSERT INTO `url_alias` VALUES (85,'taxonomy/term/60','znaczniki/defibrylator','und');
+INSERT INTO `url_alias` VALUES (86,'taxonomy/term/61','znaczniki/cyberatak','und');
+INSERT INTO `url_alias` VALUES (87,'node/22','rozrusznik-serca-na-celowniku-hakerów','pl');
+INSERT INTO `url_alias` VALUES (88,'taxonomy/term/62','znaczniki/ipv6','und');
+INSERT INTO `url_alias` VALUES (89,'taxonomy/term/63','znaczniki/protokół','und');
+INSERT INTO `url_alias` VALUES (90,'node/23','6-czerwca-ipv6-day','pl');
+INSERT INTO `url_alias` VALUES (91,'taxonomy/term/64','znaczniki/linkedin','und');
+INSERT INTO `url_alias` VALUES (92,'taxonomy/term/65','znaczniki/goldenline','und');
+INSERT INTO `url_alias` VALUES (93,'node/24','65-miliona-hashy-haseł-z-linkedin-ujawnionych','pl');
+INSERT INTO `url_alias` VALUES (94,'taxonomy/term/66','znaczniki/gmail','und');
+INSERT INTO `url_alias` VALUES (95,'node/25','gogle-ostrzega-użytkowników-gmaila-przed-sponsorowanymi-atakami','pl');
+INSERT INTO `url_alias` VALUES (96,'node/26','anonymous-polują-na-pedofilów-na-twitterze','pl');
+/*!40000 ALTER TABLE `url_alias` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
