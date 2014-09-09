@@ -1,0 +1,30 @@
+<assembly>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>/META-INF/web-resources/</outputDirectory>
+            <excludes>
+                <exclude>**/*.tar.gz</exclude>
+                <exclude>**/*.txt</exclude>
+                <exclude>**/*.xml</exclude>
+                <exclude>**/*.zip</exclude>
+                <exclude>**/.git</exclude>
+                <exclude>**/CHANGES.md</exclude>
+                <exclude>**/CHANGES</exclude>
+                <exclude>**/LICENSE.md</exclude>
+                <exclude>**/LICENSE</exclude>
+                <exclude>**/README.md</exclude>
+                <exclude>**/README</exclude>
+                <exclude>**/index.html</exclude>
+                <exclude>**/package.json</exclude>
+                <exclude>**/test/**</exclude>
+                <exclude>**/tests/**</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+</assembly>
+

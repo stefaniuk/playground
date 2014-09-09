@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context
+    docBase="/projects/dojotoolkit-resourceservlet/dojotoolkit-resourceservlet/target/dojotoolkit-resourceservlet/"
+    workDir="/projects/dojotoolkit-resourceservlet/dojotoolkit-resourceservlet/target/dojotoolkit-resourceservlet/WEB-INF/work/"
+    path="/dojotoolkit-resourceservlet"
+    privileged="true"
+    reloadable="true"
+/>
+

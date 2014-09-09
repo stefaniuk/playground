@@ -1,0 +1,9 @@
+dojotoolkit-js/src/main/resources/*.tar.gz
+dojotoolkit-js/src/main/resources/*.zip
+dojotoolkit-js/src/main/resources/dijit
+dojotoolkit-js/src/main/resources/dojo
+dojotoolkit-js/src/main/resources/dojox
+dojotoolkit-js/target
+dojotoolkit-resourceservlet/target
+parent/target
+target

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dojotoolkit-js" default="download" basedir=".">
+
+    <property file="build.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="detect-os">
+        <property name="source.directory" value="src/main/resources" />
+        <available file="${basedir}/${source.directory}/dojo/dojo.js" property="dojo.toolkit.present" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/${source.directory}/dijit" />
+        <delete dir="${basedir}/${source.directory}/dojo" />
+        <delete dir="${basedir}/${source.directory}/dojox" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: download                             -->
+    <!-- ============================================ -->
+    <target name="download" depends="init" unless="dojo.toolkit.present">
+        <get src="http://download.dojotoolkit.org/release-${dojo.toolkit.version}/dojo-release-${dojo.toolkit.version}-src.zip" dest="${basedir}/${source.directory}" skipexisting="true" />
+        <unzip src="${basedir}/${source.directory}/dojo-release-${dojo.toolkit.version}-src.zip" dest="${basedir}/${source.directory}" />
+        <move file="${basedir}/${source.directory}/dojo-release-${dojo.toolkit.version}-src/dijit" todir="${basedir}/${source.directory}" />
+        <move file="${basedir}/${source.directory}/dojo-release-${dojo.toolkit.version}-src/dojo" todir="${basedir}/${source.directory}" />
+        <move file="${basedir}/${source.directory}/dojo-release-${dojo.toolkit.version}-src/dojox" todir="${basedir}/${source.directory}" />
+        <delete dir="${basedir}/${source.directory}/dojo-release-${dojo.toolkit.version}-src" />
+    </target>
+
+</project>
+

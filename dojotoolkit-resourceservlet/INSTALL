@@ -1,0 +1,107 @@
+Build Project
+=============
+
+mvn clean install
+mvn test
+
+How to Use
+==========
+
+Install JAR file
+----------------
+
+    mvn install:install-file "-Dfile=dojotoolkit-js-1.9.0.jar" "-DgroupId=org.stefaniuk.dojotoolkit.resourceservlet" "-DartifactId=dojotoolkit-js" "-Dversion=1.9.0" "-Dpackaging=jar"
+
+Dependencies
+------------
+
+    SLF4J
+    log4j
+    Servlet API
+    Spring Framework Web Flow
+    Dojo Toolkit
+
+Edit pom.xml
+------------
+
+    <!-- Spring Framework Web Flow (required only if org.springframework.js.resource.ResourceServlet is used) -->
+    <dependency>
+        <groupId>org.springframework.webflow</groupId>
+        <artifactId>spring-webflow</artifactId>
+        <version>2.3.1.RELEASE</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.springframework.webflow</groupId>
+                <artifactId>spring-js-resources</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <!-- Dojo Toolkit -->
+    <dependency>
+        <groupId>org.stefaniuk.dojotoolkit.resourceservlet</groupId>
+        <artifactId>dojotoolkit-js</artifactId>
+        <version>1.9.0</version>
+    </dependency>
+
+First approach (deprecated): Edit web.xml
+-----------------------------------------
+
+    <servlet>
+        <display-name>Resource Servlet</display-name>
+        <servlet-name>resource-servlet</servlet-name>
+        <servlet-class>org.springframework.js.resource.ResourceServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>resource-servlet</servlet-name>
+        <url-pattern>/resources/dojotoolkit/*</url-pattern>
+    </servlet-mapping>
+
+Second approach (recommended): Edit WEB-INF/spring/config/servlet-context.xml
+-----------------------------------------------------------------------------
+
+    <mvc:resources mapping="/resources/dojotoolkit/**" location="classpath:META-INF/web-resources/" cache-period="31556926" />
+
+Edit HTML file
+--------------
+
+    <style type="text/css">
+        @import "resources/custom/themes/custom/custom.css";
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                custom: '../../custom'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="resources/dojotoolkit/dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'dojo/ready',
+            'custom/main'
+        ], function(ready) {
+            ready(function() {
+                console.log('TADA!');
+            });
+        });
+    </script>
+
+Project Structure
+-----------------
+
+application/
+    resources/
+        custom/
+            themes/
+                custom/
+                    custom.css
+            main.js
+    WEB-INF/
+        lib/
+            dojotoolkit-js-1.9.0.jar
+        web.xml
+    index.jsp
+
