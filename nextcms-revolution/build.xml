@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="nextcms-revolution" default="install-externals" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/source/libraries/Doctrine" />
+        <delete dir="${basedir}/source/libraries/Zend" />
+        <delete dir="${basedir}/source/public/resources/ckeditor" />
+        <delete dir="${basedir}/source/public/resources/dojotoolkit" />
+        <delete dir="${basedir}/source/public/resources/flowplayer" />
+        <delete dir="${basedir}/source/public/resources/jquery" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: get-externals                        -->
+    <!-- ============================================ -->
+    <target name="get-externals" depends="init">
+        <get src="http://packages.zendframework.com/releases/ZendFramework-${zendframework.version}/ZendFramework-${zendframework.version}.tgz" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://www.doctrine-project.org/downloads/DoctrineCommon-${doctrine.version}-full.tar.gz" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://www.doctrine-project.org/downloads/DoctrineORM-${doctrine.version}-full.tar.gz" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://download.cksource.com/CKEditor/CKEditor/CKEditor%20${ckeditor.version}/ckeditor_${ckeditor.version}_full.tar.gz" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://download.dojotoolkit.org/release-${dojotoolkit.version}/dojo-release-${dojotoolkit.version}-src.tar.gz" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://code.jquery.com/jquery-${jquery.version}.min.js" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://code.jquery.com/ui/${jqueryui.version}/themes/base/jquery-ui.css" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://code.jquery.com/ui/${jqueryui.version}/jquery-ui.min.js" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://code.jquery.com/mobile/${jquerymobile.version}/jquery.mobile-${jquerymobile.version}.min.css" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://code.jquery.com/mobile/${jquerymobile.version}/jquery.mobile-${jquerymobile.version}.min.js" dest="${basedir}/externals" skipexisting="true" />
+        <get src="http://releases.flowplayer.org/${flowplayer.version}/flowplayer-${flowplayer.version}.zip" dest="${basedir}/externals" skipexisting="true" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: install-externals                    -->
+    <!-- ============================================ -->
+    <target name="install-externals" depends="get-externals">
+        <!-- Zend Framework -->
+        <available file="${basedir}/source/libraries/Zend" type="dir" property="zendframework.lib.present" />
+        <if>
+            <equals arg1="${zendframework.lib.present}" arg2="true" />
+            <then>
+                <echo message="Zend Framework directory already exists." />
+            </then>
+            <else>
+                <untar src="${basedir}/externals/ZendFramework-${zendframework.version}.tgz" dest="${basedir}/source/libraries" compression="gzip" />
+                <move file="${basedir}/source/libraries/ZendFramework-${zendframework.version}/library/Zend" todir="${basedir}/source/libraries" />
+                <delete dir="${basedir}/source/libraries/ZendFramework-${zendframework.version}" />
+            </else>
+        </if>
+        <!-- Doctrine -->
+        <available file="${basedir}/source/libraries/Doctrine/Common" type="dir" property="doctrine.common.lib.present" />
+        <if>
+            <equals arg1="${doctrine.common.lib.present}" arg2="true" />
+            <then>
+                <echo message="Doctrine Common directory already exists." />
+            </then>
+            <else>
+                <gunzip src="${basedir}/externals/DoctrineCommon-${doctrine.version}-full.tar.gz" />
+                <untar src="${basedir}/externals/DoctrineCommon-${doctrine.version}-full.tar" dest="${basedir}/source/libraries" />
+                <move file="${basedir}/source/libraries/DoctrineCommon-${doctrine.version}/Doctrine" todir="${basedir}/source/libraries" />
+                <delete dir="${basedir}/source/libraries/DoctrineCommon-${doctrine.version}" />
+                <delete file="${basedir}/externals/DoctrineCommon-${doctrine.version}-full.tar" />
+            </else>
+        </if>
+        <available file="${basedir}/source/libraries/Doctrine/ORM" type="dir" property="doctrine.orm.lib.present" />
+        <if>
+            <equals arg1="${doctrine.orm.lib.present}" arg2="true" />
+            <then>
+                <echo message="Doctrine ORM directory already exists." />
+            </then>
+            <else>
+                <gunzip src="${basedir}/externals/DoctrineORM-${doctrine.version}-full.tar.gz" />
+                <untar src="${basedir}/externals/DoctrineORM-${doctrine.version}-full.tar" dest="${basedir}/source/libraries" />
+                <move file="${basedir}/source/libraries/DoctrineORM-${doctrine.version}/Doctrine/ORM" todir="${basedir}/source/libraries/Doctrine" />
+                <delete dir="${basedir}/source/libraries/DoctrineORM-${doctrine.version}" />
+                <delete file="${basedir}/externals/DoctrineORM-${doctrine.version}-full.tar" />
+            </else>
+        </if>
+        <!-- CKEditor -->
+        <available file="${basedir}/source/public/resources/ckeditor" type="dir" property="ckeditor.lib.present" />
+        <if>
+            <equals arg1="${ckeditor.lib.present}" arg2="true" />
+            <then>
+                <echo message="CKEditor directory already exists." />
+            </then>
+            <else>
+                <gunzip src="${basedir}/externals/ckeditor_${ckeditor.version}_full.tar.gz" />
+                <untar src="${basedir}/externals/ckeditor_${ckeditor.version}_full.tar" dest="${basedir}/source/public/resources" />
+                <delete file="${basedir}/externals/ckeditor_${ckeditor.version}_full.tar" />
+            </else>
+        </if>
+        <!-- Dojo Toolkit -->
+        <available file="${basedir}/source/public/resources/dojotoolkit" type="dir" property="dojotoolkit.lib.present" />
+        <if>
+            <equals arg1="${dojotoolkit.lib.present}" arg2="true" />
+            <then>
+                <echo message="Dojo Toolkit directory already exists." />
+            </then>
+            <else>
+                <mkdir dir="${basedir}/source/public/resources/dojotoolkit" />
+                <gunzip src="${basedir}/externals/dojo-release-${dojotoolkit.version}-src.tar.gz" />
+                <untar src="${basedir}/externals/dojo-release-${dojotoolkit.version}-src.tar" dest="${basedir}/source/public/resources" />
+                <move file="${basedir}/source/public/resources/dojo-release-${dojotoolkit.version}-src/dijit" todir="${basedir}/source/public/resources/dojotoolkit" />
+                <move file="${basedir}/source/public/resources/dojo-release-${dojotoolkit.version}-src/dojo" todir="${basedir}/source/public/resources/dojotoolkit" />
+                <move file="${basedir}/source/public/resources/dojo-release-${dojotoolkit.version}-src/dojox" todir="${basedir}/source/public/resources/dojotoolkit" />
+                <move file="${basedir}/source/public/resources/dojo-release-${dojotoolkit.version}-src/util" todir="${basedir}/source/public/resources/dojotoolkit" />
+                <delete dir="${basedir}/source/public/resources/dojo-release-${dojotoolkit.version}-src" />
+                <delete file="${basedir}/externals/dojo-release-${dojotoolkit.version}-src.tar" />
+            </else>
+        </if>
+        <!-- jQuery -->
+        <available file="${basedir}/source/public/resources/jquery" type="dir" property="jquery.lib.present" />
+        <if>
+            <equals arg1="${jquery.lib.present}" arg2="true" />
+            <then>
+                <echo message="jQuery directory already exists." />
+            </then>
+            <else>
+                <mkdir dir="${basedir}/source/public/resources/jquery" />
+                <copy file="${basedir}/externals/jquery-${jquery.version}.min.js" tofile="${basedir}/source/public/resources/jquery/jquery.js" />
+                <copy file="${basedir}/externals/jquery-ui.css" tofile="${basedir}/source/public/resources/jquery/jquery-ui.css" />
+                <copy file="${basedir}/externals/jquery-ui.min.js" tofile="${basedir}/source/public/resources/jquery/jquery-ui.js" />
+                <copy file="${basedir}/externals/jquery.mobile-${jquerymobile.version}.min.css" tofile="${basedir}/source/public/resources/jquery/jquery-mobile.css" />
+                <copy file="${basedir}/externals/jquery.mobile-${jquerymobile.version}.min.js" tofile="${basedir}/source/public/resources/jquery/jquery-mobile.js" />
+            </else>
+        </if>
+        <!-- Flowplayer -->
+        <available file="${basedir}/source/public/resources/flowplayer" type="dir" property="flowplayer.lib.present" />
+        <if>
+            <equals arg1="${flowplayer.lib.present}" arg2="true" />
+            <then>
+                <echo message="Flowplayer directory already exists." />
+            </then>
+            <else>
+                <mkdir dir="${basedir}/source/public/resources/flowplayer" />
+                <unzip src="${basedir}/externals/flowplayer-${flowplayer.version}.zip" dest="${basedir}/source/public/resources/flowplayer" />
+            </else>
+        </if>
+    </target>
+
+</project>
+

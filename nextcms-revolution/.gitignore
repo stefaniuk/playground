@@ -1,0 +1,15 @@
+build/*.tar.gz
+build/*.zip
+externals/*.tar.gz
+externals/*.tar
+externals/*.tgz
+externals/*.zip
+externals/*.css
+externals/*.js
+source/libraries/Zend
+source/libraries/Doctrine
+source/public/resources/ckeditor
+source/public/resources/dojotoolkit
+source/public/resources/jquery
+source/public/resources/flowplayer
+
