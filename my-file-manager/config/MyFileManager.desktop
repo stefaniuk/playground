@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=My File Manager
+GenericName=My File Manager
+Comment=Browse the file system and manage the files
+Categories=FileManager;FileTools;Utility;Application;
+Exec=MyFileManager.py %U
+Icon=MyFileManager.png
+Terminal=false
+
