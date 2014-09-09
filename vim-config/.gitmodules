@@ -1,0 +1,12 @@
+[submodule ".vim/bundle/vundle"]
+    path = .vim/bundle/vundle
+    url = https://github.com/gmarik/vundle.git
+[submodule ".vim/bundle/nerdtree"]
+    path = .vim/bundle/nerdtree
+    url = https://github.com/scrooloose/nerdtree.git
+[submodule ".vim/bundle/vim-nerdtree-tabs"]
+    path = .vim/bundle/vim-nerdtree-tabs
+    url = https://github.com/jistr/vim-nerdtree-tabs.git
+[submodule ".vim/bundle/vim-fugitive"]
+    path = .vim/bundle/vim-fugitive
+    url = https://github.com/tpope/vim-fugitive.git

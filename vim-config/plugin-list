@@ -1,0 +1,11 @@
+vundle              https://github.com/gmarik/vundle
+
+MiniBufExplorer     https://github.com/fholgado/minibufexpl.vim
+TaskList            http://www.vim.org/scripts/script.php?script_id=2607
+TagList             https://github.com/vim-scripts/taglist.vim
+SrcExpl             https://github.com/wesleyche/SrcExpl
+NERDTree            https://github.com/scrooloose/nerdtree
+vim-nerdtree-tabs   https://github.com/jistr/vim-nerdtree-tabs
+vim-fugitive        https://github.com/tpope/vim-fugitive
+guifont++           https://github.com/vim-scripts/guifontpp.vim
+

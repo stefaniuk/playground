@@ -1,0 +1,169 @@
+Commnads:
+=========
+
+Tabs
+----
+
+:[count]tabnew [file]   Open a new tab.
+:tabc[lose][!] [count]  Close tab.
+:tabo[nly][!]           Close all other tabs.
+<C-PageDown>            Go to the next tab.
+<C-PageUp>              Go to the previous tab.
+:tabr[ewind]            Go to the first tab.
+:tabl[ast]              Go to the last tab.
+:tabm[ove] [N]          Move the current tab to after tab N.
+:tabs                   List the tab pages and the windows they contain.
+:tabd[o] {cmd}          Execute {cmd} in each tab page.
+:help tab-page-intro    Help page.
+
+Windows
+-------
+
+
+
+Buffers
+-------
+
+:ls                 List buffers.
+:b number           Switch buffer.
+:%bd                Close all buffers.
+
+:bufdo command
+
+Files
+-----
+
+:e filename         Open a new file.
+:w filename         Save changes to a file.
+:q                  Quit
+:q!                 Exit without saving changes.
+:wq                 Write the file and exit.
+C-s                 Save the file.
+
+Move
+----
+
+gg          Jump to beginning of file.
+G           Jump to end of file.
+10G         Jump to line 10.
+''          Returns to the line where cursor was before the latest jump.
+H           Jump to the top of the screen.
+M           Jump to the middle of the screen.
+L           Jump to the bottom of the screen.
+$           Move to the end of the line.
+0           Move to the beginning of the line.
+e           Move to the end of a word.
+w           Move forward to the beginning of a word.
+3w          Move forward three words.
+b           Move backward to the beginning of a word.
+3b          Move backward three words.
+%           Jump to corresponding item, e.g. from an open brace to its matching closing brace.
+
+SEE: http://vim.wikia.com/wiki/Moving_around
+
+Search
+------
+
+/pattern    Serch for pattern.
+3/pattern   Serch for the third occurrence of pattern.
+/pattern\c  Serch for pattern case insensitive.
+*           Select and search for current word forwards.
+g*          Use it if you don't want to search for an exact word forwards.
+#           Select and search for current word backwords.
+g#          Use it if you don't want to search for an exact word backwords.
+ggn         Jump to the first match.
+GN          Jump to the last match.
+/ or ?      See search history. Use the arrow up/down keys to browse search patterns.
+/ C-r C-w   Copy the current word to the command line.
+
+SEE: http://vim.wikia.com/wiki/Searching
+
+Replace
+-------
+
+:%s/foo/bar/g           Find each occurrence of 'foo' and replace it with 'bar'.
+:%s/\<foo\>/bar/gc      Change only whole words exactly matching 'foo' to 'bar' and ask for confirmation.
+:%s/foo/bar/gci         Change each 'foo' (case insensitive) to 'bar' and ask for confirmation.
+:%s/foo/bar/gcI         Change each 'foo' (case sensitive) to 'bar' and ask for confirmation.
+
+SEE: http://vim.wikia.com/wiki/Search_and_replace
+
+Undo and Redo
+-------------
+
+u           Undo
+C-r         Redo
+
+Edit
+----
+
+<C-c>       Copy text to the system clipboard.
+Shift-Ins   Paste text from the system clipboard.
+yy          Copy current line.
+dd          Copy and remove current line.
+p           Paste the copied line after current line.
+P           Paste the copied line before current line.
+:t.         Duplicate current line.
+:t 3        Copy current line after line 3.
+:%y+        Copy the entire file into your clipboard.
+
+Selection
+---------
+V           Select entire lines.
+v           Select range of text.
+C-v         Select columns.
+gv          Reselect block.
+
+Bookmars
+--------
+
+mm          Toggle visual bookmark current line.
+ma          Remove all bookmarks.
+mn or <F2>  Move to next bookmark.
+mp or <F3>  Move to previous bookmark.
+
+SEE: http://www.vim.org/scripts/script.php?script_id=4076
+
+Folding
+-------
+
+zM      Close all folds.
+zR      Open all folds.
+zc      Close current fold.
+zo      Open current fold.
+
+Actions:
+========
+
+Copy, Cut and Paste
+-------------------
+
+1. Position the cursor where you want to begin selecting.
+2. Press v (or upper case V if you want to select whole lines).
+3. Move the cursor to the end of what you want to select.
+4. Press d (delete) or y (yank).
+5. Move to where you would like to paste.
+6. Press p to paste after the cursor, or P to paste before.
+
+If you want to copy and paste between editor buffers (but not between instances of vim), or if you want to maintain multiple "clipboards" (copy buffers), you can name your buffer by pressing "x (that's a double quote followed by x, where x is the single letter name you choose for your buffer) before the d in step 4, and again before the p in step 6. If you happen to be using gvim for Windows and want to copy or cut into the Windows clipboard, press Ctrl+Insert in step 4 (to copy) or Shift+Delete to cut. To paste from the Windows clipboard, press Shift+Insert.
+
+Select and Modify
+-----------------
+
+1. Press v to start visual mode.
+2. Move cursor to select text.
+3. Press d (delete), c (change) or y (yank) to modify text.
+
+
+Info
+----
+
+:help index
+:help map-which-keys
+
+Plugins:
+========
+
+\ + n   Open file tree.
+\ + N   Close file tree.
+
