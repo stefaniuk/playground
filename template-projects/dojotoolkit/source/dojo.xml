@@ -1,0 +1,36 @@
+<assembly>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>source</directory>
+            <outputDirectory>/META-INF/web-resources/</outputDirectory>
+            <includes>
+                <include>build/**</include>
+                <include>custom/**</include>
+                <include>dgrid/**</include>
+                <include>dijit/**</include>
+                <include>dojo/**</include>
+                <include>dojox/**</include>
+                <include>put-selector/**</include>
+                <include>xstyle/**</include>
+            </includes>
+            <excludes>
+                <exclude>**/*.txt</exclude>
+                <exclude>**/.git</exclude>
+                <exclude>**/CHANGES.md</exclude>
+                <exclude>**/CHANGES</exclude>
+                <exclude>**/LICENSE.md</exclude>
+                <exclude>**/LICENSE</exclude>
+                <exclude>**/README.md</exclude>
+                <exclude>**/README</exclude>
+                <exclude>**/index.html</exclude>
+                <exclude>**/package.json</exclude>
+                <exclude>**/test/**</exclude>
+                <exclude>**/tests/**</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+</assembly>

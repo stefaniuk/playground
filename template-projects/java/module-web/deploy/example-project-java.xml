@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context
+    docBase="/projects/example-project-java/module-web/target/module-web/"
+    workDir="/projects/example-project-java/module-web/target/module-web/WEB-INF/work/"
+    path="/example-project-java"
+    privileged="true"
+    reloadable="true"
+/>
+

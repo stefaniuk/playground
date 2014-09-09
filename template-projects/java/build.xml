@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="example-project-java" default="rename" basedir=".">
+
+    <property file="${basedir}/build.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="detect-os">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/build/current" />
+        <delete><fileset dir="${basedir}/build/" includes="*.tar.gz" /></delete>
+        <exec dir="${basedir}/" executable="${basedir}/scripts/mvn-clean.${os.script.ext}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: rename                               -->
+    <!-- ============================================ -->
+    <target name="rename" depends="clean">
+        <!-- copy & replace -->
+        <copy todir="${basedir}/build/current/${project.new.name}/${project.new.core.name}">
+            <fileset dir="${basedir}/module-core" />
+        </copy>
+        <copy todir="${basedir}/build/current/${project.new.name}/${project.new.web.name}">
+            <fileset dir="${basedir}/module-web" />
+        </copy>
+        <copy todir="${basedir}/build/current/${project.new.name}/parent">
+            <fileset dir="${basedir}/parent" />
+        </copy>
+        <copy todir="${basedir}/build/current/${project.new.name}">
+            <fileset file="${basedir}/.gitignore" />
+            <fileset file="${basedir}/LICENSE" />
+            <fileset file="${basedir}/pom.xml" />
+        </copy>
+        <touch file = "${basedir}/build/current/${project.new.name}/README.md" /> 
+        <exec dir="${basedir}/build/current" executable="${basedir}/scripts/project-rename.${os.script.ext}">
+            <arg value="${project.new.name}" />
+            <arg value="${project.new.core.name}" />
+            <arg value="${project.new.web.name}" />
+            <arg value="${project.new.groupid.name}" />
+        </exec>
+        <!-- pack -->
+        <tar destfile="${basedir}/build/${project.new.name}.tar" basedir="${basedir}/build/current" />
+        <gzip destfile="${basedir}/build/${project.new.name}.tar.gz" src="${basedir}/build/${project.new.name}.tar" />
+        <delete file="${basedir}/build/${project.new.name}.tar" />
+        <delete dir="${basedir}/build/current" />
+    </target>
+
+</project>
+

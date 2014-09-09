@@ -1,0 +1,7 @@
+build/*.tar.gz
+build/current
+module-core/target
+module-web/target
+parent/bin
+parent/target
+target

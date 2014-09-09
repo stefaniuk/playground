@@ -1,0 +1,20 @@
+{
+    name: 'Example Project',
+    version: '0.0.0dev',
+    author: 'Daniel Stefaniuk',
+    directories: {
+        lib: '.'
+    },
+    main: './main',
+    description: 'Dojo Toolkit - Example Project',
+    licenses: [
+        {
+            type: 'BSD',
+            url: 'https://raw.github.com/stefaniuk/example-project-dojotoolkit/master/LICENSE'
+        }
+    ],
+    bugs: 'https://github.com/stefaniuk/example-project-dojotoolkit/issues',
+    keywords: [ 'JavaScript', 'Dojo Toolkit' ],
+    homepage: 'https://github.com/stefaniuk/example-project-dojotoolkit',
+    dojoBuild: 'custom.profile.js'
+}

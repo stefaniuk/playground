@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="example-project-dojotoolkit" default="minify" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/git-clone.sh" /></exec>
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/git-revision.sh" /></exec>
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/git-update.sh" /></exec>
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <property name="config.namespace" value="custom" />
+        <property name="config.file.name" value="${basedir}/source/${config.namespace}/config.js" />
+        <property name="config.relativePath.file.name" value="../../${config.namespace}/config.js" />
+        <property name="profile.file.name" value="${basedir}/source/${config.namespace}/${config.namespace}.profile.js" />
+        <property name="profile.relativePath.file.name" value="../../${config.namespace}/${config.namespace}.profile.js" />
+        <!-- requirements -->
+        <available file="${basedir}/source/util/buildscripts/build.${os.script.ext}" property="buildscript.present" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete file="${basedir}/build.log" />
+        <delete>
+            <fileset dir="${basedir}/source" includes="*.zip" />
+            <fileset dir="${basedir}/source" includes="*.tar.gz" />
+        </delete>
+        <delete dir="${basedir}/source/.download" />
+        <delete dir="${basedir}/source/.repository" />
+        <delete dir="${basedir}/source/build" />
+        <delete dir="${basedir}/source/demos" />
+        <delete dir="${basedir}/source/dgrid" />
+        <delete dir="${basedir}/source/dijit" />
+        <delete dir="${basedir}/source/docs" />
+        <delete dir="${basedir}/source/dojo" />
+        <delete dir="${basedir}/source/dojox" />
+        <delete dir="${basedir}/source/dwb" />
+        <delete dir="${basedir}/source/put-selector" />
+        <delete dir="${basedir}/source/util" />
+        <delete dir="${basedir}/source/xstyle" />
+        <delete dir="${basedir}/target" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: _get-release                         -->
+    <!-- ============================================ -->
+    <target name="_get-release" depends="init">
+        <delete dir="${basedir}/source/.download" />
+        <mkdir dir="${basedir}/source/.download" />
+        <input
+            message="Which Dojo Toolkit version is going to be used?"
+            validargs="${dojo.version.validargs}"
+            addproperty="dojo.version"
+            defaultvalue="${dojo.version.defaultvalue}"
+        />
+        <get src="http://download.dojotoolkit.org/release-${dojo.version}/dojo-release-${dojo.version}-src.zip" dest="${basedir}/source/.download" skipexisting="true" />
+        <unzip src="${basedir}/source/.download/dojo-release-${dojo.version}-src.zip" dest="${basedir}/source/.download" />
+        <move file="${basedir}/source/.download/dojo-release-${dojo.version}-src/dijit" todir="${basedir}/source/.download" />
+        <move file="${basedir}/source/.download/dojo-release-${dojo.version}-src/dojo" todir="${basedir}/source/.download" />
+        <move file="${basedir}/source/.download/dojo-release-${dojo.version}-src/dojox" todir="${basedir}/source/.download" />
+        <move file="${basedir}/source/.download/dojo-release-${dojo.version}-src/util" todir="${basedir}/source/.download" />
+        <delete dir="${basedir}/source/.download/dojo-release-${dojo.version}-src" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: _get-repository                      -->
+    <!-- ============================================ -->
+    <target name="_get-repository" depends="init">
+        <delete dir="${basedir}/source/.repository" />
+        <mkdir dir="${basedir}/source/.repository" />
+        <!-- demos -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/demos.git" />
+        </exec>
+        <!-- dijit -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/dijit.git" />
+        </exec>
+        <!-- docs -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/docs.git" />
+        </exec>
+        <!-- dojo -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/dojo.git" />
+        </exec>
+        <!-- dojox -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/dojox.git" />
+        </exec>
+        <!-- dwb -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/dwb.git" />
+        </exec>
+        <!-- util -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/dojo/util.git" />
+        </exec>
+        <!-- xstyle -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/kriszyp/xstyle.git" />
+        </exec>
+        <!-- put-selector -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/kriszyp/put-selector.git" />
+        </exec>
+        <!-- dgrid -->
+        <exec dir="${basedir}/source/.repository" executable="${basedir}/scripts/git-clone.${os.script.ext}">
+            <arg line="https://github.com/SitePen/dgrid.git" />
+        </exec>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-repository                    -->
+    <!-- ============================================ -->
+    <target name="update-repository" depends="init">
+        <!-- demos -->
+        <exec dir="${basedir}/source/demos/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- dijit -->
+        <exec dir="${basedir}/source/dijit/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- docs -->
+        <exec dir="${basedir}/source/docs/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- dojo -->
+        <exec dir="${basedir}/source/dojo/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- dojox -->
+        <exec dir="${basedir}/source/dojox/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- dwb -->
+        <exec dir="${basedir}/source/dwb/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- util -->
+        <exec dir="${basedir}/source/util/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- xstyle -->
+        <exec dir="${basedir}/source/xstyle/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- put-selector -->
+        <exec dir="${basedir}/source/put-selector/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+        <!-- dgrid -->
+        <exec dir="${basedir}/source/dgrid/" executable="${basedir}/scripts/git-pull.${os.script.ext}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: switch                               -->
+    <!-- ============================================ -->
+    <target name="switch" depends="init">
+        <available file="${basedir}/source/dojo/.git" type="dir" property="dojo.repository.present" />
+        <if>
+            <equals arg1="${dojo.repository.present}" arg2="true" />
+            <then>
+                <echo>Switching to the release...</echo>
+                <move file="${basedir}/source/dijit" todir="${basedir}/source/.repository" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/dojo" todir="${basedir}/source/.repository" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/dojox" todir="${basedir}/source/.repository" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/util" todir="${basedir}/source/.repository" failonerror="false" quiet="true" />
+                <available file="${basedir}/source/.download/dojo" type="dir" property="dojo.download.saved.present" />
+                <if>
+                    <equals arg1="${dojo.download.saved.present}" arg2="true" />
+                    <then>
+                        <move file="${basedir}/source/.download/dijit" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.download/dojo" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.download/dojox" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.download/util" todir="${basedir}/source" />
+                    </then>
+                    <else>
+                        <antcall target="get-release" />
+                    </else>
+                </if>
+            </then>
+            <else>
+                <echo>Switching to the repository...</echo>
+                <move file="${basedir}/source/dijit" todir="${basedir}/source/.download" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/dojo" todir="${basedir}/source/.download" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/dojox" todir="${basedir}/source/.download" failonerror="false" quiet="true" />
+                <move file="${basedir}/source/util" todir="${basedir}/source/.download" failonerror="false" quiet="true" />
+                <available file="${basedir}/source/.repository/dojo/.git" type="dir" property="dojo.repository.saved.present" />
+                <if>
+                    <equals arg1="${dojo.repository.saved.present}" arg2="true" />
+                    <then>
+                        <move file="${basedir}/source/.repository/dijit" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.repository/dojo" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.repository/dojox" todir="${basedir}/source" />
+                        <move file="${basedir}/source/.repository/util" todir="${basedir}/source" />
+                    </then>
+                    <else>
+                        <antcall target="get-repository" />
+                    </else>
+                </if>
+            </else>
+        </if>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean, _get-release, _get-repository, switch">
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: compile-css                          -->
+    <!-- ============================================ -->
+    <target name="compile-css" depends="init">
+        <!-- TODO -->
+    </target>
+
+    <!-- ============================================ -->
+    <!-- (DEFAULT) target: minify                     -->
+    <!-- ============================================ -->
+    <target name="minify" depends="compile-css" if="buildscript.present">
+        <!-- minify -->
+        <echo>Minifying...</echo>
+        <exec executable="chmod"><arg line="+x ${basedir}/source/util/buildscripts/build.sh" /></exec>
+        <exec dir="${basedir}/source/util/buildscripts/" executable="${basedir}/source/util/buildscripts/build.${os.script.ext}" output="${basedir}/${log.file}">
+            <arg line="--dojoConfig ${config.relativePath.file.name}" />
+            <arg line="--profile ${profile.relativePath.file.name}" />
+            <arg line="--release" />
+        </exec>
+    </target>
+
+</project>

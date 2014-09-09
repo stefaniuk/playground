@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context
+    docBase="d:\projects\springframework-sample-project\target\springframework-sample-project\"
+    workDir="d:\projects\springframework-sample-project\target\springframework-sample-project\WEB-INF\work\"
+    path="/springframework-sample-project"
+    privileged="true"
+    reloadable="true"
+/>

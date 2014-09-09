@@ -1,0 +1,4 @@
+mvn install:install-file "-Dfile=module-core-1.0.0-SNAPSHOT.jar" "-DgroupId=org.stefaniuk.example.project.java" "-DartifactId=module-core" "-Dversion=1.0.0-SNAPSHOT" "-Dpackaging=jar"
+mvn clean install
+mvn test
+mvn source:jar javadoc:javadoc javadoc:jar
