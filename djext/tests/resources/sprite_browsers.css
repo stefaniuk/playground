@@ -1,0 +1,27 @@
+.icon-browser-chrome,
+.icon-browser-firefox,
+.icon-browser-ie,
+.icon-browser-opera,
+.icon-browser-safari {
+    background-image: url('sprite_browsers.png');
+    width: 64px;
+    height: 64px;
+}
+
+.icon-browser-chrome { background-position: 0 0; }
+.icon-browser-firefox { background-position: 0 -64px; }
+.icon-browser-ie { background-position: 0 -128px; }
+.icon-browser-opera { background-position: 0 -192px; }
+.icon-browser-safari { background-position: 0 -256px; }
+
+.icon-browser-chromeHover { background-position: 128px 0; }
+.icon-browser-firefoxHover { background-position: 128px -64px; }
+.icon-browser-ieHover { background-position: 128px -128px; }
+.icon-browser-operaHover { background-position: 128px -192px; }
+.icon-browser-safariHover { background-position: 128px -256px; }
+
+.icon-browser-chromeDisabled { background-position: 64px 0; }
+.icon-browser-firefoxDisabled { background-position: 64px -64px; }
+.icon-browser-ieDisabled { background-position: 64px -128px; }
+.icon-browser-operaDisabled { background-position: 64px -192px; }
+.icon-browser-safariDisabled { background-position: 64px -256px; }

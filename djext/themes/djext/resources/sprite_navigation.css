@@ -1,0 +1,11 @@
+.djext-icon-close {
+    background-image: url('sprite_navigation.png');
+    width: 48px;
+    height: 48px;
+}
+
+.djext-icon-close { background-position: 0 0; }
+
+.djext-icon-closeHover { background-position: 96px 0; }
+
+.djext-icon-closeDisabled { background-position: 48px 0; }

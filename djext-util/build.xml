@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="djext-util" default="minify" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/lib/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+        <exec executable="chmod"><arg line="+x ${basedir}/scripts/git-revision.sh" /></exec>
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- get properties -->
+        <input
+            message="What's the package name?"
+            addproperty="package.name"
+            defaultvalue="djext"
+        />
+        <!-- set properties -->
+        <property name="profile.file" value="../../${package.name}/${package.name}.profile.js" />
+        <property name="package.dir" value="../../${package.name}" />
+        <!-- requirements -->
+        <available file="${basedir}/../util/buildscripts/build.${os.script.ext}" property="buildscript.present" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/../build" />
+        <delete file="${basedir}/${log.file}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- (DEFAULT) target: minify                     -->
+    <!-- "prepare" must be run manually               -->
+    <!-- ============================================ -->
+    <target name="minify" depends="init" if="buildscript.present">
+        <echo>Minifying...</echo>
+        <exec executable="chmod"><arg line="+x ${basedir}/../util/buildscripts/build.sh" /></exec>
+        <exec dir="${basedir}/../util/buildscripts/" executable="${basedir}/../util/buildscripts/build.${os.script.ext}" output="${basedir}/${log.file}">
+            <arg line="--profile ${profile.file}" />
+            <arg line="--package ${package.dir}" />
+        </exec>
+    </target>
+
+</project>
+

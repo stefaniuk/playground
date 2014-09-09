@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Templated Widget</title>
+    <style type="text/css">
+        @import "../../../dojo/resources/dojo.css";
+        @import "../../../dijit/themes/claro/claro.css";
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'dojo/_base/declare',
+            'djext/main',
+            'djext/data/JsonService'
+        ], function(declare, djext, JsonService) {
+
+            // get service registry
+            var registry = djext.get('jsonservice.registry');
+
+            // define inline SMD
+            var smd = {
+                SMDVersion: '2.0',
+                additionalParameters: 'false',
+                contentType: 'application/json',
+                envelope: 'JSON-RPC-2.0',
+                transport: 'POST',
+                services: {
+                    methodToCall: {
+                        parameters: [{ type: 'object' }],
+                        returns: { type: 'any' }
+                    }
+                }
+            };
+
+            registry.add({ url: 'service.json', smd: smd });
+
+            var service1 = registry.get('service.json');
+            service1.sync = true;
+            service1.methodToCall(0xF1, 'This is just a test 1.').then(function(result) {
+                console.log('Response: ', result);
+            });
+            var service2 = registry.get('service.json');
+            service2.methodToCall(0xF2, 'This is just a test 2.').then(function(result) {
+                console.log('Response: ', result);
+            });
+            console.log('This should be the last line in the output if "service.sync==true", the default value is "false".');
+
+            // SMD test
+            var service3 = registry.get('smd.json');
+            service3.methodToCall(0xF3, 'This is just a test 3.').then(function(result) {
+                console.log('Response: ', result);
+            });
+
+        });
+    </script>
+</head>
+<body class="claro">
+</body>
+</html>

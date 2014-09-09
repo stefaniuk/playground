@@ -1,0 +1,31 @@
+.djext-popup {
+    position: absolute;
+}
+
+.djext-popup-border {
+    position: relative;
+    padding: 0;
+    border-style: solid;
+    z-index: 1000;
+    _width: 0; /* IE */
+    border-color: #000000;
+    border-width: 7px;
+}
+
+.djext-popup-content {
+    position: relative;
+    clear: both;
+    overflow: hidden;
+    z-index: 1000;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.djext-popup-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: -35px -35px 0 0;
+    cursor: pointer;
+    z-index: 1001;
+}

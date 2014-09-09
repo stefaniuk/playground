@@ -1,0 +1,79 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Widget Templated</title>
+    <style type="text/css">
+        @import "../../djext/themes/djext/djext.css";
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'dojo/_base/declare',
+            'djext/_WidgetTemplated',
+            'dijit/form/Button',
+            'dojo/dom',
+            'dojo/keys',
+            'dojo/_base/array'
+        ], function(declare, _WidgetTemplated, Button, dom, keys, array) {
+            declare('my.Widget', [ _WidgetTemplated ], {
+                name: 'My Widget',
+                list: [ 'Item 1', 'Item 2', 'Item 3' ],
+                templateString: '<div>' +
+                        '<div>{{name}}</div>' +
+                        '<div><input data-dojo-attach-event="onkeyup:_addItem" data-dojo-attach-point="input" /></div>' +
+                        '<div>' +
+                            '<ul>' +
+                                '<!--{% for item in list %}--><li>' +
+                                    '<button data-dojo-type="dijit.form.Button parsed" title="{{ item }}"><!--{{ item }}--><script type="dojo/on" data-dojo-event="click" data-dojo-args="e">console.debug("You clicked", this.containerNode.innerHTML);</' + 'script></button>' +
+                                '</li><!--{% endfor %}-->' +
+                            '</ul>' +
+                        '</div>' +
+                    '</div>',
+                _addItem: function(e) {
+                    if(e.keyCode == keys.ENTER && this.input.value) {
+                        var i = array.indexOf(this.list, this.input.value);
+                        if(i != -1) {
+                            this.list.splice(i, 1);
+                        }
+                        else {
+                            this.list.push(this.input.value);
+                        }
+                        this.input.value = '';
+                        this.render();
+                    }
+                }
+            });
+             var widget = new my.Widget({ name: 'Widget 2' }, dom.byId('widget'));
+        });
+    </script>
+</head>
+<body class="display-onready">
+    <div data-dojo-type="my.Widget" data-dojo-props="name: 'Widget 1'"></div>
+    <div id="widget"></div>
+</body>
+</html>

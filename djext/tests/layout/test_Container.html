@@ -1,0 +1,75 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Container</title>
+    <style type="text/css">
+        @import "../../../djext/themes/djext/djext.css";
+        @import "../../../djext/themes/djext/Container.css";
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'djext/main',
+            'dojo/dom',
+            'djext/layout/Container',
+            'dojo/domReady!'
+        ], function(djext, dom, Container) {
+
+            var node1 = dom.byId('container1');
+            new Container({
+                borderColor: '#ff5f1f',
+                borderWidth: '10px',
+                borderOpacity: 0.2,
+                contentOpacity: 0.6
+            }, node1);
+            var node2 = dom.byId('container2');
+            new Container({
+                borderColor: '#1f5fff',
+                borderWidth: '10px',
+                borderOpacity: 0.5,
+                contentOpacity: 0.8
+            }, node2);
+
+        });
+    </script>
+</head>
+<body class="display-onready">
+    <div id="container1" style="position:relative;width:400px;height:170px">
+        The universe is commonly defined as the totality of everything that exists, including all physical matter and energy, the planets, stars, galaxies, and the contents of intergalactic space, although this usage may differ with the context (see definitions, below). The term universe may be used in slightly different contextual senses, denoting such concepts as the cosmos, the world, or nature. Observations of earlier stages in the development of the universe, which can be seen at great distances, suggest that the universe has been governed by the same physical laws and constants throughout most of its extent and history.
+    </div>
+    <div id="container2" style="position:absolute;top:160px;left:160px;width:500px;height:200px">
+        A galaxy is a massive, gravitationally bound system that consists of stars and stellar remnants, an interstellar medium of gas dust, and an important but poorly understood component tentatively dubbed dark matter. The name is from the Greek root galaxias, literally meaning "milky", a reference to the Milky Way galaxy. Typical galaxies range from dwarfs with as few as ten million (107) stars, up to giants with a hundred trillion (1014) stars, all orbiting the galaxy's center of mass. Galaxies may contain many star systems, star clusters, and various interstellar clouds. The Sun is one of the stars in the Milky Way galaxy; the Solar System includes the Earth and all the other objects that orbit the Sun.
+    </div>
+    <div style="position:absolute;bottom:60px;right:100px;width:300px;height:300px"
+        data-dojo-type="djext/layout/Container"
+        data-dojo-props="borderWidth:'10px',borderColor:'#000000',borderOpacity:0.75"
+    >
+        A star is a massive, luminous ball of plasma held together by gravity. At the end of its lifetime, a star can also contain a proportion of degenerate matter. The nearest star to Earth is the Sun, which is the source of most of the energy on Earth. Other stars are visible from Earth during the night when they are not outshone by the Sun or blocked by atmospheric phenomena. Historically, the most prominent stars on the celestial sphere were grouped together into constellations and asterisms, and the brightest stars gained proper names. Extensive catalogues of stars have been assembled by astronomers, which provide standardized star designations.
+    </div>
+</body>
+</html>

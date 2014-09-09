@@ -1,0 +1,115 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Data Grid - JSON-RPC</title>
+    <style type="text/css">
+        @import "../../../djext/themes/djext/djext.css";
+        @import "../../../djext/themes/djext/DataGrid.css";
+    </style>
+    <style type="text/css">
+        #grid {
+            width: 99%;
+            height: 90%;
+        }
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'djext/main',
+            'djext/grid/DataGrid',
+        ], function(djext, DataGrid) {
+
+            // layout
+            layout = [{
+                cells: [
+                    { field: 'name', name: 'Name', datatype: 'string', width: 50, editable: true },
+                    { field: 'message', name: 'Message', datatype: 'string', width: 20, editable: true },
+                    { field: 'date', name: 'Date', datatype: 'string', width: 15, editable: true }
+                ]
+            }];
+
+            // plugins
+            plugins = {
+                indirectSelection: true,
+                pagination: {
+                    pageSizeArr: ['10', '25', '50', '100', 'All'],
+                    description: '30%',
+                    sizeSwitch: '260px',
+                    pageStepper: '30em',
+                    gotoButton: true,
+                    maxPageStep: 5,
+                    position: 'bottom'
+                }
+            };
+
+            // grid
+            var grid;
+            djext.ready(function() {
+                grid = new DataGrid({
+                    id: 'grid',
+                    structure: layout,
+                    plugins : plugins,
+                    store: 'resources/data.php'
+                });
+                dojo.byId('grid').appendChild(grid.domNode);
+                dojo.connect(grid.store, 'onDelete', function(result) {
+                    grid.selection.clear();
+                    grid.render();
+                });
+            });
+            djext.ready(function() {
+                grid.startup();
+            }, 1000);
+
+            // functions
+            refreshItems = function() {
+                grid.render();
+            }
+            saveItems = function() {
+                grid.store.save();
+            }
+            deleteItems = function() {
+                var selected = grid.selection.getSelected();
+                for(var i = 0; i < selected.length; i++) {
+                    grid.store.deleteItem(selected[i]);
+                    grid.store.save();
+                }
+            }
+
+        });
+    </script>
+</head>
+<body class="display-onready">
+    <div>
+        <input type="button" value="refresh" onclick="refreshItems()" />
+        <input type="button" value="save" onclick="saveItems()" />
+        <input type="button" value="delete" onclick="deleteItems()" />
+    </div>
+    <div id="grid"></div>
+</body>
+</html>

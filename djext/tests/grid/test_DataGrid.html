@@ -1,0 +1,115 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Data Grid</title>
+    <style type="text/css">
+        @import "../../../djext/themes/djext/djext.css";
+        @import "../../../djext/themes/djext/DataGrid.css";
+    </style>
+    <style type="text/css">
+        html, body {
+            overflow: hidden;
+        }
+         #grid {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'djext/main',
+            'djext/grid/DataGrid',
+            'dojo/data/ItemFileWriteStore',
+            'dojo/_base/lang',
+            'dojo/dom',
+            'dijit/registry',
+            'djext/tests/grid/resources/store'
+        ], function(djext, DataGrid, ItemFileWriteStore, lang, dom, registry) {
+
+            // plugins
+            plugins = {
+                pagination: {
+                    pageSizeArr: ['10', '25', '50', '100', 'All'],
+                    description: '30%',
+                    sizeSwitch: '260px',
+                    pageStepper: '30em',
+                    gotoButton: true,
+                    maxPageStep: 7,
+                    position: 'bottom'
+                }
+            };
+
+            // layout
+            layout = [{
+                cells: [
+                    { field: 'id', name: 'Identity', datatype: 'number', width: 4, editable: false },
+                    { field: 'Genre', name: 'Genre', datatype: 'string', width: 10 },
+                    { field: 'Artist', name: 'Artist', datatype: 'string', width: 10 },
+                    { field: 'Year', name: 'Year', datatype: 'string', width: 2.5 },
+                    { field: 'Album', name: 'Album', datatype: 'string', width: 10 },
+                    { field: 'Name', name: 'Name', datatype: 'string', width: 8 },
+                    { field: 'Length', name: 'Length', datatype: 'string', width: 4 },
+                    { field: 'Track', name: 'Track', datatype: 'number', width: 3 },
+                    { field: 'Composer', name: 'Composer', datatype: 'string', width: 12 },
+                    { field: 'Download Date', name: 'Download Date', datatype: 'date', width: 12 },
+                    { field: 'Last Played', name: 'Last Played', datatype: 'time', width: 6 },
+                    { field: 'Heard', name: 'Checked', datatype: 'boolean', width: 6 }
+                ]
+            }];
+
+            // store
+            var len = data_list.length;
+            var rounds = 1;
+            for(var i=0; i < rounds * len ; ++i) {
+                data.items.push(lang.mixin({'id': i + 1 }, data_list[i % len]));
+            }
+            var test_store_data = [];
+            test_store_data.push(lang.clone(data));
+            store = new ItemFileWriteStore({ data: data });
+
+            // grid
+            var grid = new DataGrid({
+                plugins: plugins,
+                structure: layout,
+                store: store
+            });
+            dom.byId('grid').appendChild(grid.domNode);
+
+            // on ready
+            djext.ready(function() {
+                grid.startup();
+            }, 1000);
+
+        });
+    </script>
+</head>
+<body class="display-onready">
+    <div id="grid"></div>
+</body>
+</html>

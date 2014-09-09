@@ -1,0 +1,20 @@
+{
+    name: 'djext',
+    version: '0.0.0dev',
+    directories: {
+        lib: '.'
+    },
+    main: 'main',
+    description: '',
+    licenses: [
+        {
+            type: 'BSD',
+            url: 'https://github.com/stefaniuk/djext'
+        }
+    ],
+    bugs: 'https://github.com/stefaniuk/djext',
+    keywords: [ 'JavaScript', 'Dojo', 'Toolkit', 'djext' ],
+    homepage: 'https://github.com/stefaniuk/djext',
+    dojoBuild: 'djext.profile.js'
+}
+

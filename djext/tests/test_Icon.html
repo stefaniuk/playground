@@ -1,0 +1,59 @@
+<!--[if IE 7]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<![endif]>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Test Icon</title>
+    <style type="text/css">
+        @import "../../djext/themes/djext/djext.css";
+        @import "resources/sprite_browsers.css";
+    </style>
+    <script type="text/javascript">
+        var dojoConfig = {
+            async: true,
+            isDebug: true,
+            parseOnLoad: true,
+            locale: 'en',
+            paths: {
+                djext: '../djext'
+            }
+        };
+    </script>
+    <script type="text/javascript" src="../../dojo/dojo.js"></script>
+    <script type="text/javascript">
+        require([
+            'djext/main',
+            'dojo/dom',
+            'djext/Icon',
+            'dojo/domReady!'
+        ], function(djext, dom, Icon) {
+
+            var node = dom.byId('opera');
+            var icon = new Icon({
+                'class': 'icon-browser-opera',
+                disabled: true
+            }, node);
+
+        });
+    </script>
+</head>
+<body class="display-onready">
+    <div class="icon-browser-chrome" data-dojo-type="djext/Icon"></div>
+    <div class="icon-browser-ie" data-dojo-type="djext/Icon"></div>
+    <div class="icon-browser-firefox" data-dojo-type="djext/Icon"></div>
+    <div class="icon-browser-safari" data-dojo-type="djext/Icon"></div>
+    <div id="opera"></div>
+</body>
+</html>

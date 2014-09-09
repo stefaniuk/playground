@@ -1,0 +1,22 @@
+.djext-container {
+    position: absolute;
+}
+
+.djext-container-border {
+    position: relative;
+    padding: 0;
+    border-style: solid;
+    z-index: 1000;
+    _width: 0; /* IE */
+    border-color: #000000;
+    border-width: 7px;
+}
+
+.djext-container-content {
+    position: relative;
+    clear: both;
+    overflow: hidden;
+    z-index: 1000;
+    background-color: #ffffff;
+    color: #000000;
+}
