@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="my-Terminal" default="prepare" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete file="${basedir}/source/MyTerminal.desktop" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+        <copy file="${basedir}/config/MyTerminal.desktop" tofile="${basedir}/source/MyTerminal.desktop" />
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/MyTerminal.desktop"
+            match="^Exec=MyTerminal.py"
+            replace="Exec=${basedir}/source/MyTerminal.py"
+        />
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/MyTerminal.desktop"
+            match="^Icon=MyTerminal.png"
+            replace="Icon=${basedir}/source/images/icon.png"
+        />
+        <chmod file="${basedir}/source/MyTerminal.desktop" perm="ugo+rx" />
+        <copy file="${basedir}/source/MyTerminal.desktop" tofile="${user.home}/.local/share/applications/MyTerminal.desktop" />
+    </target>
+
+</project>
+

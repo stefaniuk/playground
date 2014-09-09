@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=My Terminal
+GenericName=My Terminal
+Comment=Multiple terminals in one window
+Categories=TerminalEmulator;System;Application;
+Exec=MyTerminal.py %U
+Icon=MyTerminal.png
+Terminal=false
+
