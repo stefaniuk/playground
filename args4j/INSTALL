@@ -1,0 +1,30 @@
+Build Project
+=============
+
+mvn clean install
+mvn test
+
+How to Use
+==========
+
+Install JAR file
+----------------
+
+    mvn install:install-file "-Dfile=args4j-1.0.0.jar" "-DgroupId=org.stefaniuk.args4j" "-DartifactId=args4j" "-Dversion=1.0.0" "-Dpackaging=jar"
+
+Edit pom.xml
+------------
+
+    <dependency>
+        <groupId>org.stefaniuk.args4j</groupId>
+        <artifactId>args4j</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+
+Dependencies
+------------
+
+    SLF4J
+    log4j
+    Commons Lang
+
