@@ -1,0 +1,70 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="python-$VER_PYTHON"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.python.org/ftp/python/$VER_PYTHON/Python-$VER_PYTHON.tar.xz"
+    file=python-$VER_PYTHON.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 11000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile Python:"
+    [ -d $INSTALL_DIR/python ] && rm -rf $INSTALL_DIR/python
+    tar -Jxf python-$VER_PYTHON.tar.gz
+    cd Python-$VER_PYTHON
+    ./configure \
+        --prefix=$INSTALL_DIR/python \
+    && make && make install && echo "Python installed successfully!" \
+    && rm -rfv $INSTALL_DIR/python/share
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/python/bin
+    echo "Create package:"
+    package_create $INSTALL_DIR/python $pkg_name
+else
+    echo "Install Python from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $CMD_PYTHON ]; then
+    echo "Error: Python has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# set files permission
+chown -R root:root $INSTALL_DIR/python
+
+##
+## post install
+##
+
+[ -f python-$VER_PYTHON.tar.xz ] && rm python-$VER_PYTHON.tar.xz
+[ -d Python-$VER_PYTHON ] && rm -rf Python-$VER_PYTHON
+
+# save package version
+package_add_version "python" "$VER_PYTHON"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/python/bin
+hashes_add_dir $INSTALL_DIR/python/lib
+
+exit 0
+

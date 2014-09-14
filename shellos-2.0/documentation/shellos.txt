@@ -1,0 +1,173 @@
+Installation root directory
+===========================
+
+    /srv/
+
+Application directory structure
+===============================
+
+    /srv/[application]/
+        bin/
+        conf/
+        lib/
+        log/
+        sbin/
+
+Pid files
+=========
+
+    /srv/[application]/log/[application].pid
+
+Log files
+=========
+
+    rsyslog daemon should be used to capture all the logs produced by a service.
+
+    1) File names
+        [application].log
+        [application].err
+
+    2) Location
+
+        /var/log/
+        /srv/[application]/log/ - symbolic links to /var/log/
+
+Command naming convention
+=========================
+
+this_is_a_command       - shell function
+this-is-a-command       - shell/Perl script
+tic                     - alias to function or script
+
+ShellOS Perl API
+================
+
+Common interface for services:
+
+    start
+    restart
+    reload
+    stop
+    is_running
+
+Common interface for generic entities:
+
+    [name]_create
+    [name]_remove
+    [name]_update
+    [name]_exists
+    [name]_list
+    [name]_count
+
+Common interface for service entities:
+
+    + [name]_help
+
+Common interface for service administration entities:
+
+    + [name]_synchronize
+
+Standard return values:
+
+    FALSE = 0
+    TRUE = 1
+
+ShellOS Shell API
+=================
+
+Common interface for Perl API entities wrappers:
+
+    [name]_create.pl
+    [name]_remove.pl
+    [name]_update.pl
+    [name]_exists.pl
+    [name]_list.pl
+    [name]_count.pl
+
+Standard return values:
+
+    success
+    error
+    yes
+    no
+
+List of essential packages
+==========================
+
+lzo
+zlib
+openssl
+openssh
+git
+openvpn
+mysql
+perl
+python
+postfix
+openjdk
+shellos
+
+Users and groups
+================
+
+sshd:sshd           UID=400 GID=400
+shellos:shellos     UID=500 GID=500
+ftpjail             GID=9999
+sshjail             GID=502
+vpn:vpn             UID=503 GID=503
+tor:tor             UID=504 GID=504
+mysql:mysql         UID=510 GID=510
+httpd:httpd         UID=520 GID=520
+nginx:nginx         UID=521 GID=521
+tomcat:tomcat       UID=525 GID=525
+postfix:postfix     UID=530 GID=530
+postdrop            GID=531
+proftpd:proftpd     UID=540 GID=540
+dovecot:dovecot     UID=550 GID=550
+dovenull:dovenull   UID=551 GID=551
+vmail:vmail         UID=999 GID=999
+user:user           UID=10001-19999 GID=10001-19999
+
+Ports
+=====
+
+20                  ftp data
+21                  ftp
+22                  sshd
+25                  smtp
+80                  http
+81                  http
+110                 pop3
+143                 imap
+443                 https
+993                 imaps
+995                 pop3s
+1900 - 1999         ftp passive ports
+5901 - 5999         kvm
+8443                vpn
+9009                ajp
+9080                http
+9443                https
+10001 - 19999       php-fpm
+
+List of the essential cron jobs
+===============================
+
+system maintenance
+
+    system-start
+    system-status
+    system-update
+    system-usage
+
+backup
+
+    backup-databases
+    backup-logs
+
+Project roles
+=============
+
+hypervisor | virtual
+kvm | lxc | xen | vbox
+

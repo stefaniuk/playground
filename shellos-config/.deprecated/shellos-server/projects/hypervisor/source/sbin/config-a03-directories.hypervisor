@@ -1,0 +1,16 @@
+#!/bin/bash
+
+##
+## create directories
+##
+
+mkdir -p $NODE_BACKUP_SNAPSHOTS_DIR
+
+##
+## set directory permissions
+##
+
+chown root:root $NODE_BACKUP_SNAPSHOTS_DIR > /dev/null 2>&1
+chmod 700 $NODE_BACKUP_SNAPSHOTS_DIR > /dev/null 2>&1
+
+exit 0

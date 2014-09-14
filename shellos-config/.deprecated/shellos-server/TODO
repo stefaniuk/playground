@@ -1,0 +1,60 @@
+TODO
+====
+
+0) all high priority tasks
+
+ - lxc - make network working
+
+ - create admin email account
+
+ - set hypervisor mac address ???
+
+ - php suexec, php-fpm, multiple versions
+
+ - update ability
+
+ - host4ge deamon
+
+ - admin application
+
+ - implement host4ge hooks
+
+ - usage job
+    a) better indicators, some of them are not very accurate
+
+ - backup-databases job
+    a) more user defined options are required
+        include databases
+        exclude databases
+        maximum number of backups per single database
+        maximum size of all backaups per single database
+
+1) hypervisor
+
+ - implement hooks
+    http://libvirt.org/hooks.html
+
+x) web application (future)
+
+ - go mobile
+
+ - Dojo Toolkit
+
+ - Spring Framework
+
+ - Hibernate
+
+ - decentralised database
+    http://www.howtoforge.com/setting-up-master-master-replication-on-four-nodes-with-mysql-5-on-debian-etch
+
+ - dotCMS
+    http://dotcms.com
+    https://github.com/dotCMS/dotCMS
+
+ - Apache TomEE & OpenEJB
+    http://openejb.apache.org/
+
+ - source code version control
+    https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools
+    gitweb
+    InDefero -> http://projects.ceondo.com/p/indefero/

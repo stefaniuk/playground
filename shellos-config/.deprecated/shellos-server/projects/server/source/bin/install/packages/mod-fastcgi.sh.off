@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# INFO: this package is not required at this stage
+
+exit 0
+
+##
+## variables
+##
+
+MOD_FASTCGI_HTTPD_NAME=
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --mod-fastcgi)  shift
+                        MOD_FASTCGI_HTTPD_NAME=$1
+                        ;;
+    esac
+    shift
+done
+
+##
+## check dependencies
+##
+
+if [ ! -x $INSTALL_DIR/$MOD_FASTCGI_HTTPD_NAME/bin/httpd ]; then
+    echo "Error: Apache HTTPD mod_fastcgi requires Apache HTTPD Server!"
+    exit 1
+fi
+
+##
+## download
+##
+
+#URL="http://www.fastcgi.com/dist/mod_fastcgi-$MOD_FASTCGI_VERSION.tar.gz"
+#FILE=mod_fastcgi-$MOD_FASTCGI_VERSION.tar.gz
+#RESULT=$(download_file $URL $FILE --check-file-size 100000)
+#if [ "$RESULT" == "error" ]; then
+#    echo "Error: Unable to download $FILE file!"
+#    exit 1
+#fi
+git clone git://github.com/ByteInternet/libapache-mod-fastcgi.git
+
+##
+## install
+##
+
+echo "Installing Apache HTTPD mod_fastcgi:"
+#tar -zxf mod_fastcgi-$MOD_FASTCGI_VERSION.tar.gz
+#cp -vf fcgi_config.c ./mod_fastcgi-$MOD_FASTCGI_VERSION/
+#cd mod_fastcgi-$MOD_FASTCGI_VERSION
+cd libapache-mod-fastcgi
+$INSTALL_DIR/$MOD_FASTCGI_HTTPD_NAME/bin/apxs -o mod_fastcgi.so -c *.c && \
+$INSTALL_DIR/$MOD_FASTCGI_HTTPD_NAME/bin/apxs -i -a -n fastcgi mod_fastcgi.so && \
+echo "Apache HTTPD mod_fastcgi installed successfully!"
+cd ..
+
+# check
+if [ ! -f $INSTALL_DIR/$MOD_FASTCGI_HTTPD_NAME/modules/mod_fastcgi.so ]; then
+    echo "Error: Apache HTTPD mod_fastcgi has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# TODO
+
+##
+## post install
+##
+
+# TODO
+
+exit 0

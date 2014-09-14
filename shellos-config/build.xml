@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="shellos-config" default="link" basedir=".">
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <property file="${basedir}/build.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: unlink                               -->
+    <!-- ============================================ -->
+    <target name="unlink" depends="init">
+        <delete file="${basedir}/../shellos/shellos/config/properties/laptop.properties" />
+        <delete file="${basedir}/../shellos/shellos/config/properties/vm-server.properties" />
+        <delete file="${basedir}/../shellos/shellos/config/properties/vm-desktop.properties" />
+        <delete file="${basedir}/../shellos/shellos/config/properties/web.properties" />
+        <delete file="${basedir}/../shellos/shellos/config/properties/hosting.properties" />
+        <delete file="${basedir}/../shellos/shellos/config/properties/test.properties" />
+        <delete file="${basedir}/../shellos/shellos/build.${os.script.ext}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: link                                 -->
+    <!-- ============================================ -->
+    <target name="link" depends="unlink">
+        <!-- laptop -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/laptop.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- vm-server -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/vm-server.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- vm-desktop -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/vm-desktop.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- web -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/web.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- hosting -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/hosting.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- test -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/config/properties/test.properties" />
+            <arg line="${basedir}/../shellos/shellos/config/properties/" />
+        </exec>
+        <!-- build script -->
+        <exec dir="${basedir}/" executable="${basedir}/scripts/create-link.${os.script.ext}">
+            <arg line="${basedir}/shellos/build.${os.script.ext}" />
+            <arg line="${basedir}/../shellos/shellos/" />
+        </exec>
+    </target>
+
+</project>
+

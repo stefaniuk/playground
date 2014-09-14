@@ -1,0 +1,146 @@
+#!/bin/bash
+#
+# Scheduled job. This script sends a system status report via an e-mail.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+    # do not log if all jobs are locked
+    [ `job_lock_all_exists` == "no" ] && \
+        logger -p local0.notice -t host4ge "job $( basename $0 ) is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+test -x $INSTALL_DIR/postfix/bin/mailx || exit 1
+
+time=$(date +"%T %Z (%d %b %G)")
+
+# memory
+mem_str=$(echo `free -b` | awk '{print $8 " " $9 " " $19 " " $20}')
+mem_total=`echo $mem_str | awk '{print $1}'`
+mem_used=`echo $mem_str | awk '{print $2}'`
+mem_swap_total=`echo $mem_str | awk '{print $3}'`
+mem_swap_used=`echo $mem_str | awk '{print $4}'`
+
+# disk space
+filesystem=`df | awk '{ if ( NR == 2 ) { print } }' | awk '{print $1}'`
+#if [ ${#filesystem} -gt 12 ]; then
+#    disk_size=`df -h | grep '/$' | awk '{print $1}'`
+#    disk_used=`df -h | grep '/$' | awk '{print $2}'`
+#    disk_free=`df -h | grep '/$' | awk '{print $3}'`
+#else
+    disk_size=`df -h | grep $filesystem | awk '{print $2}'`
+    disk_used=`df -h | grep $filesystem | awk '{print $3}'`
+    disk_free=`df -h | grep $filesystem | awk '{print $4}'`
+#fi
+
+# file hashes
+file_hash=`sha1sum $HASH_FILES_FILE | awk '{print $1}'`
+file_hashes_no_chk=`cat $HASH_FILES_FILE | wc -l`
+file_hashes_no_bad=`hashes_count_bad`
+
+# locks
+lock_list=`job_lock_list 'system-status'`
+[ -z "$lock_list" ] && lock_list="no locks"
+
+# get indicators specific to the server role
+[ -x $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME)
+
+# get custom indicators
+[ -x $HOST4GE_DIR/job/$( basename $0 ).custom ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).custom)
+
+# TODO: use a template file to produce the output
+
+# TODO: include git status in the report
+
+# cpu
+cpu_usage_1h=$(mysql_query_value "use host4ge; select format(100 - avg(idle), 2) from cpu_usage where timestamp > date_sub(now(), interval 1 hour)")
+cpu_usage_2h=$(mysql_query_value "use host4ge; select format(100 - avg(idle), 2) from cpu_usage where timestamp > date_sub(now(), interval 2 hour)")
+cpu_usage_3h=$(mysql_query_value "use host4ge; select format(100 - avg(idle), 2) from cpu_usage where timestamp > date_sub(now(), interval 3 hour)")
+
+# memory
+mem_usage_1h=$(mysql_query_value "use host4ge; select floor(avg(mem_used) / 1000000) from memory_usage where timestamp > date_sub(now(), interval 1 hour)")
+mem_usage_2h=$(mysql_query_value "use host4ge; select floor(avg(mem_used) / 1000000) from memory_usage where timestamp > date_sub(now(), interval 2 hour)")
+mem_usage_3h=$(mysql_query_value "use host4ge; select floor(avg(mem_used) / 1000000) from memory_usage where timestamp > date_sub(now(), interval 3 hour)")
+
+# report system status
+(   echo -e "Time: $time" && \
+    echo -e "Server Details: role - $ROLE_NAME, aspect - $ASPECT_NAME" && \
+    echo -e "\nConnections (`expr \`netstat -tuapn | grep -v '0.0.0.0:*' | grep -v ':::*' | sed '1 d' | wc -l\` - 1`):\n" && \
+    echo -e "`netstat -tuapn | grep -v '0.0.0.0:*' | grep -v ':::*' | sed '1 d'`" && \
+    echo -e "\nCPU:\n" && \
+    echo -e "Avg. 1h Usage: ${cpu_usage_1h}%" && \
+    echo -e "Avg. 2h Usage: ${cpu_usage_2h}%" && \
+    echo -e "Avg. 3h Usage: ${cpu_usage_3h}%" && \
+    echo -e "\nMemory:\n" && \
+    echo -e "Total: $(expr $mem_total / 1000000)MB" && \
+    echo -e "Avg. 1h Usage: ${mem_usage_1h}MB" && \
+    echo -e "Avg. 2h Usage: ${mem_usage_2h}MB" && \
+    echo -e "Avg. 3h Usage: ${mem_usage_3h}MB" && \
+    echo -e "Current Usage: $(expr $mem_used / 1000000)MB" && \
+    echo -e "\nSwap:\n" && \
+    echo -e "Total: $(expr $mem_swap_total / 1000000)MB" && \
+    echo -e "Current Usage: $(expr $mem_swap_used / 1000000)MB" && \
+    echo -e "\nDisk:\n" && \
+    echo -e "Filesystem: $filesystem" && \
+    echo -e "Total size: $disk_size" && \
+    echo -e "Used space: $disk_used" && \
+    echo -e "Free space: $disk_free" && \
+    echo -e "\nFile hashes:\n" && \
+    echo -e "Hash: $file_hash" && \
+    echo -e "Number of files checked: $file_hashes_no_chk" && \
+    echo -e "Number of bad hashes: $file_hashes_no_bad" && \
+    echo -e "\nLocks: $lock_list" && \
+    echo -e "\nProcesses (`expr \`ps aux --sort -vsize | grep -v '0:00 \[' | wc -l\` - 3`):\n" && \
+    echo -e "`ps aux --sort -vsize | grep -v '0:00 \['`" && \
+    echo -e "\nUpdates:\n" && \
+    echo -e "`cat /var/log/update.log`" \
+) | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname -f) - status at $time" $ADMIN_MAIL
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# log an event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run (time: $time s)"
+else
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# add hashes
+hashes_add_dir /boot
+hashes_add_dir /bin
+hashes_add_dir /lib
+hashes_add_dir /sbin
+hashes_add_dir /usr/bin
+hashes_add_dir /usr/lib
+hashes_add_dir /usr/sbin
+
+# hash files
+hashes_create_list
+
+exit 0
+

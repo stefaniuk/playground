@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ] && [ ! -d $WORKSPACE_DIR/shellos ] && [ -f /home/$OWNER/.ssh/keys/github ]; then
+
+    cd $WORKSPACE_DIR
+    $CMD_GIT clone git://github.com/stefaniuk/shellos.git
+
+    if [ -d shellos ]; then
+        cd shellos
+        replace_in_file "git:\/\/github.com\/stefaniuk\/shellos.git" "git@github.com:stefaniuk\/shellos.git" ./.git/config
+        chown -R $OWNER:$OWNER $WORKSPACE_DIR/shellos
+    fi
+
+fi
+
+exit 0
+

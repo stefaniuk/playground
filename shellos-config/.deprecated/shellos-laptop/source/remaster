@@ -1,0 +1,289 @@
+#!/bin/bash
+#
+# USAGE: ./remaster 2>&1 | tee ~/remaster.log
+
+##
+## variables
+##
+
+system_name="Custom OS"
+system_code="custom-os"
+
+ubuntu_version="12.04.1"
+iso_file="ubuntu-$ubuntu_version-alternate-amd64.iso"
+iso_hash="8cbeafefdde13c4c9fd84beb242b12e050805789"
+url="http://releases.ubuntu.mirrors.uk2.net/$ubuntu_version/ubuntu-$ubuntu_version-alternate-amd64.iso"
+
+path=
+[ -f ./$iso_file ] && path=.
+[ -f ~/$iso_file ] && path=~
+[ -f /srv/$iso_file ] && path=/srv
+# download iso
+if [ ! -f $path/$iso_file ]; then
+    wget $url
+    path=.
+fi
+
+iso_in_path=$path/$iso_file
+iso_out_path=$path/$system_code.iso
+custom_dir=$path/$system_code
+
+mnt_iso_in=/mnt/ubuntu
+mnt_iso_out=/mnt/$system_code
+
+timezone="Europe/London"
+hostname="laptop"
+username="daniel"
+userfullname="Daniel Stefaniuk"
+usb_dev=/dev/sdc
+usb_install="Y"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --timezone)     shift; timezone="$1"
+                        ;;
+        --hostname)     shift; hostname=$1
+                        ;;
+        --username)     shift; username=$1
+                        ;;
+        --userfullname) shift; userfullname="$1"
+                        ;;
+        --usb)          shift; usb_dev=$1
+                        ;;
+    esac
+    shift
+done
+
+##
+## functions
+##
+
+function replace_in_file() {
+
+    local file=/tmp/replace_in_file.$$
+    sed "s/$1/$2/g" $3 > $file && mv $file $3
+}
+
+##
+## main
+##
+
+# install dependencies
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes update
+apt-get --yes --force-yes upgrade
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    apt-file \
+    genisoimage \
+    syslinux \
+    xorriso
+
+# mount
+mkdir $mnt_iso_in > /dev/null 2>&1
+umount $mnt_iso_in > /dev/null 2>&1
+mkdir $mnt_iso_out > /dev/null 2>&1
+umount $mnt_iso_out > /dev/null 2>&1
+
+# copy files
+mount -o loop $iso_in_path $mnt_iso_in
+rm -rf $custom_dir
+rsync -av $mnt_iso_in/ $custom_dir
+
+# file: $system_code.seed
+cat << EOF > $custom_dir/preseed/$system_code.seed
+d-i apt-setup/extras boolean true
+d-i preseed/early_command string . /usr/share/debconf/confmodule; db_get debconf/priority; case \$RET in low|medium) db_fset tasksel/first seen false; echo 'tasksel tasksel/first seen false' >>/var/lib/preseed/log ;; esac
+#ubiquity ubiquity/keep-installed string icedtea6-plugin openoffice.org
+
+#
+# locale and keyboard
+#
+
+d-i debian-installer/locale select en_GB.UTF-8
+d-i keyboard-configuration/layoutcode string gb
+d-i console-setup/layoutcode string en_GB
+d-i console-setup/ask_detect boolean false
+d-i localechooser/supported-locales multiselect pl_PL.ISO-8859-2
+
+#
+# clock and time zone
+#
+
+d-i clock-setup/utc boolean true
+d-i time/zone string $timezone
+#d-i time/zone seen false
+d-i clock-setup/ntp boolean true
+d-i clock-setup/utc-auto true
+
+#
+# network
+#
+
+d-i netcfg/get_hostname string $hostname
+#d-i netcfg/get_hostname seen false
+
+#
+# accounts
+#
+
+d-i passwd/make-user boolean true
+d-i passwd/user-fullname string $userfullname
+d-i passwd/username string $username
+# mkpasswd -m sha-512 changeit thisisatest
+d-i passwd/user-password-crypted password \$6\$thisisatest\$Bz.PEw0bOb/.tGr2oV/xLEttklaQLxz0wX9Szp8WESF.Thc08MKlVK9i2iV4PjoKqUXlee95BHHY4YeXwIO.51
+d-i passwd/root-login boolean true
+# mkpasswd -m sha-512 changeit thisisatest
+d-i passwd/root-password-crypted password \$6\$thisisatest\$Bz.PEw0bOb/.tGr2oV/xLEttklaQLxz0wX9Szp8WESF.Thc08MKlVK9i2iV4PjoKqUXlee95BHHY4YeXwIO.51
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+#
+# packages
+#
+
+d-i mirror/http/proxy string
+tasksel tasksel/first multiselect ubuntu-desktop
+d-i pkgsel/language-pack-patterns string
+d-i pkgsel/install-language-support boolean true
+
+#
+# boot loader
+#
+
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/timeout string 3
+d-i debian-installer/quiet boolean false
+d-i debian-installer/splash boolean false
+
+#
+# disk partitions
+#
+
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto-lvm/new_vg_name string vg00
+d-i partman-auto/choose_recipe select boot-root
+d-i partman-auto/disk string /dev/sda
+d-i partman-auto/init_automatically_partition select Guided - use entire disk and set up LVM
+d-i partman-auto/method string lvm
+d-i partman-auto/purge_lvm_from_device boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/device_remove_lvm_span boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/alignment select optimal
+d-i partman/choose_partition select Finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman-auto/expert_recipe string \\
+    boot-root :: \\
+        100 100 100 ext3 \\
+            \$primary{ } \$bootable{ } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext3 } \\
+            mountpoint{ /boot } . \\
+        100 1000 1000000000 ext4 \\
+            \$primary{ } \$defaultignore{ } \\
+            method{ lvm } \\
+            device{ /dev/sda } \\
+            vg_name{ vg00 } . \\
+        1000 4000 100% linux-swap \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ swap } \\
+            method{ swap } format{ } . \\
+        20000 24000 32000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ root } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext4 } \\
+            mountpoint{ / } . \\
+        50000 100000 1000000000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ workspace } \\
+            use_filesystem{ } filesystem{ ext4 } \\
+            mountpoint{ /srv } .
+
+#
+# shell commands
+#
+
+d-i preseed/late_command string cp /cdrom/late-command-script /target/home/$username/; cp /cdrom/finalise /target/home/$username/; cp /cdrom/post-install /target/home/$username/; cp /cdrom/config /target/home/$username/; cp -r /cdrom/resources /target/home/$username/; chroot /target chmod +x /home/$username/late-command-script; chroot /target chmod +x /home/$username/finalise; chroot /target chmod +x /home/$username/post-install; chroot /target chmod +x /home/$username/config; chroot /target bash /home/$username/late-command-script
+
+#
+# final options
+#
+
+d-i finish-install/reboot_in_progress note
+d-i cdrom-detect/eject boolean false
+EOF
+chmod 444 $custom_dir/preseed/$system_code.seed
+
+# file: late-command-script
+cat << EOF > $custom_dir/late-command-script
+#!/bin/bash
+chown $username:$username /srv
+unset DEBCONF_REDIR
+unset DEBCONF_FRONTEND
+unset DEBIAN_HAS_FRONTEND
+unset DEBIAN_FRONTEND
+(. /home/$username/finalise --username $username)
+rm -f /home/$username/late-command-script
+exit 0
+EOF
+chmod 555 $custom_dir/late-command-script
+
+# file: custom.cfg
+cat << EOF > $custom_dir/isolinux/custom.cfg
+default install
+label install
+  menu label ^Install $system_name
+  kernel /install/vmlinuz
+  append debian-installer/locale=en_GB.UTF-8 keyboard-configuration/layoutcode=gb console-setup/layoutcode=en_GB console-setup/ask_detect=false interface=eth0 file=/cdrom/preseed/$system_code.seed vga=792 initrd=/install/initrd.gz quiet splash --
+label hd
+  menu label ^Boot from hard disk
+  localboot 0x80
+label memtest
+  menu label ^Test memory
+  kernel /install/mt86plus
+EOF
+chmod 444 $custom_dir/isolinux/custom.cfg
+
+# file: menu.cfg
+replace_in_file "include txt.cfg" "include custom.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adtxt.cfg" "#include adtxt.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adgtk.cfg" "#include adgtk.cfg" $custom_dir/isolinux/menu.cfg
+chmod 444 $custom_dir/isolinux/menu.cfg
+
+# copy shell scripts
+cp -v ./{finalise,post-install,config} $custom_dir
+chmod 555 $custom_dir/{finalise,post-install,config}
+
+# copy resources
+cp -rv ./resources $custom_dir
+
+# create custom iso
+xorriso -as mkisofs \
+    -r -J -joliet-long -l -V "$system_name" \
+    -b isolinux/isolinux.bin \
+    -c isolinux/boot.cat \
+    -iso-level 3 -no-emul-boot -partition_offset 16 -boot-load-size 4 -boot-info-table \
+    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+    -o $iso_out_path $custom_dir
+
+# mount custom iso
+mount -o loop $iso_out_path $mnt_iso_out
+
+# print iso info
+isoinfo -debug -d -i $iso_in_path
+isoinfo -debug -d -i $iso_out_path
+
+# create bootable usb
+if [ "$usb_install" == "Y" ] && [ -n "$usb_dev" ]; then
+    dd if=$iso_out_path of=$usb_dev bs=1M
+    sync
+    fdisk -l $usb_dev
+fi
+
+exit 0

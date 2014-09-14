@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Scheduled job. This script removes no longer needed files.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="clean-up"
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ $(job_lock_exists $job_name) == "yes" ]; then
+    # do not log if all jobs are locked
+    [ $(job_lock_all_exists) == "no" ] && \
+        log_info "job $job_name is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+# remove temporary files older than a day
+find $TMP_DIR/* -mtime +$JOB_TMP_FILES_REMOVE_DAYS -exec rm {} \; > /dev/null 2>&1
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

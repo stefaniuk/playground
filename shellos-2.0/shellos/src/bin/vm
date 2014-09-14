@@ -1,0 +1,33 @@
+#!/bin/bash
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+action=$1
+
+##
+## main
+##
+
+if [ -f $LIB_DIR/vm-${DEVICE} ]; then
+    source $LIB_DIR/vm-${DEVICE}
+    if [ $(func_exists "vm_${action}") == "yes" ]; then
+
+        # call function
+        vm_${action} $@
+
+        exit 0
+    fi
+fi
+
+echo "Operation not supported."
+
+exit 1
+

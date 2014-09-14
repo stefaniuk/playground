@@ -1,0 +1,78 @@
+bashinator-0.5 (2010-05-13):
+
+* 2010-05-13 Wolfram Schlich <wschlich@gentoo.org>
+
+	* library: allow the user to disable using a safe PATH
+	variable by defining __ScriptUseSafePathEnv=0
+
+	* library: allow the user to set a custom umask by
+	defining __ScriptUmask=<umask>
+
+	* library: message severities can now also be specified
+	numerically (see /usr/include/sys/syslog.h and bashinator.cfg.sh)
+
+	* library: message severity prefixes are now configurable
+	by the user (see bashinator.cfg.sh
+
+	* library: allow the user to define custom signal handling
+	functions named __trap<signal> (e.g. __trapSIGHUP).
+	this way, also builtin traps can be overridden.
+	to ignore SIGINTs instead of exiting (default), just
+	define a __trapSIGINT function that does nothing:
+
+		function __trapSIGINT() { :; }
+	
+	...and you're done.
+
+bashinator-0.4 (2009-10-08):
+
+* 2009-10-08 Wolfram Schlich <wschlich@gentoo.org>
+
+	* library: added __requireCommand()
+	* messaging: added new message configuration options for
+	prefixing messages with their severity and source (file name,
+	line number, function name):
+	__PrintPrefixSeverity
+	__PrintPrefixSource
+	__LogPrefixSeverity
+	__LogPrefixSource
+	__MailPrefixSeverity
+	__MailPrefixSource
+	NOTE: manually printed/logged/mailed messages do not get
+	their source recorded.
+	* __msgPrint: added rxvt as terminal supporting color
+	* __addPrefix(): improve reliability by escaping certain characters
+	* __addPrefix(): do NOT automatically add any characters to the prefix
+	* __dispatch(): on __init() and __main() failure (return value != 0),
+	__die() with their return value instead of 2
+	* __requireSource(), __includeSource(): check file argument
+
+bashinator-0.3.1 (2009-10-05):
+
+* 2009-10-05 Wolfram Schlich <wschlich@gentoo.org>
+
+	* __boot(): fix bash version number comparison bug which prevented
+	bashinator to work with bash-4.0.x
+
+bashinator-0.3 (2009-05-28):
+
+* 2009-05-28 Wolfram Schlich <wschlich@gentoo.org>
+
+	* __boot(): when bash version number check fails,
+	exit instead of return
+	* example.sh: change invocation of __boot() and __dispatch()
+
+bashinator-0.2 (2009-05-28):
+
+* 2009-05-28 Wolfram Schlich <wschlich@gentoo.org>
+
+	* library: added __includeSource() and __requireSource()
+	* example.sh: boot bashinator before handling application
+	component files (library, config), so we can use the new
+	__requireSource() for sourcing those files
+
+bashinator-0.1 (2009-05-28):
+
+* 2009-05-28 Wolfram Schlich <wschlich@gentoo.org>
+
+	* initial release

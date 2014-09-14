@@ -1,0 +1,298 @@
+#!/bin/bash
+#
+# SEE:
+#
+# important !!!
+# http://brakkee.org/site/2010/11/28/kernel-virtual-machine-kvm-benchmark-results/
+#
+# http://www.howtoforge.com/virtualization-with-kvm-on-ubuntu-12.04-lts
+# http://en.ispdoc.com/index.php/Creating_VPS_under_KVM_from_empty_template_(VDSmanager)
+# http://blog.liw.fi/posts/kvm-for-ubuntu-iso-testing/
+# http://wiki.centos.org/HowTos/KVM
+# http://nicolas.barcet.com/drupal/en/boot-ubuntu-iso-console
+# https://help.ubuntu.com/12.04/serverguide/jeos-and-vmbuilder.html
+# http://www.centos.org/docs/5/html/5.2/Virtualization/chap-Virtualization-Managing_guests_with_virsh.html
+# http://blog.codefront.net/2010/02/01/setting-up-virtualization-on-ubuntu-with-kvm/
+# http://blogs.thehumanjourney.net/oaubuntu/entry/kvm_vmbuilder_puppet_really_automated
+# http://www.howtoforge.com/virtualization-with-kvm-on-a-debian-lenny-server
+# TODO: http://libvirt.org/drvqemu.html
+#
+# MAC addresses: http://standards.ieee.org/develop/regauth/tut/macgrp.pdf
+#               http://serverfault.com/questions/40712/what-range-of-mac-addresses-can-i-safely-use-for-my-virtual-machines
+#               http://stackoverflow.com/questions/9605927/linux-shell-scripting-hex-number-to-binary-string
+#
+# for VM options see: http://libvirt.org/formatdomain.html
+#
+# http://blog.codefront.net/2010/02/01/setting-up-virtualization-on-ubuntu-with-kvm/
+# SSH into VM and create a file /etc/init/ttyS0.conf
+# http://fedoraproject.org/wiki/How_to_debug_Virtualization_problems
+#
+# USAGE: node-create --cpus 1 --mem 500 --disk-size 20 --root-size 12 --hostname vm --ip 192.168.1.201 2>&1 | tee $LOG_DIR/node-create.log
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## variables
+##
+
+url="http://releases.ubuntu.com/$UBUNTU_VERSION/$UBUNTU_IMAGE_FILE"
+
+# localisation
+node_timezone="Europe/London"
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    node_timezone="Europe/Warsaw"
+fi
+node_lang="en_GB.UTF-8"
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    node_lang="pl_PL"
+fi
+
+node_id=
+node_cpus= # number
+node_mem= # MB
+node_disk_size= # GB
+node_disk_max_size="N"
+node_disk_clear="N"
+node_root_size= # GB
+node_hostname=
+node_ip=
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --id)               shift; node_id=$1
+                            ;;
+        --cpus)             shift; node_cpus=$1
+                            ;;
+        --mem)              shift; node_mem=$1
+                            ;;
+        --disk-size)        shift; node_disk_size=$1
+                            ;;
+        --disk-max-size)    node_disk_max_size="Y"
+                            ;;
+        --clear-disk)       node_disk_clear="Y"
+                            ;;
+        --root-size)        shift; node_root_size=$1
+                            ;;
+        --hostname)         shift; node_hostname=$1
+                            ;;
+        --ip)               shift; node_ip=$1
+                            ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+# download iso
+file=$UBUNTU_IMAGE_FILE
+result=$(file_download --url $url --file $file --donwload-directory $CACHE_IMAGES_DIR --cache-dir-name images --check-file-size 600000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+# SEE: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549691#57
+
+# create partition
+if [ "$node_disk_max_size" == "N" ]; then
+    node_disk_gib=$(expr $node_disk_size \* 1000000000 / 1073741824)
+    lvcreate -L ${node_disk_gib}G -n $node_hostname vg00
+    lvdisplay /dev/mapper/vg00-$node_hostname
+else
+    lvcreate -L 1G -n $node_hostname vg00
+    lvdisplay /dev/mapper/vg00-$node_hostname
+    lvextend -l +100%FREE /dev/mapper/vg00-$node_hostname
+    lvdisplay /dev/mapper/vg00-$node_hostname
+fi
+sleep 1
+
+# clear disk to make snapshot smaller
+if [ "$node_disk_clear" == "Y" ]; then
+    # http://linuxcommando.blogspot.co.uk/2008/06/show-progress-during-dd-copy.html
+    dd if=/dev/zero of=/dev/mapper/vg00-$node_hostname bs=1000000 count=13000 # 13GB
+fi
+
+# remove temporary directories
+for dir in $(ls -1 /tmp/tmp* 2> /dev/null); do
+    umount $dir > /dev/null 2>&1
+    rm -rf $dir > /dev/null 2>&1
+done
+
+# calculat mac address
+mac_p1=$(echo $NODE_MAC_ADDRESSES | cut -c1-15)
+mac_p2=$(echo $NODE_MAC_ADDRESSES | cut -c16-17)
+mac_p2_dec=$(h2d $mac_p2)
+mac_p2_dec=$(expr $mac_p2_dec + $node_id)
+mac_p2=$(d2h $mac_p2_dec)
+node_mac=$(lower ${mac_p1}${mac_p2})
+
+# create vm
+cat << EOF > $TMP_DIR/firstboot.sh
+#!/bin/bash
+(
+
+    # force root to change password
+    passwd -e root
+
+) > /root/firstboot.log 2>&1
+rm /root/firstboot.sh
+exit 0
+EOF
+
+# create node
+vmbuilder kvm ubuntu -v --debug --overwrite \
+    --suite precise --arch amd64 --variant minbase --flavour virtual \
+    --cpus $node_cpus --mem $node_mem \
+    --raw /dev/mapper/vg00-$node_hostname --rootsize $(expr $node_root_size \* 1000) --swapsize $node_mem \
+    --hostname $node_hostname --domain $DOMAIN \
+    --ip $node_ip \
+    --mask $NETMASK \
+    --net $NETWORK \
+    --bcast $BROADCAST \
+    --gw $GATEWAY \
+    --dns "$DNS_NAMESERVERS" \
+    --bridge br0 \
+    --timezone "$node_timezone" --lang "$node_lang" \
+    --rootpass root \
+    --iso $CACHE_IMAGES_DIR/$UBUNTU_IMAGE_FILE \
+    --mirror http://$(echo $SERVER_LOCATION | tr '[:upper:]' '[:lower:]').archive.ubuntu.com/ubuntu \
+    --components main,universe,restricted \
+    --addpkg acpid \
+    --addpkg cron \
+    --addpkg dbus \
+    --addpkg iptables \
+    --addpkg iputils-ping \
+    --addpkg lsb-release \
+    --addpkg net-tools \
+    --addpkg openssh-server \
+    --addpkg rsyslog \
+    --addpkg update-manager-core \
+    --addpkg vim \
+    --addpkg wget \
+    --firstboot $TMP_DIR/firstboot.sh \
+    --libvirt qemu:///system \
+    --tmpfs -
+sleep 3
+
+# create 3rd partition
+part_start=$(expr $node_root_size \* 1000 + $node_mem)
+part_end="$(parted /dev/mapper/vg00-$node_hostname unit MB print devices | grep "/dev/mapper/vg00-$node_hostname ("| awk '{ print $2 }' | sed s/^\(// | sed s/MB\)$//)"
+parted /dev/mapper/vg00-$node_hostname mkpart primary $part_start $part_end
+kpartx -av /dev/mapper/vg00-$node_hostname
+sleep 3
+part_dev=/dev/mapper/vg00-${node_hostname}3
+[ -L /dev/mapper/vg00-${node_hostname}p3 ] && part_dev=/dev/mapper/vg00-${node_hostname}p3
+mkfs.ext4 -F $part_dev
+sleep 1
+
+##
+## changes to the node's filesystem
+##
+
+node_mount_fs $node_hostname
+
+# host4ge
+[ -f $CACHE_DOWNLOADS_DIR/host4ge-$node_hostname.tar.gz ] && (
+    cp -v $CACHE_DOWNLOADS_DIR/host4ge-$node_hostname.tar.gz /mnt/$node_hostname/srv
+    cd /mnt/$node_hostname/srv
+    tar zxf host4ge-$node_hostname.tar.gz
+    mv source host4ge
+    cd host4ge/sbin
+    chmod u+x ./*
+    cd ~
+)
+
+# /boot/grub/menu.lst
+cp /mnt/$node_hostname/boot/grub/menu.lst /mnt/$node_hostname/boot/grub/menu.lst.old
+replace_in_file "ro quiet splash" "ro quiet splash console=ttyS0,115200" /mnt/$node_hostname/boot/grub/menu.lst
+
+# /etc/fstab
+cp /mnt/$node_hostname/etc/fstab /mnt/$node_hostname/etc/fstab.old
+cat << EOF > /mnt/$node_hostname/etc/fstab
+#<file system>      <mount point>           <type>  <options>       <dump>  <pass>
+proc                /proc                   proc    defaults        0       0
+/dev/sda1           /                       ext4    defaults        0       0
+/dev/sda2           swap                    swap    defaults        0       0
+/dev/sda3           $WORKSPACE_DIR  ext4    defaults        0       0
+EOF
+mkdir -p /mnt/$node_hostname/$WORKSPACE_DIR
+
+# /etc/init/ttyS0.conf
+cat << EOF > /mnt/$node_hostname/etc/init/ttyS0.conf
+start on stopped rc RUNLEVEL=[2345]
+stop on runlevel [!2345]
+
+respawn
+exec /sbin/getty -8 38400 ttyS0 vt102
+EOF
+
+node_umount_fs $node_hostname
+
+##
+## changes to the node's configuration
+##
+
+# finish configuration
+node_mem_kb=$(expr $node_mem \* 1000)
+replace_in_file "<memory>.*<\/memory>" "<memory unit='KB'>$node_mem_kb<\/memory>" /etc/libvirt/qemu/$node_hostname.xml
+replace_in_file "<currentMemory>.*<\/currentMemory>" "<currentMemory unit='KB'>$node_mem_kb<\/currentMemory>" /etc/libvirt/qemu/$node_hostname.xml
+replace_in_file "<mac address='.*'\/>" "<mac address='$node_mac'\/>" /etc/libvirt/qemu/$node_hostname.xml
+vnc_port=$(expr 5900 + $node_id)
+replace_in_file "type='vnc' port='-1' autoport='yes'" "type='vnc' port='$vnc_port'" /etc/libvirt/qemu/$node_hostname.xml
+replace_in_file "127.0.0.1" "0.0.0.0" /etc/libvirt/qemu/$node_hostname.xml
+replace_in_file "<\/devices>" "  <serial type='pty'><target port='0'\/><\/serial><console type='pty'><target type='serial' port='0'\/><\/console>\n  <\/devices>" /etc/libvirt/qemu/$node_hostname.xml
+cat /etc/libvirt/qemu/$node_hostname.xml
+virsh define /etc/libvirt/qemu/$node_hostname.xml
+
+##
+## finish
+##
+
+# clean up
+rm $TMP_DIR/firstboot.sh > /dev/null 2>&1
+for dir in $(ls -1 /tmp/tmp* 2> /dev/null); do
+    umount $dir > /dev/null 2>&1
+    rm -rf $dir > /dev/null 2>&1
+done
+rm -rf /tmp/ubuntu-kvm > /dev/null 2>&1
+rm -rf /root/ubuntu-kvm > /dev/null 2>&1
+rm -rf ./ubuntu-kvm > /dev/null 2>&1
+
+# remove old key
+ssh-keygen -f /root/.ssh/known_hosts -R $node_ip > /dev/null 2>&1
+ssh-keygen -f /root/.ssh/known_hosts -R $node_hostname.$DOMAIN > /dev/null 2>&1
+rm /root/.ssh/known_hosts.old > /dev/null 2>&1
+
+# insert database record
+db_name=$(host4ge_conf_get_option db_name)
+db_user=$(host4ge_conf_get_option db_user)
+db_pass=$(host4ge_conf_get_option db_pass)
+hostname=$(hostname)
+cat << EOF | $CMD_MYSQL --user=$db_user --password=$db_pass
+delete from $db_name.nodes where servername='$hostname' and name = '$node_hostname';
+insert into $db_name.nodes (timestamp,servername,cpus,mem,disk,ip,name)
+values (now(),'$hostname','$node_cpus','$node_mem','$node_disk_size','$node_ip','$node_hostname');
+EOF
+db_pass=
+
+exit 0

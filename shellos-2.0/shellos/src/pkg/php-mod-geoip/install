@@ -1,0 +1,108 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/geoip/bin/geoiplookup ]; then
+    echo "Error: GeoIP module for PHP requires GeoIP!"
+    exit 1
+fi
+
+##
+## functions
+##
+
+function install_geoip {
+
+    local type=$1
+    local php_geoip_install_dir=$2
+    local php_geoip_ext_dir=$php_geoip_install_dir/lib/php/extensions/$(ls $php_geoip_install_dir/lib/php/extensions/)
+
+    # download
+    pkg_name="$type-geoip-$VER_PHP_MOD_GEOIP"
+    [ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+    if [ "$pkg_result" != "success" ]; then
+        url="http://pecl.php.net/get/geoip-$VER_PHP_MOD_GEOIP.tgz"
+        file=geoip-$VER_PHP_MOD_GEOIP.tgz
+        result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 10000)
+        if [ "$result" == "error" ]; then
+            echo "Error: Unable to download $file file!"
+            exit 1
+        fi
+    fi
+
+    # install
+    if [ "$pkg_result" != "success" ]; then
+        echo "Compile GeoIP module for PHP:"
+        [ -d geoip-$VER_PHP_MOD_GEOIP ] && rm -rf geoip-$VER_PHP_MOD_GEOIP
+        tar -xzf geoip-$VER_PHP_MOD_GEOIP.tgz
+        cd geoip-$VER_PHP_MOD_GEOIP
+        $php_geoip_install_dir/bin/phpize
+        ./configure \
+            --prefix=$INSTALL_DIR/geoip \
+            --with-php-config=$php_geoip_install_dir/bin/php-config \
+        && make && make install && echo "GeoIP module for PHP installed successfully in $php_geoip_install_dir!"
+        cd ..
+        echo "Strip symbols:"
+        development_strip_symbols $php_geoip_ext_dir/geoip.so
+        echo "Create package:"
+        package_create_files $php_geoip_ext_dir $pkg_name geoip.so
+    else
+        echo "Install GeoIP module for PHP in $php_geoip_install_dir from package:"
+        package_restore_files $pkg_name $php_geoip_ext_dir
+    fi
+
+    # check
+    if [ ! -f $php_geoip_ext_dir/geoip.so ]; then
+        echo "Error: GeoIP module for PHP has NOT been installed successfully in $php_geoip_install_dir"
+        exit 1
+    fi
+
+    # configure
+    if [ -f $php_geoip_install_dir/conf/php.ini ]; then
+        replace_in_file "extension = geoip.so\n" "" $php_geoip_install_dir/conf/php.ini
+        replace_in_file "; extensions end" "extension = geoip.so\n; extensions end" $php_geoip_install_dir/conf/php.ini
+        echo -e "\n[geoip]\ngeoip.custom_directory = $INSTALL_DIR/geoip/share/GeoIP/" >> $php_geoip_install_dir/conf/php.ini
+    fi
+
+}
+
+##
+## main
+##
+
+install_geoip "php" $INSTALL_DIR/php
+for php_geoip_dir_name in $INSTALL_DIR/php-fpm/*; do
+    if [ -d $php_geoip_dir_name ]; then
+        # SEE: php-fpm installation script
+        php_fpm_ver="xx"
+        if [[ $(basename $php_geoip_dir_name) == 5.3.* ]]; then
+            php_fpm_ver=5.3
+        fi
+        if [[ $(basename $php_geoip_dir_name) == 5.4.* ]]; then
+            php_fpm_ver=5.4
+        fi
+        if [[ $(basename $php_geoip_dir_name) == 5.5.* ]]; then
+            php_fpm_ver=5.5
+        fi
+        if [ $php_fpm_ver != "xx" ]; then
+            install_geoip "php-fpm-${php_fpm_ver}" $php_geoip_dir_name
+        fi
+    fi
+done
+
+##
+## post install
+##
+
+[ -f package.xml ] && rm package.xml
+[ -f php-geoip-${VER_PHP_MOD_GEOIP}${PACKAGE_SUFFIX} ] && rm php-geoip-${VER_PHP_MOD_GEOIP}${PACKAGE_SUFFIX}
+[ -f geoip-$VER_PHP_MOD_GEOIP.tgz ] && rm geoip-$VER_PHP_MOD_GEOIP.tgz
+[ -d geoip-$VER_PHP_MOD_GEOIP ] && rm -rf geoip-$VER_PHP_MOD_GEOIP
+
+# save package version
+package_add_version "php-geoip" "$VER_PHP_MOD_GEOIP"
+
+exit 0
+

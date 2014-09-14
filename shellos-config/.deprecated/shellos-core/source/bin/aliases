@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+# Global aliases common for all projects. These aliases may depend on variables,
+# constants or functions.
+#
+# SEE: http://www.cyberciti.biz/tips/bash-aliases-mac-centos-linux-unix.html
+
+# memory usage
+alias psm='data=$(ps -eo size,rss,vsz,pid,user,cmd | awk "{ if ( NR > 1 ) { print } }"); echo "$data" | egrep -v "[ ^I]+0[ ^I]+0[ ^I]+" | grep -v "ps -eo " | grep -v "awk { if ( NR > 1 ) { print } }" | sort -nr'
+
+# source common files
+alias srcvar='source $SHELLOS_DIR/conf/variables'
+alias srcver='source $SHELLOS_DIR/conf/versions'
+alias srcconst='source $SHELLOS_DIR/bin/constants'
+alias srcfunc='source $SHELLOS_DIR/bin/functions'
+alias srcalias='source $SHELLOS_DIR/bin/aliases'
+alias srcall='reload_common_files'
+
+# firewall
+alias fwe='firewall --enable'
+alias fwd='firewall --disable'
+
+# search/replace files
+alias ffi='file_find_in'
+alias fri='file_replace_in'
+
+# check file hashes
+alias hcb='hashes_count_bad'
+alias hlb='hashes_list_bad'
+alias hcl='hashes_create_list'
+
+# lock/unlock jobs
+alias jla='job_lock_all'
+alias jua='job_unlock_all'
+
+# print logs
+alias tlau='tail /var/log/auth.log'
+alias tlsy='tail /var/log/sys.log'
+alias tlcr='tail /var/log/cron.log'
+alias tlda='tail /var/log/daemon.log'
+alias tlke='tail /var/log/kern.log'
+alias tlus='tail /var/log/user.log'
+alias tlho='tail /var/log/host4ge.log'
+alias tlhoe='tail /var/log/host4ge.err'
+alias tlos='tail /var/log/openssh.log'
+alias tlose='tail /var/log/openssh.err'
+alias tlov='tail /var/log/openvpn.log'
+alias tlove='tail /var/log/openvpn.err'
+alias tlms='tail /var/log/mysql.log'
+alias tlmse='tail /var/log/mysql.err'
+alias tlht='tail /var/log/httpd.log'
+alias tlhte='tail /var/log/httpd.err'
+alias tlf2b='tail /var/log/fail2ban.log'
+alias tlf2be='tail /var/log/fail2ban.err'
+alias tlft='tail /var/log/ftp.log'
+alias tlma='tail /var/log/mail.log'
+alias tlmae='tail /var/log/mail.err'
+
+# change current directory
+alias chd='cd $SHELLOS_DIR'
+alias cvl='cd /var/log'
+
+# mysql
+alias mur='mysql --user=root --password=$(mysql_get_user_password root) --auto-rehash'
+
+# hardware
+alias reboot='system_reboot'
+
+################################################################################
+## include system specific aliases
+##
+
+[ -f $SHELLOS_DIR/bin/aliases.$ROLE_NAME ] && \
+    source $SHELLOS_DIR/bin/aliases.$ROLE_NAME
+
+################################################################################
+## include custom aliases
+##
+
+[ -f $SHELLOS_DIR/bin/aliases.custom ] && \
+    source $SHELLOS_DIR/bin/aliases.custom

@@ -1,0 +1,23 @@
+This directory contains packed archive files of the project ready to install.
+
+Usage:
+
+cd /srv && \
+[ -f host4ge-server.tar.gz ] && mkdir /srv/host4ge && \
+tar -zxf host4ge-server.tar.gz -C /srv/host4ge && \
+mv host4ge-server.tar.gz /srv/host4ge/var/cache/downloads && \
+cd /srv/host4ge/bin && \
+chmod u+x run
+
+# draco:
+./run install --predefined --packages-force-compilation --do-not-use-cached-updates
+
+#./run install --force-all --packages-force-compilation --kernel-force-compilation --do-not-use-cached-updates
+#./run install --debug --force-all --packages-force-compilation --kernel-force-compilation --do-not-use-cached-updates
+
+#./run install --predefined
+#./run install --debug --predefined
+#./run install --predefined --packages-force-compilation --kernel-force-compilation --do-not-use-cached-updates
+
+#./run install --custom --initialise --finalise --lzo --openssl --openssh --openvpn --debug
+#./run install --custom --lxc --selective-config config-z46-profile config-z47-crontab config-z48-hashes config-z49-repository

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+##
+## include
+##
+
+. $package_dir/common
+
+##
+## main
+##
+
+# TODO
+
+exit 0
+

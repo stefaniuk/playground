@@ -1,0 +1,18 @@
+#!/bin/bash
+
+file=apache-maven-$VER_MAVEN-bin.tar.gz
+
+# set files permission
+chown -R root:root $INSTALL_DIR/ant
+
+# remove file
+[ -f $file ] && rm $file
+
+# save package version
+package_add_version "maven" "$VER_MAVEN"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/maven/bin
+hashes_add_dir $INSTALL_DIR/maven/lib
+
+exit 0

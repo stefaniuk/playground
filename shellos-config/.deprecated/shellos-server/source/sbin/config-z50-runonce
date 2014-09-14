@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ "$SERVER_STATUS" == "installation" ]; then
+
+    cat << EOF > /root/runonce.sh
+#!/bin/bash
+sleep 10
+INSTALL_DIR=$INSTALL_DIR HOST4GE_DIR=$HOST4GE_DIR $HOST4GE_DIR/job/system-services --on-initial-reboot
+(cat $HOST4GE_DIR/conf/.crontab-variables; cat $HOST4GE_DIR/conf/.crontab-jobs) | crontab
+exit 0
+EOF
+    chmod u+x ~/runonce.sh
+
+    # /etc/rc.local
+    [ ! -f /etc/rc.local.old ] && cp /etc/rc.local /etc/rc.local.old
+    cat << EOF > /etc/rc.local
+#!/bin/sh -e
+/root/runonce.sh > $HOST4GE_DIR/log/runonce.log 2>&1
+chmod 600 $HOST4GE_DIR/log/runonce.log
+rm /root/runonce.sh
+(echo "#!/bin/sh"; echo "exit 0") > /etc/rc.local
+chmod u+x /etc/rc.local
+exit 0
+EOF
+    chmod u+x /etc/rc.local
+
+fi
+
+exit 0

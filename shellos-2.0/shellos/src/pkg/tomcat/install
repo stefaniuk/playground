@@ -1,0 +1,150 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/openjdk/bin/javac ]; then
+    echo "Error: Tomcat requires OpenJDK!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="tomcat-$VER_TOMCAT"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://apache.mirrors.timporter.net/tomcat/tomcat-7/v$VER_TOMCAT/bin/apache-tomcat-$VER_TOMCAT.tar.gz"
+    file=apache-tomcat-$VER_TOMCAT.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 5000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill jsvc.exec
+
+# create user and group
+user_create "$TOMCAT_USER" $TOMCAT_UID "$TOMCAT_GROUP" $TOMCAT_GID
+
+if [ "$pkg_result" != "success" ]; then
+    current_dir=$PWD
+    echo "Compile Tomcat:"
+    [ -d $INSTALL_DIR/tomcat ] && rm -rf $INSTALL_DIR/tomcat
+    tar -zxf apache-tomcat-$VER_TOMCAT.tar.gz
+    mv apache-tomcat-$VER_TOMCAT $INSTALL_DIR/tomcat
+    rm -rf $INSTALL_DIR/tomcat/webapps/{docs,examples}
+    cd $INSTALL_DIR/tomcat/bin
+    tar -zxf commons-daemon-native.tar.gz
+    cd $(find . -iname "commons-daemon-*-src")/unix
+    ./configure \
+        --with-java=$INSTALL_DIR/openjdk \
+    && make && cp jsvc ../..
+    cd ../..
+    rm -rf $(find . -iname "commons-daemon-*-src")
+    cd $current_dir
+    echo "Create package:"
+    package_create $INSTALL_DIR/tomcat $pkg_name
+else
+    echo "Install Tomcat from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/tomcat/bin/startup.sh ]; then
+    echo "Error: Tomcat has NOT been installed successfully!"
+    exit 1
+else
+    echo "Tomcat installed successfully!"
+fi
+
+##
+## configure
+##
+
+cp $script_dir/../pkg/$package/Tomcat7.sh $INSTALL_DIR/tomcat/bin/tomcat.sh
+
+# server.xml
+replace_in_file 'port="8005"' 'port="-1"' $INSTALL_DIR/tomcat/conf/server.xml
+# tomcat-users.xml
+[ ! -f $INSTALL_DIR/tomcat/conf/tomcat-users.xml.old ] && cp $INSTALL_DIR/tomcat/conf/tomcat-users.xml $INSTALL_DIR/tomcat/conf/tomcat-users.xml.old
+cat << EOF > $INSTALL_DIR/tomcat/conf/tomcat-users.xml
+<?xml version="1.0" encoding="utf-8"?>
+<tomcat-users>
+    <user username="admin" password="$(random 32)" roles="manager-gui,admin-gui" />
+</tomcat-users>
+EOF
+
+# TODO: 1) require ip
+ip_address=$IP_ADDRESS
+vhost_domain="tomcat"
+vhost_domain_full=${vhost_domain}.$(hostname).$DOMAIN
+if [ "$DOMAIN" == "localhost" ]; then
+    ip_address='*'
+    vhost_domain_full=${vhost_domain}.localhost
+fi
+cat << EOF > $INSTALL_DIR/httpd/conf/tomcat/${vhost_domain}.conf
+# ${vhost_domain_full}:80 >>>
+<VirtualHost ${ip_address}:80>
+    ServerName ${vhost_domain_full}:80
+    Redirect permanent / https://${vhost_domain_full}/
+</VirtualHost>
+# <<< ${vhost_domain_full}:80
+# ${vhost_domain_full}:443 >>>
+<VirtualHost ${ip_address}:443>
+    ServerName ${vhost_domain_full}:443
+    ProxyPass / ajp://127.0.0.1:8009/
+    ProxyPassReverse / ajp://127.0.0.1:8009/
+    ProxyRequests off
+    <Proxy *>
+        Order allow,deny
+        Allow from *
+    </Proxy>
+    <Location />
+        Order allow,deny
+        Allow from all
+    </Location>
+    SSLEngine on
+    SSLCertificateFile $CERTIFICATES_DIR/${vhost_domain_full}.pem
+    SSLCertificateKeyFile $CERTIFICATES_DIR/${vhost_domain_full}.key
+</VirtualHost>
+# <<< ${vhost_domain_full}:443
+EOF
+
+# add vhost to hosts file
+network_add_host 127.0.0.1 ${vhost_domain_full}
+
+# generate server certificate
+generate_certificate "${vhost_domain_full}"
+
+# set files permission
+chown -R root:root $INSTALL_DIR/tomcat
+chown -R $TOMCAT_USER:$TOMCAT_GROUP $INSTALL_DIR/tomcat/conf
+chown $TOMCAT_USER:$TOMCAT_GROUP $INSTALL_DIR/tomcat/logs
+chown $TOMCAT_USER:$TOMCAT_GROUP $INSTALL_DIR/tomcat/work
+chmod 500 $INSTALL_DIR/tomcat/bin/tomcat.sh
+chmod 600 $INSTALL_DIR/tomcat/conf/*
+
+##
+## post install
+##
+
+[ -f tomcat-${VER_TOMCAT}${PACKAGE_SUFFIX} ] && rm tomcat-${VER_TOMCAT}${PACKAGE_SUFFIX}
+[ -f apache-tomcat-$VER_TOMCAT.tar.gz ] && rm apache-tomcat-$VER_TOMCAT.tar.gz
+
+# save package version
+package_add_version "tomcat" "$VER_TOMCAT"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/tomcat/bin
+hashes_add_dir $INSTALL_DIR/tomcat/lib
+
+exit 0
+

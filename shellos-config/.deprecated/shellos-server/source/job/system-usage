@@ -1,0 +1,133 @@
+#!/bin/bash
+#
+# Scheduled job. This script writes into a database performance indicators of
+# the system.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+    # do not log if all jobs are locked
+    [ `job_lock_all_exists` == "no" ] && \
+        logger -p local0.notice -t host4ge "job $( basename $0 ) is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+# TODO: use host4ge_conf_get_option to get database details
+db_name="host4ge"
+db_user="host4ge"
+db_pass=$(mysql_get_user_password host4ge)
+hostname=$(hostname)
+old_ifs=$IFS
+
+# clear
+sql=""
+
+# cpu usage
+cpu_values=`mpstat 3 1 | sed -n 5p | awk '{ print "\x27" $3 "\x27,\x27"  $4 "\x27,\x27"  $5 "\x27,\x27"  $6 "\x27,\x27"  $7 "\x27,\x27"  $8 "\x27,\x27"  $9 "\x27,\x27"  $10 "\x27,\x27"  $11 "\x27" }'`
+sql="${sql} insert into $db_name.cpu_usage (timestamp,servername,usr,nice,sys,iowait,irq,soft,steal,guest,idle) values (now(),'$hostname',$cpu_values);"
+# memory usage
+mem_values=$(echo `free -b` | awk '{ print "\x27" $8 "\x27,\x27"  $9 "\x27,\x27"  $19 "\x27,\x27"  $20 "\x27,\x27" $16 "\x27" }')
+sql="${sql} insert into $db_name.memory_usage (timestamp,servername,mem_total,mem_used,swap_total,swap_used,buffers_used) values (now(),'$hostname',$mem_values);"
+# disk usage
+IFS=$'\n'
+for line in `df | grep '^/dev/'`; do
+    disk_values=$(echo $line | awk '{ print "\x27" $1 "\x27,\x27" $6 "\x27,\x27" $3 "\x27,\x27" $4 "\x27" }')
+    sql="${sql} insert into $db_name.disk_usage (timestamp,servername,device,mountpoint,used,available) values (now(),'$hostname',$disk_values);"
+done
+IFS=$old_ifs
+
+# save records
+cat << EOF | $CMD_MYSQL --user=$db_user --password=$db_pass
+$sql
+EOF
+
+# memory usage by processes
+#IFS=$'\n'
+#output=$(data=$(ps -eo size,rss,vsz,pid,user,cmd | awk "{ if ( NR > 1 ) { print } }"); echo "$data" | egrep -v "[ ^I]+0[ ^I]+0[ ^I]+" | grep -v "ps -eo " | grep -v "awk { if ( NR > 1 ) { print } }")
+#for line in $output; do
+#    values=$(echo $line | awk '{ print "\x27" $1 "\x27,\x27" $2 "\x27,\x27" $3 "\x27,\x27" $4 "\x27,\x27" $5 "\x27,trim(\x27"; for(i=6;i<=NF;i++) print $i; print "\x27)" }')
+#    cat << EOF | $CMD_MYSQL --user=$db_user --password=$db_pass
+#insert into $db_name.memory_usage_processes (timestamp,servername,size,rss,vsz,pid,user,cmd) values (now(),'$hostname',$values);
+#EOF
+#done
+#IFS=$old_ifs
+
+# monitor network connections
+#IFS=$'\n'
+#output=$(lsof -i tcp -i udp | grep ESTABLISHED)
+#for line in $output; do
+#    # local
+#    tmp=$(echo $line | awk '{ split($9,a,"->"); print a[1]; }')
+#    la=$(echo $line | awk '{ split(str,a,":"); print a[1]; }' str=$tmp)
+#    lp=$(echo $line | awk '{ split(str,a,":"); print a[2]; }' str=$tmp)
+#    # foreign
+#    tmp=$(echo $line | awk '{ split($9,a,"->"); print a[2]; }')
+#    fa=$(echo $line | awk '{ split(str,a,":"); print a[1]; }' str=$tmp)
+#    fp=$(echo $line | awk '{ split(str,a,":"); print a[2]; }' str=$tmp)
+#    # other values
+#    values=$(echo $line | awk '{print "\x27" $2 "\x27,\x27" $3 "\x27,\x27" $1 "\x27" }')
+#    cat << EOF | $CMD_MYSQL --user=$db_user --password=$db_pass
+#insert into $db_name.network_connections (timestamp,servername,local_address,local_port,foreign_address,foreign_port,pid,user,cmd) values (now(),'$hostname','$la','$lp','$fa','$fp',$values);
+#EOF
+#done
+#IFS=$old_ifs
+
+# monitor traffic
+# TODO: write shell deamon to mange jobs
+#http://www.madmadmod.com/sysadmin/54-how-to-get-the-current-network-bandwidth-usage-on-linux.html
+
+# writes into a database performance indicators specific to the server role
+[ -x $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME)
+
+# writes into a database custom performance indicators
+[ -x $HOST4GE_DIR/job/$( basename $0 ).custom ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).custom)
+
+db_pass=
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# log an event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run (time: $time s)"
+else
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

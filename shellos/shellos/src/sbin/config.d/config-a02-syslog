@@ -1,0 +1,111 @@
+#!/bin/bash
+
+##
+## define syslog facilities
+##
+
+# stop syslog service
+service rsyslog stop
+
+# /etc/rsyslog.d/50-default.conf
+[ ! -f /etc/rsyslog.d/50-default.conf.old ] && cp /etc/rsyslog.d/50-default.conf /etc/rsyslog.d/50-default.conf.old
+rm /etc/rsyslog.d/*.conf
+cat << EOF > /etc/rsyslog.d/50-default.conf
+auth,authpriv.* -/var/log/auth.log
+*.*;auth,authpriv.none -/var/log/sys.log
+cron.* -/var/log/cron.log
+daemon.* -/var/log/daemon.log
+kern.* -/var/log/kern.log
+user.* -/var/log/user.log
+*.emerg *
+
+# custom facilities
+local0.* -/var/log/shellos.log
+local0.err -/var/log/shellos.err
+local1.* -/var/log/openssh.log
+local1.err -/var/log/openssh.err
+local2.* -/var/log/openvpn.log
+local2.err -/var/log/openvpn.err
+local3.* -/var/log/mysql.log
+local3.err -/var/log/mysql.err
+local4.* -/var/log/httpd.log
+local4.err -/var/log/httpd.err
+local7.* -/var/log/fail2ban.log
+local7.err -/var/log/fail2ban.err
+ftp.* -/var/log/ftp.log
+mail.* -/var/log/mail.log
+mail.err -/var/log/mail.err
+
+\$SystemLogRateLimitInterval 10
+\$SystemLogRateLimitBurst 10000
+EOF
+
+# /etc/rsyslog.conf
+replace_in_file '#$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' '$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' /etc/rsyslog.conf
+replace_in_file '$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' '#$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' /etc/rsyslog.conf
+
+# start syslog service
+service rsyslog start
+
+##
+## configure logrotate
+##
+
+# /etc/logrotate.conf
+[ ! -f /etc/logrotate.conf.old ] && cp /etc/logrotate.conf /etc/logrotate.conf.old
+cat << EOF > /etc/logrotate.conf
+include /etc/logrotate.d
+EOF
+
+# /etc/logrotate.d/rsyslog
+[ ! -d /etc/logrotate.d.old ] && (
+    mv /etc/logrotate.d /etc/logrotate.d.old
+    mkdir /etc/logrotate.d
+)
+cat << EOF > /etc/logrotate.d/rsyslog
+/var/log/auth.log
+/var/log/sys.log
+/var/log/cron.log
+/var/log/daemon.log
+/var/log/kern.log
+/var/log/user.log
+/var/log/shellos.log
+/var/log/shellos.err
+/var/log/openssh.log
+/var/log/openssh.err
+/var/log/openvpn.log
+/var/log/openvpn.err
+/var/log/mysql.log
+/var/log/mysql.err
+/var/log/httpd.log
+/var/log/httpd.err
+/var/log/fail2ban.log
+/var/log/fail2ban.err
+/var/log/ftp.log
+/var/log/mail.log
+/var/log/mail.err
+{
+    start 0
+    rotate 9
+    size 10M
+    notifempty
+    copytruncate
+    compress
+    delaycompress
+    sharedscripts
+    mailfirst
+    mail $ADMIN_MAIL
+    postrotate
+        reload rsyslog > /dev/null 2>&1 || true
+    endscript
+}
+EOF
+
+# set read/write permissions for the owner only and read only for the group
+chmod 640 /var/log/*.{log,err}
+for file in $LOG_FILES; do
+    chown syslog:syslog /var/log/$file
+done
+
+exit 0
+

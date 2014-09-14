@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#/srv/shellos/sbin/update --php-fpm --build-package --new-version 5.4.19
+#/srv/shellos/sbin/update --php-fpm --replace-package --current-version 5.4.17 --new-version 5.4.19
+#/srv/shellos/sbin/update --php-fpm --revert-package --current-version 5.4.19 --new-version 5.4.17
+
+exit 0
+

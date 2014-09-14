@@ -1,0 +1,150 @@
+#!/bin/bash
+
+##
+## remove directories
+##
+
+rm -rfv $PROGRAMS_DIR
+
+##
+## create directories
+##
+
+mkdir -p $PROGRAMS_DIR
+
+mkdir -p $VAR_DIR
+
+mkdir -p $BACKUP_DIR
+mkdir -p $BACKUP_DATABASES_DIR
+mkdir -p $BACKUP_LOGS_DIR
+
+mkdir -p $CACHE_DIR
+mkdir -p $CACHE_DOWNLOADS_DIR
+mkdir -p $CACHE_IMAGES_DIR
+mkdir -p $CACHE_KERNELS_DIR
+mkdir -p $CACHE_PACKAGES_DIR
+mkdir -p $CACHE_UPDATES_DIR
+
+mkdir -p $HOSTING_DIR
+mkdir -p $HOSTING_USER_DIR
+mkdir -p $HOSTING_ACCOUNTS_DIR
+mkdir -p $HOSTING_APPLICATIONS_DIR
+mkdir -p $HOSTING_DOMAINS_DIR
+mkdir -p $HOSTING_PUBLIC_DIR
+
+mkdir -p $VIRTUAL_MACHINES_DIR
+
+mkdir -p $CERTIFICATES_DIR
+mkdir -p $FLAGS_DIR
+mkdir -p $MAIL_DIR
+mkdir -p $TMP_DIR
+mkdir -p $WORKSPACE_DIR
+
+##
+## set ownership
+##
+
+chown $OWNER:$OWNER $INSTALL_DIR > /dev/null 2>&1
+chown $OWNER:$OWNER $PROGRAMS_DIR > /dev/null 2>&1
+chown -R root:root $SHELLOS_DIR > /dev/null 2>&1
+chown -R root:root $VAR_DIR > /dev/null 2>&1
+chown -R $OWNER:$OWNER $WORKSPACE_DIR > /dev/null 2>&1
+
+##
+## cleanup
+##
+
+# move included archives
+mv -v $SHELLOS_DIR/*.tar.gz $CACHE_DOWNLOADS_DIR 2> /dev/null
+# remove installation package
+rm -rfv $INSTALL_DIR/shellos*.tar.gz 2> /dev/null
+# move system installation log
+mv /root/*.log $LOG_DIR/$timestamp 2> /dev/null
+rm /root/firstboot* 2> /dev/null
+
+##
+## set directory permissions
+##
+
+permissions=700
+if [ "$OWNER" != "root" ]; then
+    permissions=755
+fi
+chmod $permissions $LOG_DIR > /dev/null 2>&1
+chmod $permissions $BACKUP_DIR > /dev/null 2>&1
+chmod $permissions $BACKUP_DATABASES_DIR > /dev/null 2>&1
+chmod $permissions $BACKUP_LOGS_DIR > /dev/null 2>&1
+chmod $permissions $CACHE_DIR > /dev/null 2>&1
+chmod $permissions $CERTIFICATES_DIR > /dev/null 2>&1
+chmod $permissions $FLAGS_DIR > /dev/null 2>&1
+chmod 1777 $TMP_DIR > /dev/null 2>&1
+
+# cron files directories
+chmod 700 $ETC_DIR/cron/{daily,hourly,monthly,weekly}
+chown $OWNER:$OWNER $ETC_DIR/cron/{daily,hourly,monthly,weekly}
+
+# cache directories
+permissions=700
+if [ "$OWNER" != "root" ]; then
+    permissions=1777
+fi
+chmod $permissions $CACHE_DOWNLOADS_DIR > /dev/null 2>&1
+chmod $permissions $CACHE_IMAGES_DIR > /dev/null 2>&1
+chmod $permissions $CACHE_KERNELS_DIR > /dev/null 2>&1
+chmod $permissions $CACHE_PACKAGES_DIR > /dev/null 2>&1
+chmod $permissions $CACHE_UPDATES_DIR > /dev/null 2>&1
+
+# hosting directory
+if [ "$OWNER" != "root" ]; then
+    chmod 1777 $HOSTING_PUBLIC_DIR > /dev/null 2>&1
+    chown $OWNER:$OWNER $HOSTING_PUBLIC_DIR/*.{html,php} > /dev/null 2>&1
+fi
+
+# virtual machines directory
+permissions=700
+if [ "$OWNER" != "root" ]; then
+    permissions=1777
+fi
+chmod $permissions $VIRTUAL_MACHINES_DIR > /dev/null 2>&1
+
+##
+## set file permissions
+##
+
+chmod +x $BIN_DIR/* > /dev/null 2>&1
+chmod u+x $JOB_DIR/* > /dev/null 2>&1
+chmod u+x $ETC_DIR/firewall/* > /dev/null 2>&1
+
+##
+## make shell/bash scripts executable
+##
+
+find $SHELLOS_DIR -iname *.sh -exec chmod u+x '{}' \;
+find $SHELLOS_DIR -iname *.bash -exec chmod u+x '{}' \;
+find $SHELLOS_DIR -iname *.script -exec chmod u+x '{}' \;
+
+##
+## set configuration files ownership and permissions
+##
+
+# allow to read config files by the user ...
+cd $CONF_DIR
+files=$(find . -iname "*")
+for file in $files; do
+    [ "$file" == "." ] && continue
+    chmod 600 $file
+    if [ "$OWNER" != "root" ]; then
+        chown root:root $file
+        chmod 644 $file
+    fi
+done
+
+# ... but make secure sensitive files if main user is not root
+if [ "$OWNER" != "root" ]; then
+    for file in $(cat $SHELLOS_DIR/etc/sensitive-data-files); do
+        chmod 600 $SHELLOS_DIR/$file
+    done
+fi
+
+exit 0
+

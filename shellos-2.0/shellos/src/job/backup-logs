@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# Scheduled job. This script backups system logs.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="backup-logs"
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ $(job_lock_exists $job_name) == "yes" ]; then
+    # do not log if all jobs are locked
+    [ $(job_lock_all_exists) == "no" ] && \
+        log_info "job $job_name is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+# remove log backups older than a year
+find $BACKUP_LOGS_DIR/* -mtime +$JOB_BACKUP_LOGS_REMOVE_DAYS -exec rm {} \; > /dev/null 2>&1
+
+# rotate logs
+test -x $CMD_LOGROTATE || exit 1
+$CMD_LOGROTATE /etc/logrotate.conf
+
+# backup logs
+cd /var/log
+timestamp=$(date +"%Y%m%d%H%M")
+for log in $LOG_FILES; do
+    count=$(ls /var/log/$log.*.gz 2> /dev/null | wc -l)
+    if [ $count -gt 8 ]; then
+        tar -zcf $log-$timestamp.tar.gz $log.*.gz
+        rm $log.*.gz
+        mv $log-$timestamp.tar.gz $BACKUP_LOGS_DIR
+        chmod 400 $BACKUP_LOGS_DIR/$log-$timestamp.tar.gz
+    fi
+done
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

@@ -1,0 +1,113 @@
+#!/bin/bash
+
+source $LIB_DIR/shell/json
+
+function _whois_lookup_cache() {
+
+    local domain=$1
+    local file=$TMP_DIR/whois-$domain
+    local out=
+
+    if [ -f $file ]; then
+        local now=$(date +%s)
+        local d=$(date -d "$(stat -c %z $file)" +%s)
+        if [ $(expr $d + 600) -gt $now ]; then
+            out=$(cat $file)
+        fi
+    fi
+
+    if [ -z "$out" ]; then
+        out=$($BIN_DIR/whois.pl -d $domain)
+        echo "$out" > $file
+    fi
+
+    echo "$out"
+}
+
+function _whois_get_date() {
+
+    local line=$1
+
+    local out=$(echo "$line" | awk '{ for(i=3;i<=NF;++i) print $i }' | sed 's/\./\//g')
+    out=$(date -d "$out")
+
+    echo "$out"
+}
+
+function whois_get_expiry_date() {
+
+    local domain=$1
+
+    local out=$(_whois_lookup_cache $domain)
+    if [ -n "$out" ]; then
+        out=$(echo "$out" | json | sort)
+        # expiration_date
+        local line=$(echo "$out" | grep "expiration_date")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # expiry_date
+        local line=$(echo "$out" | grep "expiry_date")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # registration_expiration
+        local line=$(echo "$out" | grep "registration_expiration")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # renewal_date
+        local line=$(echo "$out" | grep "renewal_date")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+    fi
+}
+
+
+function whois_get_modify_date() {
+
+    local domain=$1
+
+    local out=$(_whois_lookup_cache $domain)
+    if [ -n "$out" ]; then
+        out=$(echo "$out" | json | sort)
+        # last_changed
+        local line=$(echo "$out" | grep "last_changed")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # last_modified
+        local line=$(echo "$out" | grep "last_modified")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # last_updated
+        local line=$(echo "$out" | grep "last_updated")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+        # last_updated_on
+        local line=$(echo "$out" | grep "last_updated_on")
+        if [ -n "$line" ]; then
+            line=$(_whois_get_date "$line")
+            echo $line
+            return
+        fi
+    fi
+}
+

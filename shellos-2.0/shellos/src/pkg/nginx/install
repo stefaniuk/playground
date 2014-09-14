@@ -1,0 +1,118 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="nginx-$VER_NGINX"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://nginx.org/download/nginx-$VER_NGINX.tar.gz"
+    file=nginx-$VER_NGINX.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill nginx
+
+# create user and group
+user_create "$NGINX_USER" $NGINX_UID "$NGINX_GROUP" $NGINX_GID
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile Nginx:"
+    [ -d $INSTALL_DIR/nginx ] && rm -rf $INSTALL_DIR/nginx
+    tar -zxf nginx-$VER_NGINX.tar.gz
+    cd nginx-$VER_NGINX
+    ./configure \
+        --prefix=$INSTALL_DIR/nginx \
+        --sbin-path=$INSTALL_DIR/nginx/bin/nginx \
+        --conf-path=$INSTALL_DIR/nginx/conf/nginx.conf \
+        --pid-path=$INSTALL_DIR/nginx/log/nginx.pid \
+        --lock-path=$INSTALL_DIR/nginx/log/nginx.lock \
+        --error-log-path=$INSTALL_DIR/nginx/log/error.log \
+        --http-log-path=$INSTALL_DIR/nginx/log/access.log \
+        --user=$NGINX_USER \
+        --group=$NGINX_GROUP \
+        --with-http_ssl_module \
+        --with-http_stub_status_module \
+        --without-mail_pop3_module \
+        --without-mail_imap_module \
+        --without-mail_smtp_module \
+    && make && make install && echo "Nginx installed successfully!"
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/nginx/bin/nginx
+    echo "Create package:"
+    package_create $INSTALL_DIR/nginx $pkg_name
+else
+    echo "Install Nginx from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/nginx/bin/nginx ]; then
+    echo "Error: Nginx has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# nginx.conf
+cat << EOF > $INSTALL_DIR/nginx/conf/nginx.conf
+worker_processes 3;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+    server {
+        listen $NGINX_PORT;
+        server_name localhost;
+        location / {
+            root html;
+            index index.html;
+        }
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+            root html;
+        }
+    }
+}
+EOF
+
+# set files permission
+chown -R root:root $INSTALL_DIR/nginx
+chown -R $NGINX_USER:$NGINX_GROUP $INSTALL_DIR/nginx/log
+chmod 700 $INSTALL_DIR/nginx/bin
+chmod 500 $INSTALL_DIR/nginx/bin/*
+chmod 700 $INSTALL_DIR/nginx/log
+
+##
+## post install
+##
+
+[ -f nginx-$VER_NGINX.tar.gz ] && rm nginx-$VER_NGINX.tar.gz
+[ -d nginx-$VER_NGINX ] && rm -rf nginx-$VER_NGINX
+
+# save package version
+package_add_version "nginx" "$VER_NGINX"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/nginx/bin
+
+exit 0
+

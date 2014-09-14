@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# File: management/setup-zeroday-account.sh
+#
+# Description: Sets up zeroday account.
+#
+# Usage:
+#
+#   setup-zeroday-account.sh 2>&1 | tee $HOST4GE_DIR/log/setup-zeroday-account.log; chmod 400 $HOST4GE_DIR/log/setup-zeroday-account.log
+
+##
+## includes
+##
+
+source $HOST4GE_DIR/sbin/include.sh
+
+##
+## variables
+##
+
+TYPE="account"
+USER="zeroday"
+PASSWORD=`get_random_string 32`
+DIR="$INSTALL_DIR/hosting/${TYPE}s/$USER"
+DOMAINS="zeroday.pl mhaker.pl"
+
+CURRENT_DIR=`pwd`
+
+##
+## functions
+##
+
+function download_module {
+    echo '1' | $DIR/usr/local/drush/drush dl $1
+}
+
+function enable_module {
+    $DIR/usr/local/drush/drush --uri=http://$2 -y pm-enable $1
+}
+
+function disable_module {
+    $DIR/usr/local/drush/drush --uri=http://$2 -y pm-disable $1
+}
+
+function uninstall_module {
+    $DIR/usr/local/drush/drush --uri=http://$2 -y pm-uninstall $1
+}
+
+##
+## install
+##
+
+create-drupal-instance.sh \
+    --type $TYPE \
+    --user $USER \
+    --password $PASSWORD \
+    --domains "$DOMAINS"
+
+# install modules
+cd $DIR/usr/local/drupal
+#MODULES="advanced_forum advanced_help captcha cck ckeditor collapsiblock comment_notify ctools devel disable_messages entity field_permissions fusion fusion_accelerator google_analytics googleanalytics og panels pathauto profile2 recaptcha rules shoutbox site_verify stringoverrides switchtheme syntaxhighlighter token user_stats userpoints userpoints_nc views visitors xmlsitemap"
+MODULES=""
+for MODULE in $MODULES; do
+    download_module $MODULE
+done
+
+for DOMAIN in $DOMAINS; do
+
+    echo "------------------------------------------------------------"
+    echo "$DOMAIN: A list of non-core, enabled modules (before install)"
+    $DIR/usr/local/drush/drush --uri=http://$DOMAIN pm-list --no-core --status="enabled"
+    echo "------------------------------------------------------------"
+
+    # enable modules
+    for MODULE in $MODULES; do
+        enable_module $MODULE $DOMAIN
+    done
+
+    # remove overlay module
+    disable_module overlay $DOMAIN
+    uninstall_module overlay $DOMAIN
+
+    # set theme
+    enable_module fusion_starter $DOMAIN
+    $DIR/usr/local/drush/drush --uri=http://$DOMAIN -y vset theme_default fusion_starter
+    disable_module bartik $DOMAIN
+    disable_module garland $DOMAIN
+    disable_module seven $DOMAIN
+    disable_module stark $DOMAIN
+
+    echo "------------------------------------------------------------"
+    echo "$DOMAIN: A list of non-core, enabled modules (after install)"
+    $DIR/usr/local/drush/drush --uri=http://$DOMAIN pm-list --no-core --status="enabled"
+    echo "------------------------------------------------------------"
+
+    # clear cache
+    echo '1' | $DIR/usr/local/drush/drush --uri=http://$DOMAIN cache-clear
+
+done
+
+# fix ownership of modules
+chown -R $USER:$USER $DIR/usr/local/drupal/sites/all/modules/*
+
+exit 0

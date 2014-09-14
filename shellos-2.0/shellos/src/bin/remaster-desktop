@@ -1,0 +1,327 @@
+#!/bin/bash
+
+# SEE: https://help.ubuntu.com/12.04/installation-guide/amd64/appendix-preseed.html
+
+##
+## variables
+##
+
+timezone="Europe/London"
+ipaddress=
+netmask=255.255.255.0
+gateway=192.168.1.1
+nameservers=192.168.1.1
+hostname="laptop"
+username="daniel"
+userfullname="Daniel Stefaniuk"
+usb_dev=/dev/sdc
+usb_install="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --timezone)     shift; timezone="$1"
+                        ;;
+        --ipaddress)    shift; ipaddress=$1
+                        ;;
+        --netmask)      shift; netmask=$1
+                        ;;
+        --gateway)      shift; gateway=$1
+                        ;;
+        --nameservers)  shift; nameservers="$1"
+                        ;;
+        --hostname)     shift; hostname=$1
+                        ;;
+        --username)     shift; username=$1
+                        ;;
+        --userfullname) shift; userfullname="$1"
+                        ;;
+        --usb)          shift; usb_dev=$1
+                        ;;
+    esac
+    shift
+done
+
+iso_in_path=$CACHE_IMAGES_DIR/$UBUNTU_ISO_FILE
+iso_out_path=$CACHE_IMAGES_DIR/$SYSTEM_CODE-$hostname.iso
+mnt_iso_in=$TMP_DIR/remaster-iso-ubuntu
+mnt_iso_out=$TMP_DIR/remaster-iso-$SYSTEM_CODE
+custom_dir=$TMP_DIR/remaster-$SYSTEM_CODE
+
+##
+## downloads
+##
+
+url="http://releases.ubuntu.com/$VER_UBUNTU/ubuntu-$VER_UBUNTU_FULL-server-amd64.iso"
+file=$UBUNTU_ISO_FILE
+result=$(file_download --url $url --file $file --donwload-directory $CACHE_IMAGES_DIR --cache-dir-name images --check-file-size 500000 --check-file-hash $UBUNTU_ISO_HASH --hash-algorithm sha1)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+##
+## main
+##
+
+# umount
+mkdir -p $mnt_iso_in
+sudo umount $mnt_iso_in > /dev/null 2>&1
+mkdir -p $mnt_iso_out
+sudo umount $mnt_iso_out > /dev/null 2>&1
+
+# copy files
+sudo mount -o loop $iso_in_path $mnt_iso_in
+rm -rf $custom_dir
+rsync -av $mnt_iso_in/ $custom_dir
+chmod u+w $custom_dir
+chmod -R u+w $custom_dir/preseed
+chmod -R u+w $custom_dir/isolinux
+
+# file: /preseed/shellos.seed
+cat << EOF > $custom_dir/preseed/$SYSTEM_CODE.seed
+d-i apt-setup/extras boolean true
+d-i preseed/early_command string . /usr/share/debconf/confmodule; db_get debconf/priority; case \$RET in low|medium) db_fset tasksel/first seen false; echo 'tasksel tasksel/first seen false' >>/var/lib/preseed/log ;; esac
+
+#
+# locale and keyboard
+#
+
+d-i debian-installer/locale select en_GB.UTF-8
+d-i keyboard-configuration/layoutcode string gb
+d-i console-setup/layoutcode string en_GB
+d-i console-setup/ask_detect boolean false
+d-i localechooser/supported-locales multiselect pl_PL.ISO-8859-2
+
+#
+# clock and time zone
+#
+
+d-i clock-setup/utc boolean true
+d-i time/zone string $timezone
+#d-i time/zone seen false
+d-i clock-setup/ntp boolean true
+d-i clock-setup/utc-auto true
+
+#
+# network
+#
+
+EOF
+# set all network parameters
+[ -n "$ipaddress" ] && cat << EOF >> $custom_dir/preseed/$SYSTEM_CODE.seed
+d-i netcfg/choose_interface select eth0
+d-i netcfg/disable_autoconfig boolean true
+d-i netcfg/get_ipaddress string $ipaddress
+#d-i netcfg/get_ipaddress seen false
+d-i netcfg/get_netmask string $netmask
+#d-i netcfg/get_netmask seen false
+d-i netcfg/get_gateway string $gateway
+#d-i netcfg/get_gateway seen false
+d-i netcfg/get_nameservers string $nameservers
+#d-i netcfg/get_nameservers seen false
+d-i netcfg/confirm_static boolean true
+d-i netcfg/get_hostname string $hostname
+#d-i netcfg/get_hostname seen false
+d-i netcfg/get_domain string
+#d-i netcfg/get_domain seen false
+EOF
+# set only the host name
+[ -z "$ipaddress" ] && cat << EOF >> $custom_dir/preseed/$SYSTEM_CODE.seed
+d-i netcfg/get_hostname string $hostname
+#d-i netcfg/get_hostname seen false
+EOF
+cat << EOF >> $custom_dir/preseed/$SYSTEM_CODE.seed
+
+#
+# kernel
+#
+
+d-i base-installer/kernel/image string linux-server
+d-i base-installer/kernel/override-image string linux-server
+
+#
+# accounts
+#
+
+d-i passwd/make-user boolean true
+d-i passwd/user-default-groups string cdrom audio video dip plugdev sudo adm admin lpadmin sambashare
+d-i passwd/user-fullname string $userfullname
+d-i passwd/username string $username
+# mkpasswd -m sha-512 shellos pKU7coRVYr3NhwVW
+d-i passwd/user-password-crypted password \$6\$pKU7coRVYr3NhwVW\$frKhFmKdI0oK8gqvacL2Q9tW4fE5dZfhzPgTbZX0FlVrfjG95lyYmtijuYYrKAGUDbWLORbrqFB34aw7z4vix0
+d-i passwd/root-login boolean true
+# mkpasswd -m sha-512 changeit thisisatest
+d-i passwd/root-password-crypted password \$6\$pKU7coRVYr3NhwVW\$frKhFmKdI0oK8gqvacL2Q9tW4fE5dZfhzPgTbZX0FlVrfjG95lyYmtijuYYrKAGUDbWLORbrqFB34aw7z4vix0
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+#
+# packages
+#
+
+d-i mirror/http/proxy string
+tasksel tasksel/first multiselect standard
+d-i pkgsel/language-pack-patterns string
+d-i pkgsel/install-language-support boolean true
+d-i pkgsel/include string openssh-server
+d-i pkgsel/upgrade select full-upgrade
+d-i pkgsel/update-policy select none
+d-i oem-config-udeb/frontend string debconf
+oem-config oem-config/steps multiselect language, timezone, keyboard, user, network, tasks
+
+#
+# boot loader
+#
+
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/timeout string 3
+d-i debian-installer/quiet boolean false
+d-i debian-installer/splash boolean false
+
+#
+# disk partitions
+#
+
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto-lvm/new_vg_name string vg00
+d-i partman-auto/choose_recipe select boot-root
+d-i partman-auto/disk string /dev/sda
+d-i partman-auto/init_automatically_partition select Guided - use entire disk and set up LVM
+d-i partman-auto/method string lvm
+d-i partman-auto/purge_lvm_from_device boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/device_remove_lvm_span boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/alignment select optimal
+d-i partman/choose_partition select Finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman-auto/expert_recipe string \\
+    boot-root :: \\
+        100 100 100 ext3 \\
+            \$primary{ } \$bootable{ } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext3 } \\
+            mountpoint{ /boot } . \\
+        100 1000 1000000000 ext4 \\
+            \$primary{ } \$defaultignore{ } \\
+            method{ lvm } \\
+            device{ /dev/sda } \\
+            vg_name{ vg00 } . \\
+        1000 4000 100% linux-swap \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ swap } \\
+            method{ swap } format{ } . \\
+        20000 24000 32000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ root } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext4 } \\
+            mountpoint{ / } . \\
+        50000 100000 1000000000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ workspace } \\
+            use_filesystem{ } filesystem{ ext4 } \\
+            mountpoint{ $VAR_DIR } .
+
+#
+# shell commands
+#
+
+d-i preseed/late_command string cp /cdrom/late-command-script /target/home/$username/; cp -r /cdrom/resources /target/home/$username/; chroot /target chmod +x /home/$username/late-command-script; chroot /target bash /home/$username/late-command-script
+
+#
+# final options
+#
+
+d-i finish-install/reboot_in_progress note
+d-i cdrom-detect/eject boolean false
+EOF
+chmod 644 $custom_dir/preseed/$SYSTEM_CODE.seed
+
+# file: late-command-script
+cat << EOF > $custom_dir/late-command-script
+#!/bin/bash
+unset DEBCONF_REDIR
+unset DEBCONF_FRONTEND
+unset DEBIAN_HAS_FRONTEND
+unset DEBIAN_FRONTEND
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes update
+apt-get --yes --force-yes upgrade
+apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+rm -f /home/$username/late-command-script
+exit 0
+EOF
+chmod 755 $custom_dir/late-command-script
+
+# file: custom.cfg
+cat << EOF > $custom_dir/isolinux/custom.cfg
+default install
+label install
+  menu label ^Install $SYSTEM_NAME
+  kernel /install/vmlinuz
+  append debian-installer/locale=en_GB.UTF-8 keyboard-configuration/layoutcode=gb console-setup/layoutcode=en_GB console-setup/ask_detect=false interface=eth0 file=/cdrom/preseed/$SYSTEM_CODE.seed vga=792 initrd=/install/initrd.gz quiet splash --
+label hd
+  menu label ^Boot from hard disk
+  localboot 0x80
+label memtest
+  menu label ^Test memory
+  kernel /install/mt86plus
+EOF
+chmod 644 $custom_dir/isolinux/custom.cfg
+
+# file: menu.cfg
+replace_in_file "include txt.cfg" "include custom.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adtxt.cfg" "#include adtxt.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adgtk.cfg" "#include adgtk.cfg" $custom_dir/isolinux/menu.cfg
+chmod 644 $custom_dir/isolinux/menu.cfg
+
+# copy shell scripts
+#cp -v ./{finalise,post-install,config} $custom_dir
+#chmod 555 $custom_dir/{finalise,post-install,config}
+
+# copy resources
+mkdir $custom_dir/resources
+#cp -rv ./resources/* $custom_dir/resources
+
+# create custom iso
+xorriso -as mkisofs \
+    -r -J -joliet-long -l -V "$SYSTEM_NAME" \
+    -b isolinux/isolinux.bin \
+    -c isolinux/boot.cat \
+    -iso-level 3 -no-emul-boot -partition_offset 16 -boot-load-size 4 -boot-info-table \
+    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+    -o $iso_out_path $custom_dir
+
+# mount custom iso
+sudo mount -o loop $iso_out_path $mnt_iso_out
+
+# print iso info
+isoinfo -debug -d -i $iso_in_path
+isoinfo -debug -d -i $iso_out_path
+
+# create bootable usb
+if [ "$usb_install" == "Y" ] && [ -n "$usb_dev" ]; then
+    dd if=$iso_out_path of=$usb_dev bs=1M
+    sync
+    fdisk -l $usb_dev
+fi
+
+# umount
+sudo umount $mnt_iso_in > /dev/null 2>&1
+sudo umount $mnt_iso_out > /dev/null 2>&1
+sudo rm -rf {$mnt_iso_in,$mnt_iso_out,$custom_dir}
+
+# set iso file owner
+chmod 644 $iso_out_path
+chown $OWNER:$OWNER $iso_out_path
+
+exit 0
+

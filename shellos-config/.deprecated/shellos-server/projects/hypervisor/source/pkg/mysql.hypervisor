@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# TODO:
+# http://stackoverflow.com/questions/1178736/mysql-maximum-memory-usage
+
+# my.cnf
+[ ! -f $INSTALL_DIR/mysql/conf/my.cnf.old ] && mv $INSTALL_DIR/mysql/conf/my.cnf $INSTALL_DIR/mysql/conf/my.cnf.old
+cat << EOF > $INSTALL_DIR/mysql/conf/my.cnf
+[client]
+port        = 3306
+socket      = $INSTALL_DIR/mysql/log/mysql.sock
+
+[mysqld]
+server-id   = 1
+port        = 3306
+socket      = $INSTALL_DIR/mysql/log/mysql.sock
+pid-file    = $INSTALL_DIR/mysql/log/mysql.pid
+
+character_set_server = $MYSQL_DEFAULT_CHARSET
+collation_server = $MYSQL_DEFAULT_COLLATION
+
+max_allowed_packet = 1M
+key_buffer_size = 128K
+net_buffer_length = 1K
+read_buffer_size = 64K
+read_rnd_buffer_size = 128K
+sort_buffer_size = 64K
+table_open_cache = 4
+table_cache = 8
+
+thread_cache_size = 4
+thread_stack = 128K
+
+query_cache_type = ON
+query_cache_size = 8M
+
+skip-character-set-client-handshake
+skip-external-locking
+
+innodb_additional_mem_pool_size = 2M
+innodb_buffer_pool_size = 8M
+innodb_log_buffer_size = 4M
+innodb_log_file_size = 5M
+
+innodb_data_file_path = ibdata1:10M:autoextend
+innodb_data_home_dir = $INSTALL_DIR/mysql/data
+innodb_log_group_home_dir = $INSTALL_DIR/mysql/data
+
+innodb_flush_log_at_trx_commit = 0
+
+slow-query-log = ON
+slow_query_log_file = $INSTALL_DIR/mysql/log/mysql-slow-query.log
+long_query_time = 5
+log-slow-admin-statements
+
+[mysqld_safe]
+syslog
+
+[mysqldump]
+quick
+max_allowed_packet = 1M
+
+[mysql]
+no-auto-rehash
+
+[myisamchk]
+key_buffer_size = 8M
+sort_buffer_size = 8M
+
+[mysqlhotcopy]
+interactive-timeout
+EOF
+
+# innodb memory usage:
+# innodb_buffer_pool_size + innodb_log_buffer_size + innodb_additional_mem_pool_size + 812 / 16384 * innodb_buffer_pool_size + OS_THREADS * 368
+# 8 + 4 + 2 + 0.4 + 3.5 = 17.9M
+
+exit 0

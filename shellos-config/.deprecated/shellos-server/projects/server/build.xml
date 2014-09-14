@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="host4ge-server" default="release" basedir=".">
+
+    <property file="build.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/../../utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/../../scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/build/${ant.project.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete><fileset dir="${basedir}/build/" includes="*.tar.gz" /></delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build-java                           -->
+    <!-- ============================================ -->
+    <target name="build-java" depends="init">
+        <!--<delete><fileset dir="${basedir}/source/var/www/" includes="*.war" /></delete>-->
+        <!--<exec dir="${basedir}/support/webapp/" executable="${basedir}/../../scripts/build.java.${os.script.ext}" />
+        <copy file="${basedir}/support/webapp/target/host4ge-server.war" tofile="${basedir}/source/var/www/host4ge-server.war" />-->
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- ============================================ -->
+    <target name="release" depends="build-java">
+        <!-- set project version -->
+        <copy file="${basedir}/source/bin/install/versions.sh" tofile="${basedir}/versions.sh.bak" />
+        <replace
+            file="${basedir}/source/bin/install/versions.sh"
+            token="0.0.0dev"
+            value="${project.version.full}"
+        />
+        <!-- release source -->
+        <tar destfile="${release.file.name.short}.tar" basedir="${basedir}/source" />
+        <gzip destfile="${release.file.name.short}.tar.gz" src="${release.file.name.short}.tar" />
+        <delete file="${release.file.name.short}.tar" />
+        <copy file="${release.file.name.short}.tar.gz" tofile="${release.file.name.full}.tar.gz" />
+        <!-- clean up -->
+        <move file="${basedir}/versions.sh.bak" tofile="${basedir}/source/bin/install/versions.sh" />
+    </target>
+
+</project>

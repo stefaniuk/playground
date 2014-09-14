@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="host4ge-hypervisor" default="release" basedir=".">
+
+    <property file="${basedir}/../../build.properties" />
+    <property file="${basedir}/../../config/properties/${server.name}.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/../../utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/../../scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/../../build/host4ge-${server.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+        <echo>Building server: ${server.name}</echo>
+        <echo>Server role: ${server.role}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete><fileset dir="${basedir}/database/" includes="*.bak" /></delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- ============================================ -->
+    <target name="release" depends="clean">
+
+        <!-- backup variables file -->
+        <echo>backup variables file (server specific)</echo>
+        <copy file="${basedir}/source/sbin/variables.${server.role}" tofile="${basedir}/variables.${server.role}.bak" />
+
+        <antcall target="update-variables"></antcall>
+
+        <!-- release source -->
+        <tar destfile="${release.file.name.short}.tar">
+            <!-- include node archives -->
+            <tarfileset
+                dir="{basedir}/../../../build"
+                prefix="source"
+                includes="${include.nodes}"
+            />
+            <!-- include common files -->
+            <tarfileset dir="${basedir}/../../source" prefix="source">
+                <include name="**" />
+                <exclude name="**/README" />
+                <exclude name="**/README.md" />
+                <!-- bashinator -->
+                <exclude name="**/bashinator/ChangeLog" />
+                <!-- bashsimplecurses -->
+                <exclude name="**/bashsimplecurses/AUTHORS" />
+                <exclude name="**/bashsimplecurses/INSTALL" />
+                <exclude name="**/bashsimplecurses/LICENSE" />
+                <exclude name="**/bashsimplecurses/Makefile" />
+            </tarfileset>
+            <!-- include project files -->
+            <tarfileset
+                dir="${basedir}/source"
+                prefix="source"
+                excludes="**/README"
+            />
+            <!-- include installation script -->
+            <tarfileset dir="${basedir}/../../config/scripts" prefix="source/sbin">
+                <include name="${server.name}.bash" />
+            </tarfileset>
+            <!-- include vpn configuration files -->
+            <tarfileset dir="${basedir}/../../config/vpn/${server.name}" prefix="source/pkg/resources/openvpn" erroronmissingdir="false" erroronmissingarchive="false">
+                <include name="**/clients/*" />
+                <include name="**/keys/*" />
+            </tarfileset>
+        </tar>
+        <gzip destfile="${release.file.name.short}.tar.gz" src="${release.file.name.short}.tar" />
+        <delete file="${release.file.name.short}.tar" />
+
+        <!-- restore variables file -->
+        <echo>restore variables file (server specific)</echo>
+        <move file="${basedir}/variables.${server.role}.bak" tofile="${basedir}/source/sbin/variables.${server.role}" />
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-variables                     -->
+    <!-- ============================================ -->
+    <target name="update-variables"
+        depends="
+            set-hypervisor-node-number,
+            set-hypervisor-node-cpus,
+            set-hypervisor-node-memory,
+            set-hypervisor-node-disks,
+            set-hypervisor-node-roots,
+            set-hypervisor-node-hostnames,
+            set-hypervisor-node-ipaddresses,
+            set-hypervisor-node-macaddress,
+            set-hypervisor-node-useprivatebridgednetwork,
+            set-hypervisor-node-privatebridgedipaddress,
+            set-hypervisor-node-privatebridgednetmask,
+            set-hypervisor-node-privatebridgednetwork,
+            set-hypervisor-node-privatebridgedbroadcast
+        ">
+        <echo>all variables are now updated (server specific)</echo>
+    </target>
+
+    <!-- set-hypervisor-node-number -->
+    <condition property="has.hypervisor.node.number">
+        <isset property="hypervisor.node.number" />
+    </condition>
+    <target name="set-hypervisor-node-number" if="has.hypervisor.node.number">
+        <echo>NODE_NUMBER=${hypervisor.node.number}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_NUMBER=&quot;&quot;"
+            replace="NODE_NUMBER=${hypervisor.node.number}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-cpus -->
+    <condition property="has.hypervisor.node.cpus">
+        <isset property="hypervisor.node.cpus" />
+    </condition>
+    <target name="set-hypervisor-node-cpus" if="has.hypervisor.node.cpus">
+        <echo>NODE_CPUS=&quot;${hypervisor.node.cpus}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_CPUS=&quot;&quot;"
+            replace="NODE_CPUS=&quot;${hypervisor.node.cpus}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-memory -->
+    <condition property="has.hypervisor.node.memory">
+        <isset property="hypervisor.node.memory" />
+    </condition>
+    <target name="set-hypervisor-node-memory" if="has.hypervisor.node.memory">
+        <echo>NODE_MEMORY=&quot;${hypervisor.node.memory}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_MEMORY=&quot;&quot;"
+            replace="NODE_MEMORY=&quot;${hypervisor.node.memory}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-disks -->
+    <condition property="has.hypervisor.node.disks">
+        <isset property="hypervisor.node.disks" />
+    </condition>
+    <target name="set-hypervisor-node-disks" if="has.hypervisor.node.disks">
+        <echo>NODE_DISKS=&quot;${hypervisor.node.disks}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_DISKS=&quot;&quot;"
+            replace="NODE_DISKS=&quot;${hypervisor.node.disks}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-roots -->
+    <condition property="has.hypervisor.node.roots">
+        <isset property="hypervisor.node.roots" />
+    </condition>
+    <target name="set-hypervisor-node-roots" if="has.hypervisor.node.roots">
+        <echo>NODE_ROOTS=&quot;${hypervisor.node.roots}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_ROOTS=&quot;&quot;"
+            replace="NODE_ROOTS=&quot;${hypervisor.node.roots}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-hostnames -->
+    <condition property="has.hypervisor.node.hostnames">
+        <isset property="hypervisor.node.hostnames" />
+    </condition>
+    <target name="set-hypervisor-node-hostnames" if="has.hypervisor.node.hostnames">
+        <echo>NODE_HOSTNAMES=&quot;${hypervisor.node.hostnames}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_HOSTNAMES=&quot;&quot;"
+            replace="NODE_HOSTNAMES=&quot;${hypervisor.node.hostnames}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-ipaddresses -->
+    <condition property="has.hypervisor.node.ipaddresses">
+        <isset property="hypervisor.node.ipaddresses" />
+    </condition>
+    <target name="set-hypervisor-node-ipaddresses" if="has.hypervisor.node.ipaddresses">
+        <echo>NODE_IP_ADDRESSES=&quot;${hypervisor.node.ipaddresses}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_IP_ADDRESSES=&quot;&quot;"
+            replace="NODE_IP_ADDRESSES=&quot;${hypervisor.node.ipaddresses}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-macaddress -->
+    <condition property="has.hypervisor.node.macaddress">
+        <isset property="hypervisor.node.macaddress" />
+    </condition>
+    <target name="set-hypervisor-node-macaddress" if="has.hypervisor.node.macaddress">
+        <echo>NODE_MAC_ADDRESSES=&quot;${hypervisor.node.macaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_MAC_ADDRESSES=&quot;&quot;"
+            replace="NODE_MAC_ADDRESSES=&quot;${hypervisor.node.macaddress}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-useprivatebridgednetwork -->
+    <condition property="has.hypervisor.node.useprivatebridgednetwork">
+        <isset property="hypervisor.node.useprivatebridgednetwork" />
+    </condition>
+    <target name="set-hypervisor-node-useprivatebridgednetwork" if="has.hypervisor.node.useprivatebridgednetwork">
+        <echo>NODE_USE_PRIVATE_BRIDGED_NETWORK=&quot;${hypervisor.node.useprivatebridgednetwork}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_USE_PRIVATE_BRIDGED_NETWORK=&quot;&quot;"
+            replace="NODE_USE_PRIVATE_BRIDGED_NETWORK=&quot;${hypervisor.node.useprivatebridgednetwork}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-privatebridgedipaddress -->
+    <condition property="has.hypervisor.node.privatebridgedipaddress">
+        <isset property="hypervisor.node.privatebridgedipaddress" />
+    </condition>
+    <target name="set-hypervisor-node-privatebridgedipaddress" if="has.hypervisor.node.privatebridgedipaddress">
+        <echo>NODE_PRIVATE_BRIDGED_IP_ADDRESS=&quot;${hypervisor.node.privatebridgedipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_PRIVATE_BRIDGED_IP_ADDRESS=&quot;&quot;"
+            replace="NODE_PRIVATE_BRIDGED_IP_ADDRESS=&quot;${hypervisor.node.privatebridgedipaddress}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-privatebridgednetmask -->
+    <condition property="has.hypervisor.node.privatebridgednetmask">
+        <isset property="hypervisor.node.privatebridgednetmask" />
+    </condition>
+    <target name="set-hypervisor-node-privatebridgednetmask" if="has.hypervisor.node.privatebridgednetmask">
+        <echo>NODE_PRIVATE_BRIDGED_NETMASK=&quot;${hypervisor.node.privatebridgednetmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_PRIVATE_BRIDGED_NETMASK=&quot;&quot;"
+            replace="NODE_PRIVATE_BRIDGED_NETMASK=&quot;${hypervisor.node.privatebridgednetmask}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-privatebridgednetwork -->
+    <condition property="has.hypervisor.node.privatebridgednetwork">
+        <isset property="hypervisor.node.privatebridgednetwork" />
+    </condition>
+    <target name="set-hypervisor-node-privatebridgednetwork" if="has.hypervisor.node.privatebridgednetwork">
+        <echo>NODE_PRIVATE_BRIDGED_NETWORK=&quot;${hypervisor.node.privatebridgednetwork}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_PRIVATE_BRIDGED_NETWORK=&quot;&quot;"
+            replace="NODE_PRIVATE_BRIDGED_NETWORK=&quot;${hypervisor.node.privatebridgednetwork}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-hypervisor-node-privatebridgedbroadcast -->
+    <condition property="has.hypervisor.node.privatebridgedbroadcast">
+        <isset property="hypervisor.node.privatebridgedbroadcast" />
+    </condition>
+    <target name="set-hypervisor-node-privatebridgedbroadcast" if="has.hypervisor.node.privatebridgedbroadcast">
+        <echo>NODE_PRIVATE_BRIDGED_BROADCAST=&quot;${hypervisor.node.privatebridgedbroadcast}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^NODE_PRIVATE_BRIDGED_BROADCAST=&quot;&quot;"
+            replace="NODE_PRIVATE_BRIDGED_BROADCAST=&quot;${hypervisor.node.privatebridgedbroadcast}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+</project>

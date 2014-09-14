@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# set new PATH (same for the profile and crontab)
+NEW_PATH=$SHELLOS_DIR/bin:$SHELLOS_DIR/job
+[ -d $INSTALL_DIR/openssl/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssl/bin
+[ -d $INSTALL_DIR/openssh/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssh/bin
+[ -d $INSTALL_DIR/git/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/git/bin
+[ -d $INSTALL_DIR/openvpn/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openvpn/bin
+[ -d $INSTALL_DIR/geoip/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/geoip/bin
+[ -d $INSTALL_DIR/mysql/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mysql/bin
+[ -d $INSTALL_DIR/mongodb/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mongodb/bin
+[ -d $INSTALL_DIR/python/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/python/bin
+[ -d $INSTALL_DIR/postfix/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/postfix/bin
+[ -d $INSTALL_DIR/proftpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/proftpd/bin
+[ -d $INSTALL_DIR/httpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/httpd/bin
+[ -d $INSTALL_DIR/nginx/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/nginx/bin
+[ -d $INSTALL_DIR/php/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/php/bin
+[ -d $INSTALL_DIR/dovecot/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/dovecot/bin
+[ -d $INSTALL_DIR/openjdk/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openjdk/bin
+[ -d $INSTALL_DIR/ant/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/ant/bin
+[ -d $INSTALL_DIR/maven/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/maven/bin
+[ -d $INSTALL_DIR/tomcat/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/tomcat/bin
+[ -d $INSTALL_DIR/nodejs/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/nodejs/bin
+[ -d $INSTALL_DIR/ruby/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/ruby/bin
+[ -d /opt/e17/bin ] && NEW_PATH=$NEW_PATH:/opt/e17/bin
+NEW_PATH=$NEW_PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+##
+## conf/.profile
+##
+
+cat << EOF > $SHELLOS_DIR/conf/.profile
+# paths
+export INSTALL_DIR=$INSTALL_DIR
+export SHELLOS_DIR=$SHELLOS_DIR
+export PATH=$NEW_PATH
+
+# settings
+export TERM=xterm
+export SHELL=/bin/bash
+export EDITOR=vim
+export MAILTO="$ADMIN_MAIL"
+
+# shellos
+export OWNER="$OWNER"
+if [[ \$- == *i* ]]; then
+    source \$SHELLOS_DIR/lib/base
+    source \$SHELLOS_DIR/lib/aliases
+fi
+
+# enlightenment
+export PYTHONPATH="/opt/e17/lib/python2.7/site-packages"
+export LD_LIBRARY_PATH="/opt/e17/lib"
+EOF
+if [ "$OWNER" != "root" ]; then
+    chmod 644 $SHELLOS_DIR/conf/.profile
+else
+    chmod 600 $SHELLOS_DIR/conf/.profile
+fi
+
+##
+## ~/.profile
+##
+
+[ ! -f ~/.profile.old ] && cp ~/.profile ~/.profile.old
+cat << EOF > ~/.profile
+if [ "\$BASH" ]; then
+    if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+    fi
+fi
+
+mesg n
+
+source $SHELLOS_DIR/conf/.profile
+EOF
+
+if [ "$OWNER" != "root" ]; then
+    [ ! -f ~/.profile.old ] && cp ~/.profile ~/.profile.old
+    cp -fv ~/.profile  /home/$OWNER/.profile
+fi
+
+##
+## ~/.bash_history
+##
+
+[ "$DEVICE" == "server" ] && ln -sf /dev/null ~/.bash_history # do not save bash history
+
+exit 0
+

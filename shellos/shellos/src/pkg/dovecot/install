@@ -1,0 +1,204 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: Dovecot requires MySQL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/postfix/bin/postfix ]; then
+    echo "Error: Dovecot requires postfix!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="dovecot-$VER_DOVECOT"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://dovecot.org/releases/2.2/dovecot-$VER_DOVECOT.tar.gz"
+    file=dovecot-$VER_DOVECOT.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 3000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill dovecot
+
+# create user and group
+user_create "$DOVECOT_USER" $DOVECOT_UID "$DOVECOT_GROUP" $DOVECOT_GID
+user_create "$DOVECOT_NULL_USER" $DOVECOT_NULL_UID "$DOVECOT_NULL_GROUP" $DOVECOT_NULL_GID
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile Dovecot":
+    [ -d $INSTALL_DIR/dovecot ] && rm -rf $INSTALL_DIR/dovecot
+    tar -zxf dovecot-$VER_DOVECOT.tar.gz
+    cd dovecot-$VER_DOVECOT
+    CPPFLAGS="-I/usr/include" LDFLAGS="-L/lib -ldl" ./configure \
+        --prefix=$INSTALL_DIR/dovecot \
+        --sbindir=$INSTALL_DIR/dovecot/bin \
+        --with-zlib \
+        --with-ssl=openssl \
+        --with-ssldir=/usr \
+        --with-mysql \
+        --with-sql=plugin \
+    && make && make install && echo "Dovecot installed successfully!" \
+    && mkdir $INSTALL_DIR/dovecot/log
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/dovecot/bin
+    development_strip_symbols $INSTALL_DIR/dovecot/libexec/dovecot
+    development_strip_symbols $INSTALL_DIR/dovecot/lib/dovecot
+    echo "Create package:"
+    package_create $INSTALL_DIR/dovecot $pkg_name
+else
+    echo "Install Dovecot from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/dovecot/bin/dovecot ]; then
+    echo "Error: Dovecot has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/dovecot/bin/dovecot:"
+ldd $INSTALL_DIR/dovecot/bin/dovecot
+
+# create link to the log file
+ln -sfv /var/log/mail.log $INSTALL_DIR/dovecot/log/mail.log
+ln -sfv /var/log/mail.err $INSTALL_DIR/dovecot/log/mail.err
+
+# database access
+mail_db_name="mail"
+mail_db_user="mail"
+mail_db_pass=$(mysql_get_user_password $mail_db_user)
+
+# generate certificate
+generate_certificate "mail"
+
+mail_dir_esc=`echo "$MAIL_DIR" | sed 's/\//\\\\\//g'`
+certificates_dir_esc=`echo "$CERTIFICATES_DIR" | sed 's/\//\\\\\//g'`
+
+# config files
+cp -rf $INSTALL_DIR/dovecot/share/doc/dovecot/example-config/conf.d $INSTALL_DIR/dovecot/etc/dovecot
+cp $INSTALL_DIR/dovecot/share/doc/dovecot/example-config/dovecot.conf $INSTALL_DIR/dovecot/etc/dovecot
+cp $INSTALL_DIR/dovecot/share/doc/dovecot/example-config/dovecot-*.conf.ext $INSTALL_DIR/dovecot/etc/dovecot
+rm -rf $INSTALL_DIR/dovecot/share
+
+# dovecot.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/dovecot.conf $INSTALL_DIR/dovecot/etc/dovecot/dovecot.conf.old
+replace_in_file "#protocols = imap pop3 lmtp" "protocols = imap pop3" $INSTALL_DIR/dovecot/etc/dovecot/dovecot.conf
+# 10-auth.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-auth.conf $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-auth.conf.old
+replace_in_file "auth_mechanisms = plain" "auth_mechanisms = plain login" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-auth.conf
+replace_in_file '!include auth-system.conf.ext' '#!include auth-system.conf.ext' $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-auth.conf
+replace_in_file '#!include auth-sql.conf.ext' '!include auth-sql.conf.ext' $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-auth.conf
+# auth-sql.conf.ext
+mv $INSTALL_DIR/dovecot/etc/dovecot/conf.d/auth-sql.conf.ext $INSTALL_DIR/dovecot/etc/dovecot/conf.d/auth-sql.conf.ext.old
+cat << EOF > $INSTALL_DIR/dovecot/etc/dovecot/conf.d/auth-sql.conf.ext
+passdb {
+    driver = sql
+    args = $INSTALL_DIR/dovecot/etc/dovecot/dovecot-sql.conf.ext
+}
+userdb {
+    driver = static
+    args = uid=$POSTFIX_VMAIL_UID gid=$POSTFIX_VMAIL_GID home=$MAIL_DIR/%d/%n/Maildir allow_all_users=yes
+}
+EOF
+# 10-mail.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-mail.conf $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-mail.conf.old
+replace_in_file "#mail_location = " "mail_location = maildir:$mail_dir_esc\/%d\/%n\/Maildir" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-mail.conf
+replace_in_file "  inbox = yes" "  #inbox = yes" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-mail.conf
+cat << EOF >> $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-mail.conf
+
+##
+## custom
+##
+
+namespace {
+    type = private
+    location = maildir:$MAIL_DIR/%d/%n/Maildir
+    separator = .
+    prefix = INBOX.
+    inbox = yes
+}
+EOF
+# 10-master.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-master.conf $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-master.conf.old
+remove_from_file "  #unix_listener \/var\/spool\/postfix\/private\/auth {.*  #}\n" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-master.conf
+replace_in_file "  unix_listener auth-userdb {" "\n  unix_listener auth-userdb {\n    mode = 0600\n    user = $POSTFIX_VMAIL_USER\n    group = $POSTFIX_VMAIL_GROUP" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-master.conf
+replace_in_file "  # Postfix smtp-auth" "  unix_listener \/var\/spool\/postfix\/private\/auth {\n    mode = 0660\n    user = $POSTFIX_USER\n    group = $POSTFIX_GROUP\n  }" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-master.conf
+
+# 10-ssl.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-ssl.conf $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-ssl.conf.old
+replace_in_file "#ssl = yes" "ssl = yes" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-ssl.conf
+replace_in_file "ssl_cert = <\/etc\/ssl\/certs\/dovecot.pem" "ssl_cert = <$certificates_dir_esc\/mail.pem" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-ssl.conf
+replace_in_file "ssl_key = <\/etc\/ssl\/private\/dovecot.pem" "ssl_key = <$certificates_dir_esc\/mail.pem" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/10-ssl.conf
+# 15-lda.conf
+cp $INSTALL_DIR/dovecot/etc/dovecot/conf.d/15-lda.conf $INSTALL_DIR/dovecot/etc/dovecot/conf.d/15-lda.conf.old
+replace_in_file "  #mail_plugins = \$mail_plugins" "  #auth_socket_path = \/var\/run\/dovecot\/auth-master\n  postmaster_address = admin@$(hostname).$DOMAIN\n  #mail_plugins = sieve\n  #log_path = $mail_dir_esc\/dovecot-lda.err\n  #info_log_path = $mail_dir_esc\/dovecot-lda.log\n  syslog_facility = mail" $INSTALL_DIR/dovecot/etc/dovecot/conf.d/15-lda.conf
+# dovecot-sql.conf.ext
+cp $INSTALL_DIR/dovecot/etc/dovecot/dovecot-sql.conf.ext $INSTALL_DIR/dovecot/etc/dovecot/dovecot-sql.conf.ext.old
+cat << EOF >> $INSTALL_DIR/dovecot/etc/dovecot/dovecot-sql.conf.ext
+
+##
+## custom
+##
+
+driver = mysql
+connect = host=$INSTALL_DIR/mysql/log/mysql.sock dbname=$mail_db_name user=$mail_db_user password=$mail_db_pass
+default_pass_scheme = PLAIN
+password_query = SELECT email as user, password FROM users WHERE email='%u';
+EOF
+
+mkdir -p /var/spool/postfix/private
+
+# postfix master.cf
+cat << EOF >> $INSTALL_DIR/postfix/conf/master.cf
+dovecot unix - n n - - pipe
+  flags=DRhu user=$POSTFIX_VMAIL_USER:$POSTFIX_VMAIL_GROUP argv=$INSTALL_DIR/dovecot/libexec/dovecot/dovecot-lda -f \${sender} -d \${recipient}
+EOF
+# postfix main.cf
+$INSTALL_DIR/postfix/bin/postconf -e virtual_transport=dovecot
+$INSTALL_DIR/postfix/bin/postconf -e dovecot_destination_recipient_limit=1
+$INSTALL_DIR/postfix/bin/postconf -e mailbox_command=$INSTALL_DIR/dovecot/libexec/dovecot/dovecot-lda
+
+# set files permission
+chmod 755 $INSTALL_DIR/dovecot/bin
+chmod 555 $INSTALL_DIR/dovecot/bin/*
+chmod 400 $INSTALL_DIR/dovecot/etc/dovecot/dovecot-sql.conf.ext
+chown $POSTFIX_VMAIL_USER:$POSTFIX_VMAIL_GROUP $INSTALL_DIR/dovecot/libexec/dovecot/dovecot-lda
+
+##
+## post install
+##
+
+[ -f dovecot-${VER_DOVECOT}${PACKAGE_SUFFIX} ] && rm dovecot-${VER_DOVECOT}${PACKAGE_SUFFIX}
+[ -f dovecot-$VER_DOVECOT.tar.gz ] && rm dovecot-$VER_DOVECOT.tar.gz
+[ -d dovecot-$VER_DOVECOT ] && rm -rf dovecot-$VER_DOVECOT
+
+# save package version
+package_add_version "dovecot" "$VER_DOVECOT"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/dovecot/bin
+hashes_add_dir $INSTALL_DIR/dovecot/lib
+hashes_add_dir $INSTALL_DIR/dovecot/libexec
+
+exit 0
+

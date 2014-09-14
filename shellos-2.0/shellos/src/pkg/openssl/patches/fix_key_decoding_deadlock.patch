@@ -1,0 +1,36 @@
+From eeca72f71ef0b679ba4314e6e9e6b74e14ca1f7c Mon Sep 17 00:00:00 2001
+From: "Dr. Stephen Henson" <steve@openssl.org>
+Date: Fri, 11 May 2012 13:52:46 +0000
+Subject: [PATCH] PR: 2813 Reported by: Constantine Sapuntzakis
+ <csapuntz@gmail.com>
+
+Fix possible deadlock when decoding public keys.
+---
+ CHANGES                |    3 +++
+ crypto/asn1/x_pubkey.c |    5 ++++-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/crypto/asn1/x_pubkey.c b/crypto/asn1/x_pubkey.c
+index 627ec87..b649e1f 100644
+--- a/crypto/asn1/x_pubkey.c
++++ b/crypto/asn1/x_pubkey.c
+@@ -175,12 +175,15 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
+ 	CRYPTO_w_lock(CRYPTO_LOCK_EVP_PKEY);
+ 	if (key->pkey)
+ 		{
++		CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
+ 		EVP_PKEY_free(ret);
+ 		ret = key->pkey;
+ 		}
+ 	else
++		{
+ 		key->pkey = ret;
+-	CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
++		CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
++		}
+ 	CRYPTO_add(&ret->references, 1, CRYPTO_LOCK_EVP_PKEY);
+ 
+ 	return ret;
+-- 
+1.7.9.5
+

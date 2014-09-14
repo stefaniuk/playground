@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ -x $CMD_OPENSSH ]; then
+    [ -f /etc/init/ssh.conf ] && mv /etc/init/ssh.conf /etc/init/ssh.conf.disabled
+    [ -x /usr/sbin/sshd ] && mv /usr/sbin/sshd /usr/sbin/sshd.disabled
+fi
+
+exit 0
+

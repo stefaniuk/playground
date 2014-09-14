@@ -1,0 +1,76 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="ruby-$VER_RUBY"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://ftp.ruby-lang.org/pub/ruby/2.0/ruby-$VER_RUBY.tar.gz"
+    file=ruby-$VER_RUBY.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 10000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile ruby:"
+    [ -d $INSTALL_DIR/ruby ] && rm -rf $INSTALL_DIR/ruby
+    tar -zxf ruby-$VER_RUBY.tar.gz
+    cd ruby-$VER_RUBY
+    ./configure \
+        --prefix=$INSTALL_DIR/ruby \
+    && make && make install && echo "ruby installed successfully!" \
+    && rm -rfv $INSTALL_DIR/ruby/share
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/ruby/bin
+    development_strip_symbols $INSTALL_DIR/ruby/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/ruby $pkg_name
+else
+    echo "Install ruby from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/ruby/bin/ruby ]; then
+    echo "Error: ruby has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/ruby/bin/ruby:"
+ldd $INSTALL_DIR/ruby/bin/ruby
+
+# TODO: http://rubyonrails.org/download
+
+# set files permission
+chown -R root:root $INSTALL_DIR/ruby
+
+##
+## post install
+##
+
+[ -f ruby-$VER_RUBY.tar.gz ] && rm ruby-$VER_RUBY.tar.gz
+[ -d ruby-$VER_RUBY ] && rm -rf ruby-$VER_RUBY
+
+# save package version
+package_add_version "ruby" "$VER_RUBY"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/ruby/bin
+hashes_add_dir $INSTALL_DIR/ruby/lib
+
+exit 0
+

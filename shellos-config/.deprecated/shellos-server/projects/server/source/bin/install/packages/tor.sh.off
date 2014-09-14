@@ -1,0 +1,84 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+TOR_USER="tor"
+TOR_GROUP="tor"
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/libevent/lib/libevent.so ]; then
+    echo "Error: Tor requires libevent!"
+    exit 1
+fi
+
+##
+## download
+##
+
+URL="https://www.torproject.org/dist/tor-$TOR_VERSION.tar.gz"
+FILE=tor-$TOR_VERSION.tar.gz
+RESULT=$(download_file $URL $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+##
+## install
+##
+
+# create user and group
+user_create "$TOR_USER" 610 "$TOR_GROUP" 610
+
+echo "Installing Tor":
+[ -d $INSTALL_DIR/tor ] && rm -rf $INSTALL_DIR/tor
+tar -zxf tor-$TOR_VERSION.tar.gz
+cd tor-$TOR_VERSION
+./configure \
+    --prefix=$INSTALL_DIR/tor \
+    --with-tor-user=$TOR_USER \
+    --with-tor-group=$TOR_GROUP \
+    --with-zlib-dir=$INSTALL_DIR/zlib \
+    --with-openssl-dir=$INSTALL_DIR/openssl \
+    --with-libevent-dir=$INSTALL_DIR/libevent \
+&& make && make install && echo "Tor installed successfully!"
+cd ..
+
+# check
+if [ ! -f $INSTALL_DIR/tor/bin/tor ]; then
+    echo "Error: Tor has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/tor/bin
+
+echo "Shared library dependencies for $INSTALL_DIR/tor/bin/tor:"
+ldd $INSTALL_DIR/tor/bin/tor
+
+##
+## post install
+##
+
+[ -f tor-$TOR_VERSION.tar.gz ] && rm tor-$TOR_VERSION.tar.gz
+[ -d tor-$TOR_VERSION ] && rm -rf tor-$TOR_VERSION
+
+# log event
+logger -p local0.notice -t host4ge "tor $TOR_VERSION installed successfully"
+
+# save package version
+package_add_version "tor" "$TOR_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/tor/bin
+
+exit 0

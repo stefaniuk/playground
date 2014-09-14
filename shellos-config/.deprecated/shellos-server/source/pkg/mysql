@@ -1,0 +1,246 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: MySQL requires zlib!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+    echo "Error: MySQL requires OpenSSL!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="mysql-$MYSQL_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://dev.mysql.com/get/Downloads/MySQL-5.5/mysql-$MYSQL_VERSION.tar.gz/from/http://www.mirrorservice.org/sites/ftp.mysql.com/"
+    file=mysql-$MYSQL_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 20000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill mysql
+
+# create user and group
+user_create "$MYSQL_USER" $MYSQL_UID "$MYSQL_GROUP" $MYSQL_GID
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile MySQL:"
+    [ -d $INSTALL_DIR/mysql ] && rm -rf $INSTALL_DIR/mysql
+    tar -zxf mysql-$MYSQL_VERSION.tar.gz
+    cd mysql-$MYSQL_VERSION
+    replace_in_file "USERNAME_CHAR_LENGTH 16" "USERNAME_CHAR_LENGTH 32" ./include/mysql_com.h
+    replace_in_file "MYSQL_USERNAME_LENGTH 48" "MYSQL_USERNAME_LENGTH 96" ./include/mysql/plugin_auth_common.h
+    replace_in_file "char authenticated_as\[48 +1\];" "char authenticated_as\[96 + 1\];" ./include/mysql/plugin_auth.h.pp
+    cmake . \
+        -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR/mysql \
+        -DMYSQL_DATADIR=$INSTALL_DIR/mysql/data \
+        -DSYSCONFDIR=$INSTALL_DIR/mysql/conf \
+        -DMYSQL_UNIX_ADDR=$INSTALL_DIR/mysql/log/mysql.sock \
+        -DMYSQL_TCP_PORT=$MYSQL_PORT \
+        -DWITH_EXTRA_CHARSETS=all \
+        -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+        -DWITH_SSL=system \
+        -DWITH_ZLIB=system \
+        -DDEFAULT_CHARSET=$MYSQL_DEFAULT_CHARSET -DDEFAULT_COLLATION=$MYSQL_DEFAULT_COLLATION \
+    && make && make install && echo "MySQL installed successfully!" \
+    && mkdir $INSTALL_DIR/mysql/{conf,log} \
+    && cp $INSTALL_DIR/mysql/support-files/mysql.server $INSTALL_DIR/mysql/bin \
+    && rm -rf $INSTALL_DIR/mysql/{data/test,docs,man,mysql-test,sql-bench} \
+    && rm -f $INSTALL_DIR/mysql/{COPYING,INSTALL-BINARY,README} \
+    && replace_in_file "logger -t '\\\$syslog_tag_mysqld' -p daemon.error" "$HOST4GE_DIR_ESC\/bin\/log-mysql.pl info" $INSTALL_DIR/mysql/bin/mysqld_safe \
+    && replace_in_file "syslog_tag_mysqld=mysqld" "syslog_tag_mysqld=mysql" $INSTALL_DIR/mysql/bin/mysqld_safe \
+    && replace_in_file "syslog_tag_mysqld_safe=mysqld_safe" "syslog_tag_mysqld_safe=mysql" $INSTALL_DIR/mysql/bin/mysqld_safe \
+    && replace_in_file "daemon.notice" "local3.info" $INSTALL_DIR/mysql/bin/mysqld_safe \
+    && replace_in_file "daemon.error" "local3.err" $INSTALL_DIR/mysql/bin/mysqld_safe
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/mysql/bin
+    development_strip_symbols $INSTALL_DIR/mysql/lib
+    development_strip_symbols $INSTALL_DIR/mysql/lib/plugin
+    echo "Create package:"
+    package_create $INSTALL_DIR/mysql $pkg_name
+else
+    echo "Install MySQL from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: MySQL has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# create link to mysql_config
+ln -s $INSTALL_DIR/mysql/bin/mysql_config /bin/
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/mysql/lib
+
+echo "Copy includes:"
+rm -rf /usr/include/mysql
+cp -rv $INSTALL_DIR/mysql/include /usr/include/mysql
+rm -rfv /usr/include/mysql/mysql
+
+echo "Shared library dependencies for $INSTALL_DIR/mysql/bin/mysqld:"
+ldd $INSTALL_DIR/mysql/bin/mysqld
+echo "Shared library dependencies for $INSTALL_DIR/mysql/bin/mysql:"
+ldd $INSTALL_DIR/mysql/bin/mysql
+
+# create links to the log files
+ln -sfv /var/log/mysql.log $INSTALL_DIR/mysql/log/mysql.log
+ln -sfv /var/log/mysql.err $INSTALL_DIR/mysql/log/mysql.err
+
+# my.cnf
+cat << EOF > $INSTALL_DIR/mysql/conf/my.cnf
+[client]
+port        = 3306
+socket      = $INSTALL_DIR/mysql/log/mysql.sock
+
+[mysqld]
+server-id   = 1
+port        = 3306
+socket      = $INSTALL_DIR/mysql/log/mysql.sock
+pid-file    = $INSTALL_DIR/mysql/log/mysql.pid
+
+character_set_server = $MYSQL_DEFAULT_CHARSET
+collation_server = $MYSQL_DEFAULT_COLLATION
+
+max_allowed_packet = 4M
+key_buffer_size = 256K
+net_buffer_length = 2K
+read_buffer_size = 128K
+read_rnd_buffer_size = 256K
+sort_buffer_size = 64K
+table_open_cache = 8
+table_cache = 8
+
+thread_cache_size = 8
+thread_stack = 256K
+
+query_cache_type = ON
+query_cache_size = 16M
+
+skip-character-set-client-handshake
+skip-external-locking
+
+innodb_additional_mem_pool_size = 2M
+innodb_buffer_pool_size = 16M
+innodb_log_buffer_size = 8M
+innodb_log_file_size = 5M
+
+innodb_data_file_path = ibdata1:10M:autoextend
+innodb_data_home_dir = $INSTALL_DIR/mysql/data
+innodb_log_group_home_dir = $INSTALL_DIR/mysql/data
+
+innodb_flush_log_at_trx_commit = 1
+
+slow-query-log = ON
+slow_query_log_file = $INSTALL_DIR/mysql/log/mysql-slow-query.log
+long_query_time = 10
+log-slow-admin-statements
+
+[mysqld_safe]
+syslog
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+
+[myisamchk]
+key_buffer_size = 8M
+sort_buffer_size = 8M
+
+[mysqlhotcopy]
+interactive-timeout
+EOF
+
+# innodb memory usage:
+# innodb_buffer_pool_size + innodb_log_buffer_size + innodb_additional_mem_pool_size + 812 / 16384 * innodb_buffer_pool_size + OS_THREADS * 368
+# 16 + 8 + 2 + 0.8 + 3.5 = 30.3M
+
+# SEE:
+#   http://dev.mysql.com/doc/refman/5.5/en/server-system-variables.html
+#   http://dev.mysql.com/doc/refman/5.5/en/memory-use.html
+#   http://dev.mysql.com/doc/refman/5.5/en/innodb-parameters.html
+#   http://www.mysqlperformanceblog.com/2006/05/30/innodb-memory-usage/
+#   https://github.com/rackerhacker/MySQLTuner-perl
+
+# prepare database server
+chown -R $MYSQL_USER:$MYSQL_GROUP $INSTALL_DIR/mysql
+chmod +x $INSTALL_DIR/mysql/bin/{mysqld_safe,mysql.server}
+cd $INSTALL_DIR/mysql; ./scripts/mysql_install_db --user=$MYSQL_USER; cd - > /dev/null 2>&1
+db_pass=$(random 32)
+mysql_add_user_password "root" "$db_pass"
+rm -rf $INSTALL_DIR/mysql/data/test
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+echo "use mysql; delete from db;" | $INSTALL_DIR/mysql/bin/mysql --user=root
+sleep 1
+echo "use mysql; delete from user where user <> 'root' or host <> 'localhost';" | $INSTALL_DIR/mysql/bin/mysql --user=root
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user=root password $db_pass
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user=root --password=$db_pass shutdown
+sleep 1
+db_pass=
+
+# set files permission
+chown -R root:root $INSTALL_DIR/mysql
+chown -R $MYSQL_USER:$MYSQL_GROUP $INSTALL_DIR/mysql/{data,log}
+chmod 755 $INSTALL_DIR/mysql/bin/*
+chmod 700 $INSTALL_DIR/mysql/data/{,mysql}
+chmod 755 $INSTALL_DIR/mysql/log
+
+##
+## info
+##
+
+echo -e "\n\n *** MySQL variables ***\n"
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+echo "show global variables;" | $INSTALL_DIR/mysql/bin/mysql --user=root --password=$db_pass
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user=root --password=$db_pass shutdown
+sleep 1
+db_pass=
+
+##
+## post install
+##
+
+[ -f mysql-${MYSQL_VERSION}${PACKAGE_SUFFIX} ] && rm mysql-${MYSQL_VERSION}${PACKAGE_SUFFIX}
+[ -f mysql-$MYSQL_VERSION.tar.gz ] && rm mysql-$MYSQL_VERSION.tar.gz
+[ -d mysql-$MYSQL_VERSION ] && rm -rf mysql-$MYSQL_VERSION
+
+# save package version
+package_add_version "mysql" "$MYSQL_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/mysql/bin
+hashes_add_dir $INSTALL_DIR/mysql/lib
+
+exit 0

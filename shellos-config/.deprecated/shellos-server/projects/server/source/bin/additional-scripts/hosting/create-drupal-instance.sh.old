@@ -1,0 +1,202 @@
+#!/bin/bash
+#
+# File: create-drupal-instance.sh
+#
+# Description: Creates Drupal instance (for internal use only).
+#
+# Usage:
+#
+#   create-drupal-instance.sh \
+#       --user <user> \
+#       --password <password> \
+#       --domains <domains>
+
+##
+## includes
+##
+
+source $HOST4GE_DIR/conf/includes.sh
+
+##
+## variables
+##
+
+USER=
+PASSWORD=
+DOMAINS=
+
+FORCE="Y"
+
+CURRENT_DIR=`pwd`
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --user)     shift && USER=$1
+                    ;;
+        --password) shift && PASSWORD=$1
+                    ;;
+        --domains)  shift && DOMAINS="$1"
+                    ;;
+    esac
+    shift
+done
+
+DIR="$INSTALL_DIR/hosting/${TYPE}s/$USER"
+
+FTP_NAME=$USER
+FTP_PASS=`get_random_string 32`
+FTP_DIR=$DIR/usr/local
+
+##
+## prerequisits
+##
+
+# create user
+if [ `user_exists $USER` == "no" ] || [ "$FORCE" == "Y" ]; then
+    [ `user_exists $USER` == "yes" ] && userdel -f "$USER"
+    [ -d $DIR ] && rm -rf $DIR
+    # TODO: user passowrd
+    PASSWORD=`user_create.pl -u "$USER" -d "$DIR" -s`
+    mkdir $DIR/usr/local/domains; chown $USER:$USER $DIR/usr/local/domains
+    [ `ftp_account_exists $FTP_NAME` == "yes" ] && ftp_user_remove.pl -u $FTP_NAME
+    ftp_jail_user_create.pl -u $FTP_NAME -p $FTP_PASS -i `id -u $USER` -d $FTP_DIR
+fi
+
+# install drush
+if [ ! -d $DIR/usr/local/drush ] || [ "$FORCE" == "Y" ]; then
+    [ -d $DIR/usr/local/drush ] && rm -rf $DIR/usr/local/drush
+    install-drush.sh \
+        --user "$USER" \
+        --path $DIR/usr/local
+fi
+
+# install drupal
+if [ ! -d $DIR/usr/local/drupal ] || [ "$FORCE" == "Y" ]; then
+    [ -d $DIR/usr/local/drupal ] && rm -rf $DIR/usr/local/drupal
+    install-drupal.sh \
+        --user "$USER" \
+        --path $DIR/usr/local \
+        --drush-path $DIR/usr/local
+fi
+
+for DOMAIN_NAME in $DOMAINS; do
+
+##
+## variables
+##
+
+ADMIN_NAME="admin"
+ADMIN_PASS=`get_random_string 32`
+DATABASE_NAME=`sanitize $DOMAIN_NAME '_'`
+DATABASE_USER=`sanitize $DOMAIN_NAME '_'`
+DATABASE_PASS=`get_random_string 32`
+DATABASE_ROOT_PASS=`mysql_get_user_password root`
+
+
+##
+## check
+##
+
+# check if database exists
+if [ `mysql_database_exists $DATABASE_NAME` == "yes" ] && [ "$FORCE" == "N" ]; then
+    echo "Error: Database '$DATABASE_NAME' already exists!"
+    exit 1
+fi
+# check if directory exists
+if [ -d $DIR/usr/local/domains/$DOMAIN_NAME ] && [ "$FORCE" == "N" ]; then
+    echo "Error: Directory '$DIR/usr/local/domains/$DOMAIN_NAME' already exists!"
+    exit 1
+fi
+
+##
+## install
+##
+
+# install drupal site
+if [ ! -d $DIR/usr/local/domains/$DOMAIN_NAME ] || [ "$FORCE" == "Y" ]; then
+
+    [ `mysql_database_exists $DATABASE_NAME` == "yes" ] && mysql_drop_database $DATABASE_NAME
+
+    cd $DIR/usr/local/drupal
+    install-drupal-site.sh \
+        --drupal-path $DIR/usr/local \
+        --drush-path $DIR/usr/local \
+        --domain-path $DIR/usr/local/domains \
+        --domain $DOMAIN_NAME \
+        --user $USER \
+        --admin-name $ADMIN_NAME \
+        --admin-pass $ADMIN_PASS \
+        --db-name $DATABASE_NAME \
+        --db-user $DATABASE_USER \
+        --db-pass $DATABASE_PASS
+    cp -f $DIR/usr/local/drupal/sites/$DOMAIN_NAME/settings.php $DIR/usr/local/drupal/sites/default/settings.php
+
+    # clear
+    cd $DIR/usr/local/drupal
+    echo '1' | $DIR/usr/local/drush/drush --uri=http://$DOMAIN_NAME cache-clear
+    cat <<EOF | mysql --user="root" --password="$DATABASE_ROOT_PASS"
+use $DATABASE_NAME;
+delete from watchdog;
+EOF
+
+    # site document root
+    DOCUMENT_ROOT=$DIR/usr/local/domains/$DOMAIN_NAME
+
+    # add vhost (port 80)
+    STR=$(cat <<END_HEREDOC
+\tServerAlias www.$DOMAIN_NAME
+\tDocumentRoot $DOCUMENT_ROOT
+\t<Directory $DOCUMENT_ROOT>
+\t\tOptions Indexes FollowSymLinks
+\t\tAllowOverride All
+\t\tOrder deny,allow
+\t\tDeny from all
+\t</Directory>
+END_HEREDOC
+)
+    httpd_vhost_remove.pl -s "httpd" -t "$TYPE" -n "$USER" -i '*' -d "$DOMAIN_NAME" -p 80
+    httpd_vhost_create.pl -s "httpd" -t "$TYPE" -n "$USER" -i '*' -d "$DOMAIN_NAME" -p 80 -c "$STR"
+    # add vhost (port 443)
+    STR=$(cat <<END_HEREDOC
+\tDocumentRoot $DOCUMENT_ROOT
+\t<Directory $DOCUMENT_ROOT>
+\t\tOptions Indexes FollowSymLinks
+\t\tAllowOverride All
+\t\tOrder deny,allow
+\t\tDeny from all
+\t</Directory>
+\tSSLEngine on
+\tSSLCertificateFile /srv/openssl/certs/$DOMAIN_NAME.pem
+\tSSLCertificateKeyFile /srv/openssl/certs/$DOMAIN_NAME.key
+END_HEREDOC
+)
+    httpd_vhost_remove.pl -s "httpd" -t "$TYPE" -n "$USER" -i '*' -d "$DOMAIN_NAME" -p 443
+    httpd_vhost_create.pl -s "httpd" -t "$TYPE" -n "$USER" -i '*' -d "$DOMAIN_NAME" -p 443 -c "$STR"
+
+    # generate certificate
+    generate_certificate $DOMAIN_NAME
+
+    echo "------------------------------------------------------"
+    echo "System user:          $USER"
+    echo "System pass:          $PASSWORD"
+    echo "System directory:     $DIR"
+    echo "Domain name:          $DOMAIN_NAME"
+    echo "Drupal admin name:    $ADMIN_NAME"
+    echo "Drupal admin pass:    $ADMIN_PASS"
+    echo "Database name:        $DATABASE_NAME"
+    echo "Database user:        $DATABASE_USER"
+    echo "Database pass:        $DATABASE_PASS"
+    echo "FTP name:             $FTP_NAME"
+    echo "FTP pass:             $FTP_PASS"
+    echo "FTP directory:        $FTP_DIR"
+    echo "------------------------------------------------------"
+
+fi
+
+done
+
+exit 0

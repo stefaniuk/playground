@@ -1,0 +1,79 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="ImageMagick-$VER_IMAGEMAGICK"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-$VER_IMAGEMAGICK.tar.gz"
+    file=ImageMagick-$VER_IMAGEMAGICK.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 10000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile ImageMagick:"
+    [ -d $INSTALL_DIR/imagemagick ] && rm -rf $INSTALL_DIR/imagemagick
+    tar -zxf ImageMagick-$VER_IMAGEMAGICK.tar.gz
+    cd ImageMagick-$VER_IMAGEMAGICK
+    ./configure \
+        --prefix=$INSTALL_DIR/imagemagick \
+    && make && make install && echo "ImageMagick installed successfully!"
+    mv $INSTALL_DIR/imagemagick/include/$(ls -l $INSTALL_DIR/imagemagick/include | grep '^d' | awk '{ print $9 }') $INSTALL_DIR/imagemagick/include/ImageMagick
+    rm -rf $INSTALL_DIR/imagemagick/share/{doc,man}
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/imagemagick/bin
+    development_strip_symbols $INSTALL_DIR/imagemagick/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/imagemagick $pkg_name
+else
+    echo "Install ImageMagick from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/imagemagick/bin/convert ]; then
+    echo "Error: ImageMagick has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/imagemagick/lib
+
+echo "Copy includes:"
+cp -rfv $INSTALL_DIR/imagemagick/include/$(ls -l $INSTALL_DIR/imagemagick/include | grep '^d' | awk '{ print $9 }')/* /usr/include
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/imagemagick/lib/pkgconfig/* /usr/lib/pkgconfig
+
+##
+## post install
+##
+
+[ -f imagemagick-${VER_IMAGEMAGICK}${PACKAGE_SUFFIX} ] && rm imagemagick-${VER_IMAGEMAGICK}${PACKAGE_SUFFIX}
+[ -f ImageMagick-$VER_IMAGEMAGICK.tar.gz ] && rm ImageMagick-$VER_IMAGEMAGICK.tar.gz
+[ -d ImageMagick-$VER_IMAGEMAGICK ] && rm -rf ImageMagick-$VER_IMAGEMAGICK
+
+# save package version
+package_add_version "imagemagick" "$VER_IMAGEMAGICK"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/imagemagick/bin
+hashes_add_dir $INSTALL_DIR/imagemagick/lib
+
+exit 0
+

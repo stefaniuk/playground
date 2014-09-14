@@ -1,0 +1,173 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: Roundcube requires MySQL!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/httpd/bin/httpd ]; then
+    echo "Error: Roundcube requires Apache HTTPD Server!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/httpd/modules/libphp5.so ]; then
+    echo "Error: Roundcube requires PHP!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/dovecot/bin/dovecot ]; then
+    echo "Error: Roundcube requires Dovecot!"
+    exit 1
+fi
+
+##
+## download
+##
+
+url="http://downloads.sourceforge.net/project/roundcubemail/roundcubemail/$VER_ROUNDCUBE/roundcubemail-$VER_ROUNDCUBE.tar.gz"
+file=roundcubemail-$VER_ROUNDCUBE.tar.gz
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 3000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $FILE file!"
+    exit 1
+fi
+
+##
+## install
+##
+
+echo "Installing Roundcube:"
+[ -d $HOSTING_APPLICATIONS_DIR/roundcube ] && rm -rf $HOSTING_APPLICATIONS_DIR/roundcube
+mkdir -p $HOSTING_APPLICATIONS_DIR/roundcube
+tar -zxf roundcubemail-$VER_ROUNDCUBE.tar.gz -C $HOSTING_APPLICATIONS_DIR/roundcube
+mv $HOSTING_APPLICATIONS_DIR/roundcube/roundcubemail-$VER_ROUNDCUBE/* $HOSTING_APPLICATIONS_DIR/roundcube && rm -rf $HOSTING_APPLICATIONS_DIR/roundcube/roundcubemail-$VER_ROUNDCUBE
+rm -rfv $HOSTING_APPLICATIONS_DIR/roundcube/installer
+
+# check
+if [ ! -s $HOSTING_APPLICATIONS_DIR/roundcube/index.php ]; then
+    echo "Error: Roundcube has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# database user
+roundcube_db_name="roundcube"
+roundcube_db_user="roundcube"
+roundcube_db_pass=$(random 32)
+mysql_add_user_password "$roundcube_db_user" "$roundcube_db_pass"
+
+# localization
+roundcube_timezone="Europe/London"
+roundcube_language="en"
+if [ "$DEVICE_LOCATION" == "PL" ]; then
+    roundcube_timezone="Europe/Warsaw"
+    roundcube_language="pl"
+fi
+roundcube_timezone_esc=`echo "$roundcube_timezone" | sed 's/\//\\\\\//g'`
+
+# config files
+cp $HOSTING_APPLICATIONS_DIR/roundcube/config/db.inc.php.dist $HOSTING_APPLICATIONS_DIR/roundcube/config/db.inc.php
+replace_in_file "mysql:\/\/roundcube:pass@localhost\/roundcubemail" "mysql:\/\/$roundcube_db_user:$roundcube_db_pass@localhost\/$roundcube_db_name" $HOSTING_APPLICATIONS_DIR/roundcube/config/db.inc.php
+cp $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php.dist $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['login_autocomplete'\] = 0;" "\$rcmail_config\['login_autocomplete'\] = 2;" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['create_default_folders'\] = false;" "\$rcmail_config\['create_default_folders'\] = true;" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['default_charset'\] = 'ISO-8859-1';" "\$rcmail_config\['default_charset'\] = 'UTF-8';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['default_host'\] = '';" "\$rcmail_config\['default_host'\] = '127.0.0.1';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['smtp_server'\] = '';" "\$rcmail_config\['smtp_server'\] = '127.0.0.1';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['force_https'\] = false;" "\$rcmail_config\['force_https'\] = true;" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['language'\] = null;" "\$rcmail_config\['language'\] = '$roundcube_language';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['message_cache_lifetime'\] = '10d';" "\$rcmail_config\['message_cache_lifetime'\] = '30m';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['password_charset'\] = 'ISO-8859-1';" "\$rcmail_config\['password_charset'\] = 'UTF-8';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+replace_in_file "\$rcmail_config\['timezone'\] = 'auto';" "\$rcmail_config\['timezone'\] = '$roundcube_timezone_esc';" $HOSTING_APPLICATIONS_DIR/roundcube/config/main.inc.php
+
+ip_address=$IP_ADDRESS
+vhost_domain="roundcube"
+vhost_domain_full=${vhost_domain}.$(hostname).$DOMAIN
+if [ "$DOMAIN" == "localhost" ]; then
+    ip_address='*'
+    vhost_domain_full=${vhost_domain}.localhost
+fi
+# config vhost 80
+str=$(cat <<HEREDOC
+    Redirect permanent / https://${vhost_domain_full}/
+HEREDOC
+)
+$SHELLOS_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "application" -n "${vhost_domain}" -i "${ip_address}" -d "${vhost_domain_full}" -p 80 -c "$str"
+# config vhost 443
+str=$(cat <<HEREDOC
+    DocumentRoot /$HOSTING_APPLICATIONS_RELATIVE_DIR/${vhost_domain}
+    <Directory /$HOSTING_APPLICATIONS_RELATIVE_DIR/${vhost_domain}>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+        #Require ip 192.168.1.0/255.255.255.0
+        #Require ip $VPN_NETWORK/$VPN_NETMASK
+    </Directory>
+    SSLEngine on
+    SSLCertificateFile $CERTIFICATES_DIR/${vhost_domain_full}.pem
+    SSLCertificateKeyFile $CERTIFICATES_DIR/${vhost_domain_full}.key
+HEREDOC
+)
+$SHELLOS_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "application" -n "${vhost_domain}" -i "${ip_address}" -d "${vhost_domain_full}" -p 443 -c "$str"
+
+# add vhost to hosts file
+network_add_host 127.0.0.1 ${vhost_domain_full}
+
+# generate server certificate
+generate_certificate "${vhost_domain_full}"
+
+# get mysql root password
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+[ $(mysql_database_exists $roundcube_db_name) == "yes" ] && mysql_drop_database $roundcube_db_name
+cat << EOF | $INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass"
+CREATE DATABASE $roundcube_db_name;
+GRANT ALL PRIVILEGES ON $roundcube_db_name.* TO $roundcube_db_user@localhost IDENTIFIED BY '$roundcube_db_pass';
+EOF
+$INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass" $roundcube_db_name < $HOSTING_APPLICATIONS_DIR/roundcube/SQL/mysql.initial.sql
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user="root" --password="$db_pass" shutdown
+sleep 1
+db_pass=
+
+# clean up
+rm -rfv $HOSTING_APPLICATIONS_DIR/roundcube/SQL
+
+# set files permission
+chown -R root:root $HOSTING_APPLICATIONS_DIR/roundcube
+chown $HTTPD_USER:$HTTPD_GROUP $HOSTING_APPLICATIONS_DIR/roundcube/{config,logs,temp}
+chmod 700 $HOSTING_APPLICATIONS_DIR/roundcube/{config,logs,temp}
+chown -R $HTTPD_USER:$HTTPD_GROUP $HOSTING_APPLICATIONS_DIR/roundcube/config/*
+chmod 400 $HOSTING_APPLICATIONS_DIR/roundcube/config/*
+
+##
+## post install
+##
+
+[ -f roundcubemail-$VER_ROUNDCUBE.tar.gz ] && rm roundcubemail-$VER_ROUNDCUBE.tar.gz
+
+# save package version
+package_add_version "roundcube" "$VER_ROUNDCUBE"
+
+# version control
+cd $HOSTING_APPLICATIONS_DIR/roundcube
+$CMD_GIT init && chmod 700 .git
+$CMD_GIT config user.name "$ADMIN_NAME"
+$CMD_GIT config user.email "$ADMIN_MAIL"
+$CMD_GIT config core.autocrlf false
+$CMD_GIT config core.filemode true
+$CMD_GIT add .
+$CMD_GIT commit -m "initial commit"
+repositories_add_dir $PWD
+
+exit 0
+

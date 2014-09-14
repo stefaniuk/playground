@@ -1,0 +1,17 @@
+#!/bin/bash
+
+file=jdk-${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-ea-bin-${VER_OPENJDK_BUILD}-linux-x64-${VER_OPENJDK_DATE}.tar.gz
+
+# extract
+[ -d $INSTALL_DIR/openjdk ] && rm -rf $INSTALL_DIR/openjdk
+tar -zxf $file
+mv jdk1.${VER_OPENJDK_NUMBER}.0_${VER_OPENJDK_UPDATE} $INSTALL_DIR/openjdk
+rm -rf $INSTALL_DIR/openjdk/{man,src.zip}
+
+# check
+if [ ! -x $INSTALL_DIR/openjdk/bin/javac ]; then
+    echo "Error: OpenJDK has NOT been installed successfully!"
+    exit 1
+fi
+
+exit 0

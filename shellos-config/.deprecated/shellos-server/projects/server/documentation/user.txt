@@ -1,0 +1,23 @@
+Host4ge Server Account (Type 1)
+===============================
+
+A user account is created in the system. Each account should meet below criteria:
+
+    - same user name and group name
+    - same uid and gid
+    - strong password
+        https://help.ubuntu.com/8.04/serverguide/C/user-management.html
+    - status, can be active or not active
+    - Unix like directory structure
+    - filesystem quota
+        http://manpages.ubuntu.com/manpages/jaunty/man8/edquota.8.html
+        http://manpages.ubuntu.com/manpages/jaunty/man1/quota.1.html
+        http://manpages.ubuntu.com/manpages/jaunty/man8/quotacheck.8.html
+        http://manpages.ubuntu.com/manpages/dapper/man8/quotaon.8.html
+    - permission to login to the system using scp or sftp
+
+
+
+
+http://beej.us/guide/bgipc/output/html/singlepage/bgipc.html
+http://perldoc.perl.org/perlipc.html#Bidirectional-Communication-with-Yourself

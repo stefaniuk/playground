@@ -1,0 +1,72 @@
+#!/bin/bash
+
+chmod +x /srv/shellos/sbin/install && /srv/shellos/sbin/install \
+    --owner root \
+    --lzo \
+    --zlib \
+    --openssl \
+    --openssh \
+    --git \
+    --geoip \
+    --mysql \
+    --perl \
+    --postfix \
+    --proftpd \
+    --libiconv \
+    --imagemagick \
+    --httpd \
+    --httpd-mod-geoip \
+    --php \
+    --php-fpm \
+    --php-mod-geoip \
+    --php-mod-imagick \
+    --dovecot \
+    --phpmyadmin \
+    --roundcube \
+    --shellos \
+    --notify \
+    --reboot \
+    $@
+
+exit 0
+
+#chmod +x /srv/shellos/sbin/install && /srv/shellos/sbin/install \
+#    --owner root \
+#    --lzo \
+#    --zlib \
+#    --openssl \
+#    --openssh \
+#    --git \
+#    --openvpn \
+#    --geoip \
+#    --mysql \
+#    --mongodb \
+#    --perl \
+#    --python \
+#    --postfix \
+#    --proftpd \
+#    --libiconv \
+#    --imagemagick \
+#    --httpd \
+#    --httpd-mod-geoip \
+#    --nginx \
+#    --php \
+#    --php-fpm \
+#    --php-mod-geoip \
+#    --php-mod-imagick \
+#    --dovecot \
+#    --openjdk \
+#    --ant \
+#    --maven \
+#    --tomcat \
+#    --nodejs \
+#    --ruby \
+#    --phpmyadmin \
+#    --roundcube \
+#    --shellos \
+#    --notify \
+#    --reboot \
+#    $@
+#
+#exit 0
+

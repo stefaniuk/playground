@@ -1,0 +1,20 @@
+#!/bin/bash
+
+file=jdk-${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-ea-bin-${VER_OPENJDK_BUILD}-linux-x64-${VER_OPENJDK_DATE}.tar.gz
+
+# set files permission
+chown -R root:root $INSTALL_DIR/openjdk
+
+# remove file
+[ -f $file ] && rm $file
+
+# save package version
+package_add_version "openjdk" "$VER_OPENJDK"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/openjdk/bin
+hashes_add_dir $INSTALL_DIR/openjdk/lib
+hashes_add_dir $INSTALL_DIR/openjdk/jre/bin
+hashes_add_dir $INSTALL_DIR/openjdk/jre/lib
+
+exit 0

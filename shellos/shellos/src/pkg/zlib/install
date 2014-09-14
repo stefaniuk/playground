@@ -1,0 +1,80 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="zlib-$VER_ZLIB"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.zlib.net/zlib-$VER_ZLIB.tar.gz"
+    file=zlib-$VER_ZLIB.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    if [ ! -d $INSTALL_DIR/zlib ]; then
+        echo "Compile zlib:"
+        tar -zxf zlib-$VER_ZLIB.tar.gz
+        cd zlib-$VER_ZLIB
+        ./configure \
+            --prefix=$INSTALL_DIR/zlib \
+        && make && make install && echo "zlib installed successfully!" \
+        && rm -rf $INSTALL_DIR/zlib/share
+        cd ..
+        echo "Create package:"
+        package_create $INSTALL_DIR/zlib $pkg_name
+    else
+        echo "zlib has already been installed successfully!"
+    fi
+else
+    echo "Install zlib from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: zlib has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# device specific configuration
+if [ -f $script_dir/../pkg/$package/config-${DIST}-${DEVICE} ]; then
+    chmod +x $script_dir/../pkg/$package/config-${DIST}-${DEVICE}
+    (. $script_dir/../pkg/$package/config-${DIST}-${DEVICE})
+fi
+
+echo "Shared library dependencies for $INSTALL_DIR/zlib/lib/libz.so:"
+ldd $INSTALL_DIR/zlib/lib/libz.so
+
+# set files permission
+chown -R root:root $INSTALL_DIR/zlib
+
+##
+## post install
+##
+
+[ -f zlib-${VER_ZLIB}${PACKAGE_SUFFIX} ] && rm zlib-${VER_ZLIB}${PACKAGE_SUFFIX}
+[ -f zlib-$VER_ZLIB.tar.gz ] && rm zlib-$VER_ZLIB.tar.gz
+[ -d zlib-$VER_ZLIB ] && rm -rf zlib-$VER_ZLIB
+
+# save package version
+package_add_version "zlib" "$VER_ZLIB"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/zlib/lib
+
+exit 0
+

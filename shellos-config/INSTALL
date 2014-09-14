@@ -1,0 +1,15 @@
+Download
+========
+
+scp /var/shellos/workspace/shellos/build/shellos-?.tar.gz root@192.168.1.?:/srv
+
+Full Installation
+=================
+
+INSTALL_DIR=/srv && SHELLOS_DIR=$INSTALL_DIR/shellos && shellos=$(ls $INSTALL_DIR/shellos*.tar.gz) && rm -rf $SHELLOS_DIR && mkdir $SHELLOS_DIR && cd /srv && tar zxf $shellos -C $SHELLOS_DIR && (source $SHELLOS_DIR/conf/variables; source $SHELLOS_DIR/lib/base; chmod +x $SHELLOS_DIR/sbin/install-${DEVICE} && $SHELLOS_DIR/sbin/install-${DEVICE}) 2>&1 | tee ~/shellos-all.log
+
+Install Package
+===============
+
+chmod +x /srv/shellos/sbin/install && /srv/shellos/sbin/install --do-not-configure --packages-force-compilation --package
+

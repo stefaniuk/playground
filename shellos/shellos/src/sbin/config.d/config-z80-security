@@ -1,0 +1,126 @@
+#!/bin/bash
+
+##
+## apparmor
+##
+
+# SEE: https://wiki.ubuntu.com/AppArmor
+# SEE: https://help.ubuntu.com/12.04/serverguide/apparmor.html
+# SEE: https://help.ubuntu.com/community/AppArmor
+# SEE: http://manpages.ubuntu.com/manpages/hardy/man5/apparmor.d.5.html
+
+service apparmor reload
+apparmor_status
+
+##
+## fail2ban
+##
+
+# stop fail2ban
+service fail2ban stop
+
+# remove files
+rm -fv /etc/logrotate.d/fail2ban
+rm -fv /var/log/fail2ban*
+
+# set syslog facility
+replace_in_file 'LOG_DAEMON' 'LOG_LOCAL7' /usr/share/fail2ban/server/server.py
+rm -fv /usr/share/fail2ban/server/server.pyc
+
+# fail2ban.conf
+[ ! -f /etc/fail2ban/fail2ban.conf.old ] && cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.conf.old
+cat << EOF > /etc/fail2ban/fail2ban.conf
+[Definition]
+
+loglevel = 3
+logtarget = SYSLOG
+syslog-target = /dev/log
+socket = /var/run/fail2ban/fail2ban.sock
+EOF
+
+# jail.local
+cat << EOF > /etc/fail2ban/jail.local
+[DEFAULT]
+
+ignoreip = 127.0.0.1
+bantime = 3600
+maxretry = 3
+
+backend = auto
+protocol = tcp
+banaction = iptables-multiport
+chain = INPUT
+mta = mail
+destemail = $ADMIN_MAIL
+
+action_ = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
+action_mw = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"] %(mta)s-whois[name=%(__name__)s, dest="%(destemail)s", protocol="%(protocol)s", chain="%(chain)s"]
+action_mwl = %(banaction)s[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"] %(mta)s-whois-lines[name=%(__name__)s, dest="%(destemail)s", logpath=%(logpath)s, chain="%(chain)s"]
+action = %(action_mwl)s
+
+[ssh]
+
+enabled = true
+port = $OPENSSH_PORT
+filter = sshd
+logpath = /var/log/openssh.log
+maxretry = 10
+
+[ssh-ddos]
+
+enabled  = true
+port = $OPENSSH_PORT
+filter = sshd-ddos
+logpath = /var/log/openssh.log
+maxretry = 10
+
+[postfix]
+
+enabled = true
+port = $POSTFIX_PORT
+filter = postfix
+logpath = /var/log/mail.log
+
+[proftpd]
+
+enabled = true
+port = ftp,ftp-data
+filter = proftpd
+logpath = /var/log/ftp.log
+maxretry = 6
+
+[apache]
+
+enabled = true
+port = http,https
+filter = apache-auth
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-multiport]
+
+enabled = true
+port = http,https
+filter = apache-auth
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-noscript]
+
+enabled = true
+port = http,https
+filter = apache-noscript
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-overflows]
+
+enabled = true
+port = http,https
+filter = apache-overflows
+logpath = /var/log/httpd.log
+maxretry = 2
+EOF
+
+exit 0
+

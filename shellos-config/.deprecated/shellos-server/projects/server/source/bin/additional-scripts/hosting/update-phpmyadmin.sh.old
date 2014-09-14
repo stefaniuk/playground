@@ -1,0 +1,46 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+PHPMYADMIN_VERSION=
+PHPMYADMIN_MYSQL_NAME=
+PHPMYADMIN_HTTPD_NAME=
+PHPMYADMIN_INSTALL_DIR=$INSTALL_DIR/hosting/applications/phpmyadmin
+PHPMYADMIN_SYSTEM_USER="phpmyadmin"
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --phpmyadmin)   shift && PHPMYADMIN_VERSION=$1
+                        shift && PHPMYADMIN_MYSQL_NAME=$1
+                        shift && PHPMYADMIN_HTTPD_NAME=$1
+                        ;;
+    esac
+    shift
+done
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/$PHPMYADMIN_MYSQL_NAME/bin/mysqld ]; then
+    echo "Error: phpMyAdmin requires MySQL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/$PHPMYADMIN_HTTPD_NAME/bin/httpd ]; then
+    echo "Error: phpMyAdmin requires Apache HTTPD Server!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/$PHPMYADMIN_HTTPD_NAME/modules/libphp5.so ]; then
+    echo "Error: phpMyAdmin requires PHP!"
+    exit 1
+fi
+
+# TODO
+
+exit 0

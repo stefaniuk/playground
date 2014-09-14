@@ -1,0 +1,82 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+host4ge_db_name="host4ge"
+host4ge_db_user="host4ge"
+host4ge_db_pass=$(random 32)
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: Host4ge requires MySQL!"
+    exit 1
+fi
+
+##
+## install
+##
+
+# create user and group
+user_create "$HOST4GE_USER" $HOST4GE_UID "$HOST4GE_GROUP" $HOST4GE_GID
+
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+
+# prepare database
+$INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass" < $HOST4GE_DIR/pkg/resources/host4ge/host4ge.sql
+sleep 1
+if [ -f $HOST4GE_DIR/pkg/resources/host4ge/host4ge.$ROLE_NAME.sql ]; then
+    $INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass" < $HOST4GE_DIR/pkg/resources/host4ge/host4ge.$ROLE_NAME.sql
+fi
+sleep 1
+cat <<EOF | $INSTALL_DIR/mysql/bin/mysql --user=root --password=$db_pass
+GRANT ALL PRIVILEGES ON $host4ge_db_name.* TO $host4ge_db_user@localhost IDENTIFIED BY '$host4ge_db_pass';
+EOF
+sleep 1
+
+# create admin mailbox
+#$HOST4GE_DIR/bin/mail_account_create.pl -m "admin@$(hostname).$DOMAIN" -p "$(random 32)"
+#sleep 1
+
+$INSTALL_DIR/mysql/bin/mysqladmin --user="root" --password="$db_pass" shutdown
+sleep 1
+db_pass=
+
+##
+## configure
+##
+
+# create links to the log files
+ln -sfv /var/log/host4ge.log $HOST4GE_DIR/log/host4ge.log
+ln -sfv /var/log/host4ge.err $HOST4GE_DIR/log/host4ge.err
+
+mysql_add_user_password "$host4ge_db_user" "$host4ge_db_pass"
+host4ge_conf_set_option "db_name" "$host4ge_db_name"
+host4ge_conf_set_option "db_user" "$host4ge_db_user"
+host4ge_conf_set_option "db_pass" "$host4ge_db_pass"
+
+# set files permission
+chown -R $HOST4GE_USER:$HOST4GE_GROUP $TMP_DIR
+chmod 700 $TMP_DIR
+
+##
+## post install
+##
+
+# save package version
+package_add_version "host4ge" "${HOST4GE_VERSION}-${ROLE_NAME}"
+
+# add directories to create hashes
+hashes_add_dir $HOST4GE_DIR/bin
+hashes_add_dir $HOST4GE_DIR/job
+hashes_add_dir $HOST4GE_DIR/lib
+hashes_add_dir $HOST4GE_DIR/pkg
+hashes_add_dir $HOST4GE_DIR/sbin
+
+exit 0

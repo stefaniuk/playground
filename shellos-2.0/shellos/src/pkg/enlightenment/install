@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# install compilation dependencies
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    doxygen \
+    libdbus-1-dev \
+    libegl1-mesa-dev \
+    libfontconfig1-dev \
+    libfribidi-dev \
+    libgif-dev \
+    libgles2-mesa-dev \
+    libglib2.0-dev \
+    libpulse-dev \
+    libsndfile1-dev \
+    libtiff4-dev \
+    libudev-dev \
+    libxcb-keysyms1-dev \
+    libxcb-shape0-dev \
+    libxcomposite-dev \
+    libxcursor-dev \
+    libxinerama-dev \
+    libxp-dev \
+    libxrandr-dev \
+    libxrender-dev \
+    libxss-dev \
+    libxtst-dev \
+    valgrind \
+    x11proto-print-dev
+
+# prepare
+rm -rf /tmp/easy_e17
+rm -rf /root/e17_src
+
+# download
+pkg_name="enlightenment-$VER_ENLIGHTENMENT"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    svn checkout -r $VER_ENLIGHTENMENT http://svn.enlightenment.org/svn/e/trunk /root/e17_src
+    package_create /root/e17_src $pkg_name
+else
+    package_restore $pkg_name --dir /root
+fi
+
+# SEE: http://www.enlightenment.org/p.php?p=contribute&l=en
+# SEE: https://help.ubuntu.com/community/InstallingE17Howto
+# SEE: http://ubuntuforums.org/showthread.php?t=916690
+# SEE: http://en.wikipedia.org/wiki/LightDM
+# SEE: https://wiki.ubuntu.com/LightDM
+# SEE: http://www.bodhilinux.com/
+
+(./e17.sh -i) #> /dev/null 2>&1
+
+# install display manager
+#apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+apt-get --yes --force-yes install \
+    xinit lightdm
+
+if [ $(role_has "virtual") == "yes" ] && [ $(role_has "vbox") == "yes" ]; then
+    #apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    apt-get --yes --force-yes install \
+        virtualbox-guest-x11
+fi
+
+if [ $(role_has "virtual") == "yes" ] && [ $(role_has "vbox") == "yes" ] && [ "$OWNER" != "root" ]; then
+    cat << EOF > /home/$OWNER/.xsession
+exec /opt/e17/bin/enlightenment_start
+EOF
+    ln -s /home/$OWNER/.xsession /home/$OWNER/.xinitrc
+fi
+
+# clean
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+
+exit 0
+

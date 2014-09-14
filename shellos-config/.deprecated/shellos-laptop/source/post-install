@@ -1,0 +1,198 @@
+#!/bin/bash
+#
+# USAGE: ./post-install --username "username"
+
+##
+## arguments
+##
+
+username="daniel"
+while [ "$1" != "" ]; do
+    case $1 in
+        --username) shift; username="$1"
+                    ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+(
+
+apt_get_update="apt-get --yes update"
+apt_get_upgrade="apt-get --yes --force-yes upgrade"
+apt_get_remove="apt-get --yes --purge remove"
+apt_get_install="apt-get --yes --force-yes --ignore-missing --no-install-recommends install"
+apt_add_repository="apt-add-repository --yes"
+
+DEBIAN_FRONTEND="noninteractive"
+
+# system packages update
+$apt_get_update
+$apt_get_upgrade
+apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+$apt_get_install \
+    apparmor \
+    apt-file \
+    apt-utils \
+    autoconf \
+    automake \
+    bc \
+    bison \
+    build-essential \
+    cmake \
+    dialog \
+    dnsutils \
+    expect \
+    fail2ban \
+    fakeroot \
+    gawk \
+    gettext \
+    host \
+    iftop \
+    kernel-package \
+    kpartx \
+    libbz2-dev \
+    libcap-dev \
+    libcap2-bin \
+    libcurl4-openssl-dev \
+    libdb-dev \
+    libexpat1-dev \
+    libfreetype6 \
+    libfreetype6-dev \
+    libjpeg62-dev \
+    liblua5.1-0-dev \
+    liblua50-dev \
+    liblualib50-dev \
+    libmcrypt-dev \
+    libmhash-dev \
+    libncurses5-dev \
+    libpcre3-dev \
+    libpng12-dev \
+    libsqlite0-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libtool \
+    libwrap0-dev \
+    libxml2-dev \
+    lshw \
+    lsof \
+    lzop \
+    nano \
+    nmap \
+    pkg-config \
+    re2c \
+    rsync \
+    schroot \
+    sqlite3 \
+    strace \
+    subversion \
+    sysstat \
+    tcpdump \
+    traceroute \
+    unzip \
+    update-manager-core \
+    vim \
+    whois
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+apt-file update --non-interactive
+
+# remove old kernel
+dpkg -l linux-*  | awk '/^ii/{ print $2}' | grep -v -e `uname -r | cut -f1,2 -d"-"` | grep  -e '[0-9]' | xargs $apt_get_remove
+update-grub
+
+# terminal
+$apt_get_remove xterm
+$apt_get_install gnome-terminal terminator python-keybinder guake screen
+
+# text editor
+$apt_get_install vim vim-gnome leafpad gedit gedit-common gedit-plugins gedit-dev gedit-developer-plugins
+
+# file manager
+$apt_get_install nautilus #krusader
+$apt_add_repository ppa:nae-team/ppa
+$apt_get_update > /dev/null 2>&1gnome-screenshot
+$apt_get_install nautilus-actions-extra
+nautilus -q
+
+# encryption
+$apt_add_repository ppa:alex-p/notesalexp-precise
+$apt_get_update > /dev/null 2>&1
+$apt_get_install truecrypt
+
+# password manager
+$apt_get_install keepass2
+
+# online storage
+apt-key adv --keyserver pgp.mit.edu --recv-keys 5044912E
+$apt_add_repository "deb http://linux.dropbox.com/ubuntu $(lsb_release -sc) main"
+$apt_get_update > /dev/null 2>&1
+$apt_get_install python-gpgme dropbox nautilus-dropbox
+
+# internet browsers
+$apt_get_install firefox #chromium-browser
+
+# audio
+$apt_get_remove rhythmbox
+$apt_get_install amarok
+
+# video
+$apt_get_install vlc browser-plugin-vlc
+
+# communication
+$apt_get_install skype kadu kadu-external-modules kadu-themes
+$apt_add_repository ppa:skype-wrapper/ppa
+$apt_get_update > /dev/null 2>&1
+$apt_get_install skype-wrapper
+
+# windows emulator
+$apt_get_install wine
+
+# additional software
+$apt_add_repository "deb http://archive.canonical.com/ $(lsb_release -sc) partner"
+$apt_get_update > /dev/null 2>&1
+$apt_get_install flashplugin-installer acroread
+
+# TODO: https://github.com/paradoxxxzero/gnome-shell-system-monitor-applet
+#$apt_add_repository ppa:webupd8team/gnome3
+#$apt_get_update > /dev/null 2>&1
+#$apt_get_install gnome-shell-system-monitor
+
+# virtualisation
+$apt_get_install virtualbox virtualbox-ose virtualbox-dkms virtualbox-guest-additions virtualbox-guest-x11 virtualbox-guest-additions-iso virtualbox-guest-dkms virtualbox-qt
+
+# graphic tools
+$apt_get_remove gimp gimp-plugin-registry
+$apt_add_repository ppa:otto-kesselgulasch/gimp
+$apt_get_update > /dev/null 2>&1
+$apt_get_install gimp
+
+# configuration
+$apt_get_install dconf-tools gconf-editor compizconfig-settings-manager
+sudo -u $username /home/$username/config --username $username
+chown root:root /home/$username/config.log
+chmod 444 /home/$username/config.log
+rm -f /home/$username/config
+
+# development tools
+$apt_get_install putty-tools git subversion mercurial bzr
+$apt_add_repository ppa:rabbitvcs/ppa
+$apt_get_update > /dev/null 2>&1
+$apt_get_install rabbitvcs-core rabbitvcs-cli rabbitvcs-gedit rabbitvcs-nautilus3
+git config --global user.name "Daniel Stefaniuk"
+git config --global user.email daniel.stefaniuk@gmail.com
+
+# clean up
+#rm -rf /home/$username/resources
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+
+) 2>&1 | tee /home/$username/post-install.log
+chown root:root /home/$username/post-install.log
+chmod 444 /home/$username/post-install.log
+rm -f /home/$username/post-install
+reboot
+exit 0

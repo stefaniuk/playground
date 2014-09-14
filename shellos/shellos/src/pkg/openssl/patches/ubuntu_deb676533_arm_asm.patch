@@ -1,0 +1,19 @@
+Description: enable arm assembler code in openssl
+Origin: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=676533
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=676533
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1083498
+
+--- a/Configure
++++ b/Configure
+@@ -346,9 +346,8 @@
+ "debian-alpha","gcc:-DTERMIO $debian_cflag::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:${alpha_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "debian-alpha-ev4","gcc:-DTERMIO ${debian_cflags} -mcpu=ev4::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:${alpha_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "debian-alpha-ev5","gcc:-DTERMIO ${debian_cflags} -mcpu=ev5::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:${alpha_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"debian-armeb","gcc:-DB_ENDIAN -DTERMIO ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"debian-armel","gcc:-DL_ENDIAN -DTERMIO ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"debian-armhf","gcc:-DL_ENDIAN -DTERMIO ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"debian-armel","gcc:-DL_ENDIAN -DTERMIO ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"debian-armhf","gcc:-DL_ENDIAN -DTERMIO ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "debian-amd64", "gcc:-m64 -DL_ENDIAN -DTERMIO ${debian_cflags} -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::",
+ "debian-avr32", "gcc:-DB_ENDIAN -DTERMIO ${debian_cflags} -fomit-frame-pointer::-D_REENTRANT::-ldl:BN_LLONG_BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "debian-kfreebsd-amd64","gcc:-m64 -DL_ENDIAN -DTERMIOS ${debian_cflags} -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",

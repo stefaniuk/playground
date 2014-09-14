@@ -1,0 +1,7 @@
+#!/bin/bash
+#
+# Global aliases specific to the project. These aliases may depend on variables,
+# constants or functions.
+
+# nodes
+alias nsa='node_status_all'

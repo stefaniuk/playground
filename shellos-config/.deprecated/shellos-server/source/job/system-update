@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# Scheduled job. This script updates the system.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+    # do not log if all jobs are locked
+    [ `job_lock_all_exists` == "no" ] && \
+        logger -p local0.notice -t host4ge "job $( basename $0 ) is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+# update system
+(   echo "System update: `date +\"%G %b %d, %T %Z\"`"
+    DEBIAN_FRONTEND="noninteractive"
+    apt-get --yes update
+    apt-get --yes --force-yes upgrade
+    apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+    apt-get autoremove --yes --force-yes
+    apt-get autoclean --yes --force-yes
+    apt-file update
+    rm -rfv /var/cache/apt/archives/*.deb
+) 2>&1 | tee $UPDATE_LOG_FILE
+
+# set log file permission
+chown root:root $UPDATE_LOG_FILE
+chmod 600 $UPDATE_LOG_FILE
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# log an event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run (time: $time s)"
+else
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

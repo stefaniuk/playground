@@ -1,0 +1,16 @@
+#!/bin/bash
+
+file=eclipse-$VER_ECLIPSE-linux-gtk-x86_64.tar.gz
+
+# extract
+[ -d $INSTALL_DIR/eclipse ] && rm -rf $INSTALL_DIR/eclipse
+tar -zxf $file
+mv eclipse $INSTALL_DIR/eclipse
+
+# check
+if [ ! -x $INSTALL_DIR/eclipse/eclipse ]; then
+    echo "Error: Eclipse has NOT been installed successfully!"
+    exit 1
+fi
+
+exit 0

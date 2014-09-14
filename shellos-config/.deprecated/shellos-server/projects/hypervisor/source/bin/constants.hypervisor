@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# Global constants specific to the project. These are variables not likely to be
+# changed.
+
+export NODE_BACKUP_SNAPSHOTS_DIR=$BACKUP_DIR/snapshots
+
+export NODE_STOP_DIR=$FLAGS_DIR
+export NODE_STOP_ALL_FILE=$NODE_STOP_DIR/host4ge-node-all.stop

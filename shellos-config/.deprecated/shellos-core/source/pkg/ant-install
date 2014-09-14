@@ -1,0 +1,16 @@
+#!/bin/bash
+
+file=apache-ant-$VER_ANT-bin.tar.gz
+
+# extract
+[ -d $INSTALL_DIR/ant ] && rm -rf $INSTALL_DIR/ant
+tar -zxf $file
+mv apache-ant-$VER_ANT $INSTALL_DIR/ant
+
+# check
+if [ ! -x $INSTALL_DIR/ant/bin/ant ]; then
+    echo "Error: Ant has NOT been installed successfully!"
+    exit 1
+fi
+
+exit 0

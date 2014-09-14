@@ -1,0 +1,234 @@
+#!/bin/bash
+#
+# Scheduled job. This script starts all the services.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="system-start"
+on_initial_reboot="N"
+on_reboot="N"
+force_start="N"
+force_stop="N"
+action=""
+log_errors="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --on-initial-reboot)    shift && on_initial_reboot="Y"; on_reboot="Y"
+                                ;;
+        --on-reboot)            shift && on_reboot="Y"
+                                ;;
+        --force-start)          shift && force_start="Y"
+                                ;;
+        --force-stop)           shift && force_stop="Y"
+                                ;;
+        --log-errors)           shift && log_errors="Y" # variable used in the service_monitor function
+                                ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+if [ "$on_reboot" == "Y" ]; then
+    log_info "reboot"
+
+    # load firewall rules
+    $CMD_FIREWALL_START
+
+fi
+
+# always start up services on reboot
+if [ "$on_reboot" == "N" ]; then
+
+    # force all jobs to start up
+    if [ "$force_start" == "Y" ] && [ "$force_stop" == "N" ]; then
+        job_unlock_all
+
+    # force all jobs to stop
+    elif [ "$force_start" == "N" ] && [ "$force_stop" == "Y" ]; then
+        job_lock_all
+
+    # exit if this job is locked
+    elif [ $(job_lock_exists $job_name) == "yes" ]; then
+        # do not log event if all jobs are locked
+        if [ $(job_lock_all_exists) == "no" ]; then
+            log_info "job $job_name is locked"
+        fi
+        exit 0
+    fi
+
+    # clear force start/stop flags if set improperly
+    if [ "$force_start" == "Y" ] && [ "$force_stop" == "Y" ]; then
+        force_start="N"
+        force_stop="N"
+    fi
+
+else
+
+    # clear other flags on reboot
+    force_start="N"
+    force_stop="N"
+
+fi
+
+# set action
+if [ "$force_stop" == "Y" ]; then
+    action="stop"
+else
+    action="start"
+fi
+
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+# prerequisites
+if [ "$action" == "start" ]; then
+    chroot_create_hosting_env > /dev/null 2>&1
+fi
+
+# openssh
+if [ -x $CMD_OPENSSH ]; then
+    if [ "$action" == "start" ]; then
+        start_openssh
+    else
+        stop_openssh
+    fi
+fi
+
+# openssh agent
+if [ -x $CMD_OPENSSH_AGENT ]; then
+    if [ "$action" == "start" ]; then
+        start_openssh_agent
+    else
+        stop_openssh_agent
+    fi
+fi
+
+# openvpn
+if [ -x $CMD_OPENVPN ] && [ -f $INSTALL_DIR/openvpn/keys/$(hostname).key ]; then
+    if [ "$action" == "start" ]; then
+        start_openvpn
+    else
+        stop_openvpn
+    fi
+fi
+
+# mysql
+if [ -x $CMD_MYSQLD ]; then
+    if [ "$action" == "start" ]; then
+        start_mysql
+    else
+        stop_mysql
+    fi
+fi
+
+# postfix
+if [ -x $CMD_POSTFIX ]; then
+    if [ "$action" == "start" ]; then
+        start_postfix
+    else
+        stop_postfix
+    fi
+fi
+
+# proftpd
+if [ -x $CMD_PROFTPD ]; then
+    if [ "$action" == "start" ]; then
+        start_proftpd
+    else
+        stop_proftpd
+    fi
+fi
+
+# httpd
+if [ -x $CMD_APACHECTL ]; then
+    if [ "$action" == "start" ]; then
+        start_httpd
+    else
+        stop_httpd
+    fi
+fi
+
+# nginx
+#if [ -x $CMD_NGINX ]; then
+#    if [ "$action" == "start" ]; then
+#        start_nginx
+#    else
+#        stop_nginx
+#    fi
+#fi
+
+# php-fpm
+if [ "$action" == "start" ]; then
+    start_phpfpm
+else
+    stop_phpfpm
+fi
+
+# dovecot
+if [ -x $CMD_DOVECOT ]; then
+    if [ "$action" == "start" ]; then
+        start_dovecot
+    else
+        stop_dovecot
+    fi
+fi
+
+# tomcat
+if [ -x $CMD_TOMCAT ]; then
+    if [ "$action" == "start" ]; then
+        start_tomcat
+    else
+        stop_tomcat
+    fi
+fi
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# remove all locks on initial reboot
+if [ "$on_initial_reboot" == "Y" ]; then
+    job_unlock_all
+fi
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# send eamil notification
+if [ "$on_reboot" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ] && [ "$DEVICE" == "server" ]; then
+    echo -e "$(hostname -f) ($IP_ADDRESS) has been rebooted. All services started at `date +\"%T %Z (%d %b %G)\"`." | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - reboot" $ADMIN_MAIL
+fi
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

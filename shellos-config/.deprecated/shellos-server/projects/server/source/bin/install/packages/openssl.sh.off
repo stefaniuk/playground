@@ -1,0 +1,99 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+	echo "Error: OpenSSL requires zlib!"
+	exit 1
+fi
+
+##
+## download
+##
+
+PKG_NAME="openssl-$OPENSSL_VERSION"
+[ "$PACKAGES_FORCE_COMPILATION" == "N" ] && PKG_RESULT=$(package_download $PKG_NAME)
+if [ "$PKG_RESULT" != "success" ]; then
+    URL="http://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
+    FILE=openssl-$OPENSSL_VERSION.tar.gz
+    RESULT=$(file_download --url $URL --cache-dir-name downloads --file $FILE --check-file-size 4000000)
+    if [ "$RESULT" == "error" ]; then
+        echo "Error: Unable to download $FILE file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$PKG_RESULT" != "success" ]; then
+    echo "Compile OpenSSL:"
+    [ -d $INSTALL_DIR/openssl ] && rm -rf $INSTALL_DIR/openssl
+    tar -zxf openssl-$OPENSSL_VERSION.tar.gz
+    cd openssl-$OPENSSL_VERSION
+    ./config \
+        --prefix=$INSTALL_DIR/openssl \
+        --openssldir=$INSTALL_DIR/openssl \
+        --with-zlib-lib=$INSTALL_DIR/zlib/lib \
+        --with-zlib-include=$INSTALL_DIR/zlib/include \
+        shared zlib-dynamic enable-camellia \
+    && make depend && make && make install && echo "OpenSSL installed successfully!"
+    rm -rf $INSTALL_DIR/openssl/{private,man}
+    cd ..
+    echo "Strip symbols:"
+    strip_debug_symbols $INSTALL_DIR/openssl/bin
+    strip_debug_symbols $INSTALL_DIR/openssl/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/openssl $PKG_NAME
+else
+    echo "Install OpenSSL from package:"
+    package_restore $PKG_NAME
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+	echo "Error: OpenSSL has NOT been installed successfully!"
+	exit 1
+fi
+
+##
+## configure
+##
+
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/openssl/lib
+
+echo "Shared library dependencies for $INSTALL_DIR/openssl/bin/openssl:"
+ldd $INSTALL_DIR/openssl/bin/openssl
+
+echo "Copy includes:"
+rm -rf /usr/include/openssl
+cp -rfv $INSTALL_DIR/openssl/include/openssl /usr/include/
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/openssl/lib/pkgconfig/* /usr/lib/pkgconfig
+
+# set files permission
+chown -R root:root $INSTALL_DIR/openssl
+
+##
+## post install
+##
+
+[ -f openssl-$OPENSSL_VERSION.tar.gz ] && rm openssl-$OPENSSL_VERSION.tar.gz
+[ -d openssl-$OPENSSL_VERSION ] && rm -rf openssl-$OPENSSL_VERSION
+
+# log event
+logger -p local0.notice -t host4ge "openssl $OPENSSL_VERSION installed successfully"
+
+# save package version
+package_add_version "openssl" "$OPENSSL_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/openssl/bin
+hashes_add_dir $INSTALL_DIR/openssl/lib
+
+exit 0

@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# https://help.ubuntu.com/12.04/serverguide/lxc.html
+# http://berrange.com/posts/2011/09/27/getting-started-with-lxc-using-libvirt/
+# http://berrange.com/posts/2012/01/17/building-application-sandboxes-with-libvirt-lxc-kvm/
+# http://www.salixos.org/forum/viewtopic.php?f=24&t=3386&p=22045
+
+#apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+#    lxc
+
+##
+## download
+##
+
+pkg_name="lxc-$LXC_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://lxc.sourceforge.net/download/lxc/lxc-$LXC_VERSION.tar.gz"
+    file=lxc-$LXC_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 200000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile LXC:"
+    [ -d $INSTALL_DIR/lxc ] && rm -rf $INSTALL_DIR/lxc
+    tar -zxf lxc-$LXC_VERSION.tar.gz
+    cd lxc-$LXC_VERSION
+    ./autogen.sh && ./configure \
+        --prefix=$INSTALL_DIR/lxc \
+        --localstatedir=$INSTALL_DIR/lxc \
+    && make && make install && echo "LXC installed successfully!"
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/lxc/bin
+    development_strip_symbols $INSTALL_DIR/lxc/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/lxc $pkg_name
+else
+    echo "Install LXC from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/lxc/bin/lxc-start ]; then
+	echo "Error: LXC has NOT been installed successfully!"
+	exit 1
+fi
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/lxc/lib
+
+echo "Copy includes:"
+cp -rfv $INSTALL_DIR/lxc/include/lxc /usr/include/
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/lxc/share/pkgconfig/* /usr/lib/pkgconfig
+
+echo "Shared library dependencies for $INSTALL_DIR/lxc/bin/lxc-start:"
+ldd $INSTALL_DIR/lxc/bin/lxc-start
+
+##
+## post install
+##
+
+# download original package
+current_dir=$(pwd)
+cd $INSTALL_DIR/lxc
+apt-get download lxc
+for file in $(ls -1 *.deb); do
+    dpkg -x $file ./.deb/
+done
+mv *.deb /var/cache/apt/archives
+cd $current_dir
+
+[ -f lxc-${LXC_VERSION}${PACKAGE_SUFFIX} ] && rm lxc-${LXC_VERSION}${PACKAGE_SUFFIX}
+[ -f lxc-$LXC_VERSION.tar.gz ] && rm lxc-$LXC_VERSION.tar.gz
+[ -d lxc-$LXC_VERSION ] && rm -rf lxc-$LXC_VERSION
+
+# save package version
+package_add_version "lxc" "$LXC_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/lxc/bin
+hashes_add_dir $INSTALL_DIR/lxc/lib
+hashes_add_dir $INSTALL_DIR/lxc/lib/lxc/templates
+
+exit 0

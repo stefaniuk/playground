@@ -1,0 +1,145 @@
+## Working on PHP-FPM ##
+
+# SEE: http://flexichat.net/chroot-php-fpm
+# SEE: http://forum.nginx.org/read.php?3,212362,212362
+# SEE: http://www.cyberciti.biz/faq/howto-run-nginx-in-a-chroot-jail/
+
+domain="$(hostname).$DOMAIN"
+
+# create user account
+user_remove.pl -u test
+user_create.pl -u test -g test -G $OPENSSH_JAIL_GROUP -p test -d $HOSTING_ACCOUNTS_DIR/test
+# create ftp account
+ftp_account_remove.pl -u test
+ftp_account_create.pl -u test -p test -i $(id -u test) -d $HOSTING_ACCOUNTS_DIR/test/home/test/public
+
+########################################################################################################################
+
+# create vhost
+httpd_vhost_remove.pl -s "httpd" -t "account" -n "test" -i "$IP_ADDRESS" -d "test.${domain}" -p 80
+str=$(cat <<HEREDOC
+    DocumentRoot /$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-mod
+    <Directory /$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-mod>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+HEREDOC
+)
+httpd_vhost_create.pl -s "httpd" -t "account" -n "test" -i "$IP_ADDRESS" -d "test.${domain}" -p 80 -c "$str"
+# update host file
+#network_remove_host 127.0.0.1 "test.${domain}"
+#network_add_host 127.0.0.1 "test.${domain}"
+# files
+mkdir -p $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-mod
+echo "index" > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-mod/index.html
+echo "<?php phpinfo(); ?>" > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-mod/info.php
+
+########################################################################################################################
+
+function create_php_fpm_domain() {
+
+    test_domain_number=$1
+    php_fpm_version=$(package_get_version php-fpm | sort | sed -n ${test_domain_number}p)
+    php_fpm_port=900${test_domain_number}
+
+    # create vhost
+    httpd_vhost_remove.pl -s "httpd" -t "account" -n "test" -i "$IP_ADDRESS" -d "test${test_domain_number}.${domain}" -p 80
+    str=$(cat <<HEREDOC
+    ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://127.0.0.1:$php_fpm_port/$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-fpm/\$1
+    ProxyPassMatch ^/status$ fcgi://127.0.0.1:$php_fpm_port/status
+    ProxyPassMatch ^/ping$ fcgi://127.0.0.1:$php_fpm_port/ping
+    DocumentRoot /$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-fpm
+    <Directory /$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-fpm>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+HEREDOC
+)
+    httpd_vhost_create.pl -s "httpd" -t "account" -n "test" -i "$IP_ADDRESS" -d "test${test_domain_number}.${domain}" -p 80 -c "$str"
+    # update host file
+    #network_remove_host 127.0.0.1 "test${test_domain_number}.${domain}"
+    #network_add_host 127.0.0.1 "test${test_domain_number}.${domain}"
+    # files
+    mkdir -p $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-fpm
+    echo "index" > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-fpm/index.html
+    echo "<?php phpinfo(); ?>" > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-fpm/info.php
+    cat << EOF > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-fpm/mail.php
+<?php
+
+\$to = '$ADMIN_MAIL';
+\$subject = 'php mail test';
+\$message = 'PHP ' . phpversion();
+\$headers = 'From: admin@$(hostname).$DOMAIN' . "\r\n" .
+    'Reply-To: webmaster@example.com' . "\r\n" .
+    'X-Mailer: PHP/' . phpversion();
+mail(\$to, \$subject, \$message, \$headers);
+
+?>
+EOF
+    cat << EOF > $HOSTING_ACCOUNTS_DIR/test/home/test/public/php-fpm/curl.php
+<?php
+
+\$curl = curl_init();
+curl_setopt(\$curl, CURLOPT_URL, 'https://www.google.co.uk/');
+curl_setopt(\$curl, CURLOPT_FAILONERROR, true);
+curl_setopt(\$curl, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt(\$curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt(\$curl, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt(\$curl, CURLOPT_SSL_VERIFYPEER, false);
+\$result = curl_exec(\$curl);
+curl_close(\$curl);
+echo \$result;
+
+?>
+EOF
+    chown -R test:test $HOSTING_ACCOUNTS_DIR/test/home/test/public
+    # create pool
+    cat << EOF > /srv/php-fpm/$php_fpm_version/conf/accounts/test.conf
+[test-php-fpm]
+user = test
+group = test
+listen = 127.0.0.1:$php_fpm_port
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+pm.status_path = /status
+ping.path = /ping
+access.log = /srv/php-fpm/$php_fpm_version/log/accounts/test-php-fpm.access.log
+access.format = "%R - %u %t \"%m %r%Q%q\" %s %f %{mili}d %{kilo}M %C%%"
+catch_workers_output = yes
+chroot = $HOSTING_DIR
+chdir = /$HOSTING_ACCOUNTS_RELATIVE_DIR/test/home/test/public/php-fpm
+php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
+php_flag[display_errors] = on
+php_admin_value[error_log] = /srv/php-fpm/$php_fpm_version/log/accounts/test-php-fpm.error.log
+php_admin_flag[log_errors] = on
+php_admin_value[memory_limit] = 32M
+EOF
+}
+
+create_php_fpm_domain 1
+create_php_fpm_domain 2
+create_php_fpm_domain 3
+
+########################################################################################################################
+
+pkill php-fpm
+for php_fpm_version in $(package_get_version php-fpm | sort); do
+    /srv/php-fpm/$php_fpm_version/bin/php-fpm.sh start
+done
+
+ps aux | grep php-fpm
+
+restart_httpd
+
+# http://test.localhost/info.php
+# http://test1.localhost/info.php
+# http://test1.localhost/status
+# etc...
+

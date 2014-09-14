@@ -1,0 +1,78 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="libiconv-$VER_LIBICONV"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://ftp.gnu.org/pub/gnu/libiconv/libiconv-$VER_LIBICONV.tar.gz"
+    file=libiconv-$VER_LIBICONV.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 4000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile libiconv":
+    [ -d $INSTALL_DIR/libiconv ] && rm -rf $INSTALL_DIR/libiconv
+    tar -zxf libiconv-$VER_LIBICONV.tar.gz
+    cd libiconv-$VER_LIBICONV
+    ./configure \
+        --prefix=$INSTALL_DIR/libiconv \
+    && make && make install && echo "libiconv installed successfully!"
+    rm -rf $INSTALL_DIR/libiconv/share/{doc,man}
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/libiconv/bin
+    development_strip_symbols $INSTALL_DIR/libiconv/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/libiconv $pkg_name
+else
+    echo "Install libiconv from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/libiconv/bin/iconv ]; then
+    echo "Error: libiconv has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/libiconv/lib
+
+echo "Copy includes:"
+cp -v $INSTALL_DIR/libiconv/include/*.h /usr/include/
+
+echo "Shared library dependencies for $INSTALL_DIR/libiconv/bin/iconv:"
+ldd $INSTALL_DIR/libiconv/bin/iconv
+
+##
+## post install
+##
+
+[ -f libiconv-${VER_LIBICONV}${PACKAGE_SUFFIX} ] && rm libiconv-${VER_LIBICONV}${PACKAGE_SUFFIX}
+[ -f libiconv-$VER_LIBICONV.tar.gz ] && rm libiconv-$VER_LIBICONV.tar.gz
+[ -d libiconv-$VER_LIBICONV ] && rm -rf libiconv-$VER_LIBICONV
+
+# save package version
+package_add_version "libiconv" "$VER_LIBICONV"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/libiconv/bin
+hashes_add_dir $INSTALL_DIR/libiconv/lib
+
+exit 0
+

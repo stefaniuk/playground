@@ -1,0 +1,143 @@
+#!/bin/bash
+#
+# Scheduled job. This script checks if all the services are running.
+
+##
+## includes
+##
+
+# include functions
+source $SHELLOS_DIR/bin/functions
+# variables
+source $SHELLOS_DIR/sbin/variables
+# versions
+source $SHELLOS_DIR/sbin/versions
+# include constants
+source $SHELLOS_DIR/bin/constants
+
+##
+## variables
+##
+
+on_initial_reboot="N"
+on_reboot="N"
+force_start="N"
+force_stop="N"
+action=""
+log_errors="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --on-initial-reboot)    shift && on_initial_reboot="Y"; on_reboot="Y"
+                                ;;
+        --on-reboot)            shift && on_reboot="Y"
+                                ;;
+        --force-start)          shift && force_start="Y"
+                                ;;
+        --force-stop)           shift && force_stop="Y"
+                                ;;
+        --log-errors)           shift && log_errors="Y"
+                                ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# load firewall rules
+if [ "$on_reboot" == "Y" ]; then
+    log_info "reboot"
+    $CMD_FIREWALL_START
+fi
+
+# always start up services on reboot
+if [ "$on_reboot" == "N" ]; then
+
+    # force all jobs to start up
+    if [ "$force_start" == "Y" ] && [ "$force_stop" == "N" ]; then
+        job_unlock_all
+
+    # force all jobs to stop
+    elif [ "$force_start" == "N" ] && [ "$force_stop" == "Y" ]; then
+        job_lock_all
+
+    # exit if this job is locked
+    elif [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+        # do not log event if all jobs are locked
+        if [ `job_lock_all_exists` == "no" ]; then
+            log_info "job $( basename $0 ) is locked"
+        fi
+        exit 0
+    fi
+
+    # clear force start/stop flags if set improperly
+    if [ "$force_start" == "Y" ] && [ "$force_stop" == "Y" ]; then
+        force_start="N"
+        force_stop="N"
+    fi
+
+else
+
+    # clear other flags on reboot
+    force_start="N"
+    force_stop="N"
+
+fi
+
+# set action
+if [ "$force_stop" == "Y" ]; then
+    action="stop"
+else
+    action="start"
+fi
+
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+# check services specific to the server role
+[ -x $SHELLOS_DIR/job/$( basename $0 ).$ROLE_NAME ] && \
+    (. $SHELLOS_DIR/job/$( basename $0 ).$ROLE_NAME)
+
+# check custom services
+[ -x $SHELLOS_DIR/job/$( basename $0 ).custom ] && \
+    (. $SHELLOS_DIR/job/$( basename $0 ).custom)
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# remove all locks on initial reboot
+if [ "$on_initial_reboot" == "Y" ]; then
+    job_unlock_all
+fi
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# send eamil notification
+if [ "$on_reboot" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ]; then
+    echo -e "$(hostname -f) ($IP_ADDRESS) has been rebooted. All services started at `date +\"%T %Z (%d %b %G)\"`." | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - reboot" $ADMIN_MAIL
+fi
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $( basename $0 ) run (time: $time s)"
+else
+    log_info "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

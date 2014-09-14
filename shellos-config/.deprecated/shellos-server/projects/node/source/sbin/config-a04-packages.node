@@ -1,0 +1,11 @@
+#!/bin/bash
+
+##
+## install/remove packages
+##
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    debootstrap
+
+exit 0

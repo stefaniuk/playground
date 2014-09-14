@@ -1,0 +1,20 @@
+#!/bin/bash
+
+##
+## remove crontab jobs
+##
+
+# delete user's crontab
+crontab -r
+
+# delete predefined crontab files
+rm -v /etc/cron.{hourly,daily,weekly,monthly}/{.placeholder,*} > /dev/null 2>&1
+cat << EOF > /etc/cron.hourly/.placeholder
+# DO NOT EDIT OR REMOVE
+# This file is a simple placeholder to stop dpkg from removing this directory
+EOF
+cp -v /etc/cron.hourly/.placeholder /etc/cron.daily
+cp -v /etc/cron.hourly/.placeholder /etc/cron.weekly
+cp -v /etc/cron.hourly/.placeholder /etc/cron.monthly
+
+exit 0

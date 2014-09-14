@@ -1,0 +1,330 @@
+#!/bin/bash
+
+# TODO
+
+exit 0
+
+# ======================================================================================================================
+
+#
+# SEE: https://help.ubuntu.com/12.04/installation-guide/amd64/preseed-contents.html
+#
+# USAGE: remaster --ipaddress "192.168.1.x" --netmask "255.255.255.0" --gateway "192.168.1.1" --nameservers "192.168.1.1" --hostname "host4ge" --timezone "Europe/London" --usb /dev/sdc 2>&1 | tee $HOST4GE_DIR/log/remaster.log
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## variables
+##
+
+system_name="Host4ge OS"
+system_code="host4ge-os"
+ubuntu_version="$UBUNTU_VERSION"
+ubuntu_iso_file="$UBUNTU_IMAGE_FILE"
+ubuntu_iso_hash="$UBUNTU_IMAGE_HASH"
+iso_in_path=~/$ubuntu_iso_file
+iso_out_path=~/$system_code.iso
+custom_dir=~/$system_code
+mnt_iso_in=/mnt/ubuntu-server
+mnt_iso_out=/mnt/$system_code
+
+ipaddress=
+netmask=
+gateway=
+nameservers=
+hostname=
+timezone=
+usb_dev=
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --ipaddress)    shift; ipaddress=$1
+                        ;;
+        --netmask)      shift; netmask=$1
+                        ;;
+        --gateway)      shift; gateway=$1
+                        ;;
+        --nameservers)  shift; nameservers=$1
+                        ;;
+        --hostname)     shift; hostname=$1
+                        ;;
+        --timezone)     shift; timezone=$1
+                        ;;
+        --usb)          shift; usb_dev=$1
+                        ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes update
+apt-get --yes --force-yes upgrade
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    apt-file \
+    genisoimage \
+    syslinux \
+    xorriso
+
+cd ~
+# http://cdimage.ubuntu.com/ubuntu-server/precise/daily/current/
+url="http://releases.ubuntu.com/$ubuntu_version/$ubuntu_iso_file"
+file=$ubuntu_iso_file
+result=$(file_download --url $url --file $file --cache-dir-name images --check-file-size 600000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+result=$(file_is_hash_valid $CACHE_IMAGES_DIR/$file $ubuntu_iso_hash)
+if [ "$result" == "no" ]; then
+    echo "Error: Hash of the file $file is not valid!"
+    exit 1
+fi
+
+mkdir $mnt_iso_in > /dev/null 2>&1
+umount $mnt_iso_in > /dev/null 2>&1
+mkdir $mnt_iso_out > /dev/null 2>&1
+umount $mnt_iso_out > /dev/null 2>&1
+
+# copy files from original iso
+mount -o loop $iso_in_path $mnt_iso_in
+rm -rf $custom_dir
+rsync -av $mnt_iso_in/ $custom_dir
+
+# host4ge.seed
+cat << EOF > $custom_dir/preseed/host4ge.seed
+#
+# locale and keyboard
+#
+
+d-i debian-installer/locale select en_GB.UTF-8
+d-i keyboard-configuration/layoutcode string gb
+d-i console-setup/layoutcode string en_GB
+d-i console-setup/ask_detect boolean false
+d-i localechooser/supported-locales multiselect pl_PL.ISO-8859-2
+
+#
+# clock and time zone
+#
+
+d-i clock-setup/utc boolean true
+d-i time/zone string $timezone
+#d-i time/zone seen false
+d-i clock-setup/ntp boolean true
+d-i clock-setup/utc-auto true
+
+#
+# network
+#
+
+d-i netcfg/choose_interface select eth0
+d-i netcfg/disable_autoconfig boolean true
+d-i netcfg/get_ipaddress string $ipaddress
+d-i netcfg/get_ipaddress seen false
+d-i netcfg/get_netmask string $netmask
+d-i netcfg/get_netmask seen false
+d-i netcfg/get_gateway string $gateway
+d-i netcfg/get_gateway seen false
+d-i netcfg/get_nameservers string $nameservers
+d-i netcfg/get_nameservers seen false
+d-i netcfg/confirm_static boolean true
+d-i netcfg/get_hostname string $hostname
+d-i netcfg/get_hostname seen false
+d-i netcfg/get_domain string
+#d-i netcfg/get_domain seen false
+
+#
+# kernel
+#
+
+d-i base-installer/kernel/image string linux-server
+d-i base-installer/kernel/override-image string linux-server
+
+#
+# accounts
+#
+
+d-i passwd/make-user boolean false
+d-i passwd/root-login boolean true
+# mkpasswd -m sha-512 password salt
+d-i passwd/root-password-crypted password \$6\$Eqy6yugG367YZ6rI\$FU3yUzF0L/NchbP0x.QItpfOkuMaHohAYxyM/SFyaAa79lsI/xOzuzOAWLjXdRn6gj8p9F91wjoyMtlcaHsYu0
+d-i user-setup/allow-password-weak boolean true
+d-i user-setup/encrypt-home boolean false
+
+#
+# packages
+#
+
+d-i mirror/http/proxy string
+tasksel tasksel/first multiselect standard
+d-i pkgsel/language-pack-patterns string
+d-i pkgsel/install-language-support boolean false
+d-i pkgsel/include string openssh-server
+d-i pkgsel/upgrade select full-upgrade
+d-i pkgsel/update-policy select none
+d-i oem-config-udeb/frontend string debconf
+oem-config oem-config/steps multiselect language, timezone, keyboard, user, network, tasks
+
+#
+# boot loader
+#
+
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i grub-installer/timeout string 3
+d-i debian-installer/quiet boolean false
+d-i debian-installer/splash boolean false
+
+#
+# disk partitions
+#
+
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto-lvm/new_vg_name string vg00
+d-i partman-auto/choose_recipe select boot-root
+d-i partman-auto/disk string /dev/sda
+d-i partman-auto/init_automatically_partition select Guided - use entire disk and set up LVM
+d-i partman-auto/method string lvm
+d-i partman-auto/purge_lvm_from_device boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/device_remove_lvm_span boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/alignment select optimal
+d-i partman/choose_partition select Finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman-auto/expert_recipe string \\
+    boot-root :: \\
+        100 100 100 ext3 \\
+            \$primary{ } \$bootable{ } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext3 } \\
+            mountpoint{ /boot } . \\
+        100 1000 1000000000 ext4 \\
+            \$primary{ } \$defaultignore{ } \\
+            method{ lvm } \\
+            device{ /dev/sda } \\
+            vg_name{ vg00 } . \\
+        1000 4000 100% linux-swap \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ swap } \\
+            method{ swap } format{ } . \\
+        4000 8000 12000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ root } \\
+            method{ format } format{ } \\
+            use_filesystem{ } filesystem{ ext4 } \\
+            mountpoint{ / } . \\
+        50000 100000 1000000000 ext4 \\
+            \$lvmok{ } in_vg{ vg00 } lv_name{ empty } \\
+            method{ keep } .
+
+#
+# shell commands
+#
+
+d-i preseed/late_command string cp /cdrom/finalise.sh /target/root/; chroot /target chmod +x /root/finalise.sh; chroot /target bash /root/finalise.sh
+
+#
+# final options
+#
+
+d-i finish-install/reboot_in_progress note
+d-i cdrom-detect/eject boolean false
+EOF
+chmod 444 $custom_dir/preseed/host4ge.seed
+
+# finalise.sh
+cat << EOF > $custom_dir/finalise.sh
+#!/bin/bash
+(
+
+# update and upgrade system
+unset DEBCONF_REDIR
+unset DEBCONF_FRONTEND
+unset DEBIAN_HAS_FRONTEND
+unset DEBIAN_FRONTEND
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes update
+apt-get --yes --force-yes upgrade
+
+# remove empty partition
+echo "y
+" | lvremove /dev/vg00/empty
+
+) > /root/finalise.log 2>&1
+
+rm /root/finalise.sh
+
+exit 0
+EOF
+chmod 544 $custom_dir/finalise.sh
+
+# custom.cfg
+cat << EOF > $custom_dir/isolinux/custom.cfg
+default install
+label install
+  menu label ^Install $system_name
+  kernel /install/vmlinuz
+  append debian-installer/locale=en_GB.UTF-8 keyboard-configuration/layoutcode=gb console-setup/layoutcode=en_GB console-setup/ask_detect=false interface=eth0 file=/cdrom/preseed/host4ge.seed vga=788 initrd=/install/initrd.gz quiet --
+label hd
+  menu label ^Boot from hard disk
+  localboot 0x80
+label memtest
+  menu label ^Test memory
+  kernel /install/mt86plus
+EOF
+chmod 444 $custom_dir/isolinux/custom.cfg
+
+# menu.cfg
+replace_in_file "include txt.cfg" "include custom.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adtxt.cfg" "#include adtxt.cfg" $custom_dir/isolinux/menu.cfg
+replace_in_file "include adgtk.cfg" "#include adgtk.cfg" $custom_dir/isolinux/menu.cfg
+chmod 444 $custom_dir/isolinux/menu.cfg
+
+# create custom iso
+xorriso -as mkisofs \
+    -r -J -joliet-long -l -V "$system_name" \
+    -b isolinux/isolinux.bin \
+    -c isolinux/boot.cat \
+    -iso-level 3 -no-emul-boot -partition_offset 16 -boot-load-size 4 -boot-info-table \
+    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+    -o $iso_out_path $custom_dir
+
+# mount custom iso
+mount -o loop $iso_out_path $mnt_iso_out
+
+# print iso info
+isoinfo -debug -d -i $iso_in_path
+isoinfo -debug -d -i $iso_out_path
+
+# create bootable usb from custom iso
+if [ -n "$usb_dev" ]; then
+    dd if=$iso_out_path of=$usb_dev bs=1M
+    sync
+    fdisk -l $usb_dev
+fi
+
+exit 0
+

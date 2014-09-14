@@ -1,0 +1,69 @@
+#!/bin/bash
+
+##
+## configure network interfaces
+##
+
+if [ "$USE_BRIDGED_NETWORK" == "Y" ]; then
+
+# /etc/network/interfaces (primary network interface)
+cat << EOF >> /etc/network/interfaces
+
+# primary network interface
+auto eth0
+iface eth0 inet manual
+    #hwaddress ether 00:00:00:00:00:00
+    metric 0
+EOF
+
+# /etc/network/interfaces (primary bridge)
+cat << EOF >> /etc/network/interfaces
+
+# primary bridge
+auto br0
+iface br0 inet static
+    address $IP_ADDRESS1
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+    gateway $GATEWAY
+EOF
+[ -n "$(trim "$DNS_NAMESERVERS")" ] && cat << EOF >> /etc/network/interfaces
+    dns-nameservers $(trim "$DNS_NAMESERVERS")
+EOF
+[ -n "$DNS_SEARCH" ] && cat << EOF >> /etc/network/interfaces
+    dns-search $DNS_SEARCH
+EOF
+cat << EOF >> /etc/network/interfaces
+    bridge_ports eth0
+    bridge_stp off
+    bridge_fd 9
+    bridge_hello 2
+    bridge_maxage 12
+    bridge_maxwait 0
+    metric 1
+EOF
+
+# /etc/network/interfaces (secondary bridge)
+[ "$NODE_USE_PRIVATE_BRIDGED_NETWORK" == "Y" ] && cat << EOF >> /etc/network/interfaces
+
+# secondary bridge
+#auto br1
+#iface br1 inet static
+#    address $NODE_PRIVATE_BRIDGED_IP_ADDRESS
+#    netmask $NODE_PRIVATE_BRIDGED_NETMASK
+#    network $NODE_PRIVATE_BRIDGED_NETWORK
+#    broadcast $NODE_PRIVATE_BRIDGED_BROADCAST
+#    bridge_stp off
+#    bridge_fd 0
+#    pre-up brctl addbr br1
+#    post-down brctl delbr br1
+#    #metric 1
+EOF
+
+fi
+
+# remove default libvirt bridge network
+rm /etc/libvirt/qemu/networks/autostart/default.xml
+
+exit 0

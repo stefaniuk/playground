@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# restart network
+/etc/init.d/networking restart
+
+# kill all the nodes
+pkill kvm
+
+# start mysql
+$CMD_MYSQL_START
+
+# create nodes
+[ "$create_node_snapshot" == "Y" ] && clear_disk="--clear-disk"
+for i in $(seq 1 $NODE_NUMBER); do
+
+    node=$(split_part "$NODE_HOSTNAMES" ',' $i)
+
+    node_remove $node
+    node_create $node $clear_disk
+
+done
+
+# stop mysql
+pid=`ps ax | grep "$PID_MYSQL_PROC_STR" | grep -v grep | cut -c1-5 | paste -s -`
+kill -9 $pid
+
+exit 0

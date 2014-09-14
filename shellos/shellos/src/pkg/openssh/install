@@ -1,0 +1,160 @@
+#!/bin/bash
+
+# SEE:
+#   http://www.cyberciti.biz/tips/linux-unix-bsd-openssh-server-best-practices.html
+#   http://www.openbsd.org/cgi-bin/man.cgi?query=sshd_config
+
+##
+## download
+##
+
+pkg_name="openssh-$VER_OPENSSH"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.mirrorservice.org/sites/ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-$VER_OPENSSH.tar.gz"
+    file=openssh-$VER_OPENSSH.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 1000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+# create user and group
+if [ "$(user_exists sshd)" == "no" ]; then
+    groupadd -g 400 sshd
+    useradd -u 400 -d /var/run/sshd -s /usr/sbin/nologin -g sshd sshd
+fi
+
+# create jail group
+groupadd -g $OPENSSH_JAIL_GID "$OPENSSH_JAIL_GROUP"
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile OpenSSH:"
+    [ -d $INSTALL_DIR/openssh ] && rm -rf $INSTALL_DIR/openssh
+    tar -zxf openssh-$VER_OPENSSH.tar.gz
+    cd openssh-$VER_OPENSSH
+    ./configure \
+        --prefix=$INSTALL_DIR/openssh \
+        --bindir=$INSTALL_DIR/openssh/bin \
+        --sbindir=$INSTALL_DIR/openssh/bin \
+        --libexecdir=$INSTALL_DIR/openssh/bin \
+        --sysconfdir=$INSTALL_DIR/openssh/conf \
+        --localstatedir=$INSTALL_DIR/openssh/log \
+        --without-openssl-header-check \
+        --with-privsep-path=$INSTALL_DIR/openssh/empty \
+    && make && make install && echo "OpenSSH installed successfully!" \
+    && mkdir $INSTALL_DIR/openssh/log \
+    && rm -rf $INSTALL_DIR/openssh/share
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/openssh/bin
+    echo "Create package:"
+    package_create $INSTALL_DIR/openssh $pkg_name
+else
+    echo "Install OpenSSH from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/openssh/bin/sshd ]; then
+    echo "Error: OpenSSH has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/openssh/bin/sshd:"
+ldd $INSTALL_DIR/openssh/bin/sshd
+
+# create links to the log files
+ln -sfv /var/log/openssh.log $INSTALL_DIR/openssh/log/openssh.log
+ln -sfv /var/log/openssh.err $INSTALL_DIR/openssh/log/openssh.err
+
+# bin/ssh-agent-start
+cat << EOF > $INSTALL_DIR/openssh/bin/ssh-agent-start
+#!/bin/bash
+
+pid=\`ps ax | grep "\$INSTALL_DIR/openssh/bin/ssh-agent$" | grep -v grep | cut -c1-5 | paste -s -\`
+if [ ! "\$pid" ]; then
+    \$INSTALL_DIR/openssh/bin/ssh-agent | sed 's/^echo/#echo/' > \$SSH_ENV
+    chmod 400 \$SSH_ENV
+    . \$SSH_ENV > /dev/null
+    \$INSTALL_DIR/openssh/bin/ssh-add
+fi
+
+exit 0
+EOF
+
+# sshd_config
+[ ! -f $INSTALL_DIR/openssh/conf/sshd_config.old ] && cp $INSTALL_DIR/openssh/conf/sshd_config $INSTALL_DIR/openssh/conf/sshd_config.old
+cat << EOF > $INSTALL_DIR/openssh/conf/sshd_config
+Port $OPENSSH_PORT
+PidFile $INSTALL_DIR/openssh/log/openssh.pid
+
+Protocol 2
+HostKey $INSTALL_DIR/openssh/conf/ssh_host_rsa_key
+HostKey $INSTALL_DIR/openssh/conf/ssh_host_dsa_key
+HostKey $INSTALL_DIR/openssh/conf/ssh_host_ecdsa_key
+
+SyslogFacility LOCAL1
+LogLevel VERBOSE
+
+LoginGraceTime 60
+PermitRootLogin yes
+StrictModes yes
+TCPKeepAlive yes
+
+HostbasedAuthentication no
+IgnoreRhosts yes
+IgnoreUserKnownHosts no
+PasswordAuthentication yes
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+MaxStartups 3
+
+AcceptEnv LANG LC_*
+
+Subsystem sftp $CMD_OPENSSH_SFTP_SERVER
+Match Group $OPENSSH_JAIL_GROUP
+    ChrootDirectory %h
+    AllowAgentForwarding no
+    AllowTcpForwarding no
+    X11Forwarding no
+    ForceCommand internal-sftp
+EOF
+
+# set files permission
+chown -R root:root $INSTALL_DIR/openssh
+chmod +x $INSTALL_DIR/openssh/bin/*
+chmod 755 $INSTALL_DIR/openssh/empty
+mkdir -p /root/.ssh/keys
+chmod 700 /root/.ssh
+chmod 700 /root/.ssh/keys
+
+##
+## post install
+##
+
+[ -f openssh-${VER_OPENSSH}${PACKAGE_SUFFIX} ] && rm openssh-${VER_OPENSSH}${PACKAGE_SUFFIX}
+[ -f openssh-$VER_OPENSSH.tar.gz ] && rm openssh-$VER_OPENSSH.tar.gz
+[ -d openssh-$VER_OPENSSH ] && rm -rf openssh-$VER_OPENSSH
+
+# save package version
+package_add_version "openssh" "$VER_OPENSSH"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/openssh/bin
+
+exit 0
+

@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# install lzo
+[ "$lzo_install" == "Y" ] && \
+    install_package "lzo"
+
+# install zlib
+[ "$zlib_install" == "Y" ] && \
+    install_package "zlib"
+
+# install openssl
+[ "$openssl_install" == "Y" ] && \
+    install_package "openssl"
+
+# install git
+[ "$git_install" == "Y" ] && \
+    install_package "git"
+
+# install geoip
+[ "$geoip_install" == "Y" ] && \
+    install_package "geoip"
+
+# install openssh
+[ "$openssh_install" == "Y" ] && \
+    install_package "openssh"
+
+# install openvpn
+[ "$openvpn_install" == "Y" ] && \
+    install_package "openvpn"
+
+# install mysql
+[ "$mysql_install" == "Y" ] && \
+    install_package "mysql"
+
+# install postfix
+[ "$postfix_install" == "Y" ] && \
+    install_package "postfix"
+
+# install qemu-kvm
+[ "$qemu_kvm_install" == "Y" ] && \
+    install_package "qemu-kvm"
+
+# install libvirt
+[ "$libvirt_install" == "Y" ] && \
+    install_package "libvirt"
+
+# install perl
+[ "$perl_install" == "Y" ] && \
+    install_package "perl"
+
+# install host4ge
+[ "$host4ge_install" == "Y" ] && \
+    install_package "host4ge"
+
+exit 0

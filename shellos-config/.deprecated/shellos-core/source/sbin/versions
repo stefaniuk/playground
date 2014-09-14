@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Global variables for the installation process, common for all projects. These
+# are variables that hold versions of the installed packages.
+
+# current version of the project
+VER_SHELLOS="0.0.0dev"
+
+################################################################################
+## common versions
+##
+
+VER_ANT="1.8.4"
+VER_ECLIPSE="jee-juno-SR1"
+VER_MAVEN="3.0.4"
+VER_UBUNTU="12.04.1"
+
+VER_OPENJDK_NUMBER="7"
+VER_OPENJDK_UPDATE="10"
+VER_OPENJDK_BUILD="b09"
+VER_OPENJDK_DATE="26_sep_2012"
+VER_OPENJDK="${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-${VER_OPENJDK_BUILD}"
+
+################################################################################
+## include role specific versions
+##
+
+[ -f $SHELLOS_DIR/bin/versions.$ROLE_NAME ] && \
+    source $SHELLOS_DIR/bin/versions.$ROLE_NAME
+
+################################################################################
+## include custom versions
+##
+
+[ -f $SHELLOS_DIR/bin/versions.custom ] && \
+    source $SHELLOS_DIR/bin/versions.custom

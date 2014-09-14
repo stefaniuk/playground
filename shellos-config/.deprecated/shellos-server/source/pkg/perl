@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# search for modules: apt-file search Dir/Module.pm
+
+##
+## install
+##
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    perl
+
+##
+## configure
+##
+
+# download modules
+cd ~
+apt-get download \
+    libconfig-auto-perl \
+    libconfig-inifiles-perl \
+    libdbd-mysql-perl \
+    libdbi-perl \
+    libfile-slurp-perl \
+    libtemplate-perl \
+    libtime-format-perl \
+    libxml-simple-perl
+
+# extract modules
+for file in $(ls -1 *.deb); do
+    dpkg -x $file ~/packages/
+done
+cp -vfR ~/packages/usr/lib/perl5/* /usr/lib/perl5
+cp -vfR ~/packages/usr/share/perl5/* /usr/share/perl5
+rm -rf ~/packages
+mv *.deb /var/cache/apt/archives
+
+exit 0

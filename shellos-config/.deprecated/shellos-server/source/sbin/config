@@ -1,0 +1,97 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+initialise="N"
+finalise="N"
+args=$*
+result=0
+current_dir=$(pwd)
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --initialise)   initialise="Y"
+                        ;;
+        --finalise)     finalise="Y"
+                        ;;
+    esac
+    shift
+done
+
+##
+## functions
+##
+
+run_config_scripts() {
+
+    local script=$1
+
+    cd $current_dir
+    chmod u+x $script
+    (. $script $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/$script.log)
+    result=${PIPESTATUS[0]}
+    if [ "$result" == 0 ]; then
+        local name=$(substring "$script" "./config-" "" | cut -c5-)
+
+        # custom script
+        if [ "$(contains $name custom)" == "yes" ]; then
+            name=$(split_part $name . 1)
+            log_info "configured $name (custom)"
+            echo "configured $name (custom)"
+
+        # role specific script
+        elif [ "$(contains $name $ROLE_NAME)" == "yes" ]; then
+            name=$(split_part $name . 1)
+            log_info "configured $name ($ROLE_NAME)"
+            echo "configured $name ($ROLE_NAME)"
+
+        # main script
+        else
+            log_info "configured $name"
+            echo "configured $name"
+        fi
+
+    else
+        exit $result
+    fi
+}
+
+##
+## main
+##
+
+# change directory to script's directory
+cd $script_dir
+
+# installation log directory
+[ ! -d $HOST4GE_DIR/log/$timestamp ] && (
+    mkdir -p $HOST4GE_DIR/log/$timestamp
+    chmod 700 $HOST4GE_DIR/log/$timestamp
+)
+
+# initialise
+if [ "$initialise" == "Y" ]; then
+    for script in $(ls -1 ./config-a* | sort); do
+        run_config_scripts $script
+    done
+fi
+
+# finalise
+if [ "$finalise" == "Y" ]; then
+    for script in $(ls -1 ./config-z* | sort); do
+        run_config_scripts $script
+    done
+fi
+
+# change back directory
+cd $current_dir
+
+exit $result

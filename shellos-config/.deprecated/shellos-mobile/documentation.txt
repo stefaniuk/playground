@@ -1,0 +1,108 @@
+====
+TODO
+====
+
+1. Partition internal SD card
+    - get into ClockworkMod Recovery by holding down Volume Up + Home + Power buttons together
+    - partition internal SD card (ext 4096M, swap 256M)
+1. Install ClockworkMod Recovery
+    - put your phone into download mode by holding down Volume Down + Home + Power buttons together
+    - download ROM that includes ClockworkMod Recovery, SEE: http://wiki.cyanogenmod.com/wiki/Samsung_Galaxy_S_II:_Full_Update_Guide
+    - upload ROM to the phone using Odin
+    - remove Yellow Exclamation mark using USB Jig
+2. Install CyanogenMod
+    - download desired version of CyanogenMod, SEE: http://get.cm/?device=i9100&type=nightly
+    - download desired version of Google Apps, SEE: http://wiki.cyanogenmod.com/wiki/Latest_Version#Google_Apps
+    - remove assert statement from cyanogenmod-archive/META-INF/com/google/android/updater-script and re-pack the archive
+    - copy CyanogenMod archive to the SD card
+    - get into ClockworkMod Recovery by holding down Volume Up + Home + Power buttons together
+    - install CyanogenMod and Google Apps
+    - reboot
+3. Configure
+    - login to the Google account
+    - configure device settings
+    - install applications
+4. Backup
+    - create backup using Titanium Backup
+
+============
+Applications
+============
+
+Android System Info         https://play.google.com/store/apps/details?id=com.electricsheep.asi
+
+Titanium Backup             https://play.google.com/store/apps/details?id=com.keramidas.TitaniumBackup
+MyBackup Root               https://play.google.com/store/apps/details?id=com.rerware.android.MyBackupRoot
+SMS Backup & Restore        https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore
+Call Logs Backup & Restore  https://play.google.com/store/apps/details?id=com.riteshsahu.CallLogBackupRestore
+Auto Call Recorder          https://play.google.com/store/apps/details?id=com.appstar.callrecorder
+
+Quick Settings              https://play.google.com/store/apps/details?id=com.bwx.bequick
+History Eraser              https://play.google.com/store/apps/details?id=mobi.infolife.eraser
+App Cache Cleaner           https://play.google.com/store/apps/details?id=mobi.infolife.cache
+Uninstaller                 https://play.google.com/store/apps/details?id=com.rhythm.hexise.uninst
+Task Manager                https://play.google.com/store/apps/details?id=com.rhythm.hexise.task
+
+Adobe Reader                https://play.google.com/store/apps/details?id=com.adobe.reader
+Adobe Flash Player          https://play.google.com/store/apps/details?id=com.adobe.flashplayer
+
+Maps                        https://play.google.com/store/apps/details?id=com.google.android.apps.maps
+Reader                      https://play.google.com/store/apps/details?id=com.google.android.apps.reader
+Street View                 https://play.google.com/store/apps/details?id=com.google.android.street
+Translate                   https://play.google.com/store/apps/details?id=com.google.android.apps.translate
+YouTube                     https://play.google.com/store/apps/details?id=com.google.android.youtube
+GTasks                      https://play.google.com/store/apps/details?id=org.dayup.gtask
+Skype                       https://play.google.com/store/apps/details?id=com.skype.raider
+Voice Recorder              https://play.google.com/store/apps/details?id=com.tokasiki.android.voicerecorder
+Winamp                      https://play.google.com/store/apps/details?id=com.nullsoft.winamp
+
+Total Commander             https://play.google.com/store/apps/details?id=com.ghisler.android.TotalCommander
+LAN plugin for TC           https://play.google.com/store/apps/details?id=com.ghisler.tcplugins.LAN
+FTP Plugin for TC           https://play.google.com/store/apps/details?id=com.ghisler.tcplugins.FTP
+WebDAV plugin for TC        https://play.google.com/store/apps/details?id=com.ghisler.tcplugins.WebDAV
+Dropbox                     https://play.google.com/store/apps/details?id=com.dropbox.android
+BoxCryptor                  https://play.google.com/store/apps/details?id=com.boxcryptor.android
+KeePassDroid                https://play.google.com/store/apps/details?id=com.android.keepass
+Evernote                    https://play.google.com/store/apps/details?id=com.evernote
+
+Wifi Analyzer               https://play.google.com/store/apps/details?id=com.farproc.wifi.analyzer
+Speedtest.net               https://play.google.com/store/apps/details?id=org.zwanoo.android.speedtest
+
+ConnectBot                  https://play.google.com/store/apps/details?id=org.connectbot
+DropBear SSH Server         https://play.google.com/store/apps/details?id=me.shkschneider.dropbearserver
+BusyBox Installer           https://play.google.com/store/apps/details?id=com.jrummy.busybox.installer
+BusyBox                     https://play.google.com/store/apps/details?id=stericson.busybox
+Complete Linux Installer    https://play.google.com/store/apps/details?id=com.zpwebsites.linuxonandroid
+OpenVPN Installer           https://play.google.com/store/apps/details?id=de.schaeuffelhut.android.openvpn.installer
+OpenVPN Settings            https://play.google.com/store/apps/details?id=de.schaeuffelhut.android.openvpn
+GitHub                      https://play.google.com/store/apps/details?id=com.github.mobile
+android-vnc-viewer          https://play.google.com/store/apps/details?id=android.androidVNC
+PocketCloud Remote RDP/VNC  https://play.google.com/store/apps/details?id=com.wyse.pocketcloudfree
+
+RealCalc                    https://play.google.com/store/apps/details?id=uk.co.nickfines.RealCalc
+Swiss Forex                 https://play.google.com/store/apps/details?id=com.dukascopy.informer
+QR Droid                    https://play.google.com/store/apps/details?id=la.droid.qr
+Chess for Android           https://play.google.com/store/apps/details?id=com.google.android.chess
+
+Mobile ODIN Pro             https://play.google.com/store/apps/details?id=eu.chainfire.mobileodin.pro
+ROM Manager                 https://play.google.com/store/apps/details?id=com.koushikdutta.rommanager.license
+
+Amazon                      https://play.google.com/store/apps/details?id=uk.amazon.mShop.android
+eBay                        https://play.google.com/store/apps/details?id=com.ebay.mobile
+Auto Trader                 https://play.google.com/store/apps/details?id=uk.co.autotrader.androidconsumersearch
+
+=====
+Links
+=====
+
+http://wiki.cyanogenmod.com/wiki/Samsung_Galaxy_S_II:_Full_Update_Guide
+http://download.cyanogenmod.com/?device=galaxys2
+http://androidfirmwares.net/
+
+https://konfiguracja.play.pl/hsconfig/public/service.do
+
+========
+Problems
+========
+
+http://forum.xda-developers.com/showthread.php?t=1075278

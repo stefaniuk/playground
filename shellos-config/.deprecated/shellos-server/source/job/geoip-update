@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# Scheduled job. This script updates geoip database.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+    # do not log if all jobs are locked
+    [ `job_lock_all_exists` == "no" ] && \
+        logger -p local0.notice -t host4ge "job $( basename $0 ) is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+url="http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+file=GeoLiteCity.dat.gz
+dir=$INSTALL_DIR/geoip/share/GeoIP
+chksum=$(sha1sum $CACHE_DOWNLOADS_DIR/GeoLiteCity.dat.gz)
+result=$(file_download --url $url --force --file $file --donwload-directory $dir --check-file-size 10000000)
+if [ "$result" = "success" ]; then
+
+    # compare check sum
+    chksum_new=$(sha1sum $CACHE_DOWNLOADS_DIR/GeoLiteCity.dat.gz)
+    if [ "$chksum" !=  "$chksum_new" ]; then
+        gunzip -d $dir/GeoLiteCity.dat.gz
+        mv $dir/GeoLiteCity.dat $dir/GeoIPCity.dat
+        msg="database updated"
+    fi
+
+    # set permission
+    chmod 644 $dir/GeoIPCity.dat
+
+    # check if database file exists
+    if [ ! -f $dir/GeoIPCity.dat ]; then
+        msg="database file does NOT exist"
+    fi
+
+else
+    msg="database NOT updated"
+fi
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# log an event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run (time: $time s)"
+else
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

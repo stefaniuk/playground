@@ -1,0 +1,161 @@
+#!/bin/bash
+
+# USAGE: This file is sourced by the installation script.
+
+echo "Loading arguments parser..."
+
+##
+## variables
+##
+
+debug=
+OWNER="root"
+
+do_not_configure="N"
+do_not_run_config_scripts=""
+
+install_lzo="N"
+install_zlib="N"
+install_openssl="N"
+install_openssh="N"
+install_git="N"
+install_openvpn="N"
+install_geoip="N"
+install_mysql="N"
+install_mongodb="N"
+install_perl="N"
+install_python="N"
+install_postfix="N"
+install_proftpd="N"
+install_libiconv="N"
+install_imagemagick="N"
+install_httpd="N"
+install_httpd_mod_geoip="N"
+install_nginx="N"
+install_php="N"
+install_php_fpm="N"
+install_php_mod_geoip="N"
+install_php_mod_imagick="N"
+install_dovecot="N"
+install_openjdk="N"
+install_ant="N"
+install_maven="N"
+install_tomcat="N"
+install_nodejs="N"
+install_ruby="N"
+install_phpmyadmin="N"
+install_roundcube="N"
+install_enlightenment="N"
+install_nvidia="N"
+install_eclipse="N"
+
+install_shellos="N"
+install_kernel="N"
+
+kernel_force_compilation="N"
+packages_force_compilation="N"
+do_not_use_cached_updates="N"
+
+notify="N"
+reboot="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --debug)                            debug="Y"
+                                            ;;
+        --owner)                            shift; OWNER="$1"
+                                            ;;
+        --do-not-configure)                 do_not_configure="Y"
+                                            ;;
+        --do-not-run-config-scripts)        shift; do_not_run_config_scripts="$1"
+                                            ;;
+        --lzo)                              install_lzo="Y"
+                                            ;;
+        --zlib)                             install_zlib="Y"
+                                            ;;
+        --openssl)                          install_openssl="Y"
+                                            ;;
+        --openssh)                          install_openssh="Y"
+                                            ;;
+        --git)                              install_git="Y"
+                                            ;;
+        --openvpn)                          install_openvpn="Y"
+                                            ;;
+        --geoip)                            install_geoip="Y"
+                                            ;;
+        --mysql)                            install_mysql="Y"
+                                            ;;
+        --mongodb)                          install_mongodb="Y"
+                                            ;;
+        --perl)                             install_perl="Y"
+                                            ;;
+        --python)                           install_python="Y"
+                                            ;;
+        --postfix)                          install_postfix="Y"
+                                            ;;
+        --proftpd)                          install_proftpd="Y"
+                                            ;;
+        --libiconv)                         install_libiconv="Y"
+                                            ;;
+        --imagemagick)                      install_imagemagick="Y"
+                                            ;;
+        --httpd)                            install_httpd="Y"
+                                            ;;
+        --httpd-mod-geoip)                  install_httpd_mod_geoip="Y"
+                                            ;;
+        --nginx)                            install_nginx="Y"
+                                            ;;
+        --php)                              install_php="Y"
+                                            ;;
+        --php-fpm)                          install_php_fpm="Y"
+                                            ;;
+        --php-mod-geoip)                    install_php_mod_geoip="Y"
+                                            ;;
+        --php-mod-imagick)                  install_php_mod_imagick="Y"
+                                            ;;
+        --dovecot)                          install_dovecot="Y"
+                                            ;;
+        --openjdk)                          install_openjdk="Y"
+                                            ;;
+        --ant)                              install_ant="Y"
+                                            ;;
+        --maven)                            install_maven="Y"
+                                            ;;
+        --tomcat)                           install_tomcat="Y"
+                                            ;;
+        --nodejs)                           install_nodejs="Y"
+                                            ;;
+        --ruby)                             install_ruby="Y"
+                                            ;;
+        --phpmyadmin)                       install_phpmyadmin="Y"
+                                            ;;
+        --roundcube)                        install_roundcube="Y"
+                                            ;;
+        --enlightenment)                    install_enlightenment="Y"
+                                            ;;
+        --nvidia)                           install_nvidia="Y"
+                                            ;;
+        --eclipse)                          install_eclipse="Y"
+                                            ;;
+        --shellos)                          install_shellos="Y"
+                                            ;;
+        --kernel)                           install_kernel="Y"
+                                            ;;
+        --kernel-force-compilation)         kernel_force_compilation="Y"
+                                            ;;
+        --packages-force-compilation)       packages_force_compilation="Y"
+                                            ;;
+        --do-not-use-cached-updates)        do_not_use_cached_updates="Y"
+                                            ;;
+        --notify)                           notify="Y"
+                                            ;;
+        --reboot)                           reboot="Y"
+                                            ;;
+    esac
+    shift
+done
+

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+##
+## set time zone
+##
+
+dpkg-reconfigure -f noninteractive tzdata
+if [ "$SERVER_LOCATION" == "GB" ]; then
+    echo "Europe/London" > /etc/timezone
+fi
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    echo "Europe/Warsaw" > /etc/timezone
+fi
+dpkg-reconfigure -f noninteractive tzdata
+
+##
+## set locale
+##
+
+if [ "$SERVER_LOCATION" == "GB" ]; then
+    locale-gen en_GB.UTF-8
+    update-locale LANG=en_GB.UTF-8 LC_MESSAGES=POSIX
+fi
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    locale-gen pl_PL
+    update-locale LANG=pl_PL.ISO-8859-2 LC_MESSAGES=POSIX
+fi
+
+exit 0

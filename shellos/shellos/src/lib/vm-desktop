@@ -1,0 +1,319 @@
+#!/bin/bash
+
+# SEE: http://www.virtualbox.org/manual/ch08.html
+
+function vm_create() {
+
+    local vm_name=
+    local vm_cpus=1
+    local vm_memory=512
+    local vm_disk_size=32
+    local vm_iso=
+    local vm_force="N"
+    local vm_start="N"
+    local vm_timezone="Europe/London"
+    local vm_ipaddress=
+    local vm_netmask=255.255.255.0
+    local vm_gateway=192.168.1.1
+    local vm_nameservers=192.168.1.1
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)      shift; vm_name=$1
+                            ;;
+            --cpus)         shift; vm_cpus=$1
+                            ;;
+            --memory)       shift; vm_memory=$1
+                            ;;
+            --disk-size)    shift; vm_disk_size=$1
+                            ;;
+            --iso)          shift; vm_iso=$1
+                            ;;
+            --force|-f)     vm_force="Y"
+                            ;;
+            --start|-s)     vm_start="Y"
+                            ;;
+            --timezone)     shift; vm_timezone="$1"
+                            ;;
+            --ipaddress)    shift; vm_ipaddress=$1
+                            ;;
+            --netmask)      shift; vm_netmask=$1
+                            ;;
+            --gateway)      shift; vm_gateway=$1
+                            ;;
+            --nameservers)  shift; vm_nameservers="$1"
+                            ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    # remove old virtual machine
+    if [ "$vm_force" == "Y" ]; then
+        vm_remove --name "$vm_name" > /dev/null 2>&1
+    fi
+
+    # create iso image
+    if [ -z "$vm_iso" ]; then
+        if [ -n "$vm_ipaddress" ]; then
+            # set all network parameters
+            $BIN_DIR/remaster --hostname "$vm_name" --timezone "$vm_timezone" --ipaddress $vm_ipaddress --netmask $vm_netmask --gateway $vm_gateway --nameservers "$vm_nameservers"
+        else
+            # set only the host name
+            $BIN_DIR/remaster --hostname "$vm_name"
+        fi
+        vm_iso=$CACHE_IMAGES_DIR/$SYSTEM_CODE-$vm_name.iso
+    fi
+
+    mkdir -p $VIRTUAL_MACHINES_DIR/$vm_name/snapshots
+
+    VBoxManage createvm --name "$vm_name" --basefolder $VIRTUAL_MACHINES_DIR --register
+    VBoxManage modifyvm "$vm_name" --memory $vm_memory --acpi on --boot1 dvd
+    VBoxManage modifyvm "$vm_name" --nic1 bridged --bridgeadapter1 eth0
+    VBoxManage modifyvm "$vm_name" --ostype Ubuntu_64
+    VBoxManage modifyvm "$vm_name" --cpus $vm_cpus
+    VBoxManage modifyvm "$vm_name" --vram 64
+    VBoxManage modifyvm "$vm_name" --acpi off --ioapic off
+    VBoxManage modifyvm "$vm_name" --nestedpaging off
+    VBoxManage modifyvm "$vm_name" --snapshotfolder $VIRTUAL_MACHINES_DIR/$vm_name/snapshots
+    VBoxManage createhd --filename $VIRTUAL_MACHINES_DIR/$vm_name/$vm_name.vdi --size $(expr $vm_disk_size \* 1024)
+    VBoxManage storagectl "$vm_name" --name "IDE Controller" --add ide
+    VBoxManage storageattach "$vm_name" --storagectl "IDE Controller"  --port 0 --device 0 --type hdd --medium $VIRTUAL_MACHINES_DIR/$vm_name/$vm_name.vdi
+    VBoxManage storageattach "$vm_name" --storagectl "IDE Controller" --port 1 --device 0 --type dvddrive --medium $vm_iso
+    
+    rm $VIRTUAL_MACHINES_DIR/$vm_name/*-prev
+    
+    # start new virtual machine
+    if [ "$vm_start" == "Y" ]; then
+        vm_start --name "$vm_name"
+    fi
+}
+
+function vm_modify() {
+
+    local vm_name=
+    local vm_remove_media="N"
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)      shift; vm_name=$1
+                            ;;
+            --remove-media) vm_remove_media="Y"
+                            ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    if [ "$vm_remove_media" == "Y" ]; then
+        VBoxManage storageattach "$vm_name" --storagectl "IDE Controller" --port 1 --device 0 --type dvddrive --medium "emptydrive"
+    fi
+}
+
+function vm_remove() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    vm_stop --name "$vm_name" > /dev/null 2>&1
+    VBoxManage unregistervm "$vm_name" --delete
+    rm -rf $VIRTUAL_MACHINES_DIR/$vm_name
+}
+
+function vm_exists() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+    
+    if [ $(VBoxManage list vms | grep $vm_name | wc -l) -eq 1 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+function vm_list() {
+
+    for vm in $(VBoxManage list vms | awk '{ print $1 }'); do
+        echo $vm | sed s/\"//g
+    done
+}
+
+function vm_info() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+    
+    VBoxManage showvminfo "$vm_name"
+}
+
+function vm_start() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage startvm "$vm_name" &
+}
+
+function vm_restart() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage controlvm "$vm_name" reset
+}
+
+function vm_pause() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage controlvm "$vm_name" pause
+}
+
+function vm_resume() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage controlvm "$vm_name" resume
+}
+
+function vm_save() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage controlvm "$vm_name" savestate
+}
+
+function vm_snapshot() {
+
+    local vm_name=
+    local vm_snapshot_list="N"
+    local vm_snapshot_create="N"
+    local vm_snapshot_restore=
+    local vm_snapshot_remove=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)      shift; vm_name=$1
+                            ;;
+            --list|-l)      vm_snapshot_list="Y"
+                            ;;
+            --create|-c)    vm_snapshot_create="Y"
+                            ;;
+            --restore|-r)   shift; vm_snapshot_restore=$1
+                            ;;
+            --remove)       shift; vm_snapshot_remove=$1
+                            ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    if [ "$vm_snapshot_list" == "Y" ]; then
+        VBoxManage snapshot "$vm_name" list
+    elif [ "$vm_snapshot_create" == "Y" ]; then
+        VBoxManage snapshot "$vm_name" take $(date +"%Y%m%d%H%M")
+    elif [ -n "$vm_snapshot_restore" ]; then
+        VBoxManage snapshot "$vm_name" restore $vm_snapshot_restore
+    elif [ -n "$vm_snapshot_remove" ]; then
+        VBoxManage snapshot "$vm_name" delete $vm_snapshot_remove
+    else
+        VBoxManage snapshot "$vm_name" list
+    fi
+}
+
+function vm_stop() {
+
+    local vm_name=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --name|-n)  shift; vm_name=$1
+                        ;;
+        esac
+        shift
+    done
+
+    [ -z "$vm_name" ] && return
+
+    VBoxManage controlvm "$vm_name" poweroff
+}
+

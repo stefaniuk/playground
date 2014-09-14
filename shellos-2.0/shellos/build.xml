@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="shellos" default="release" basedir=".">
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/../utils/ant-contrib-1.0b3.jar" />
+
+    <property file="${basedir}/build.properties" />
+    <property file="${basedir}/config/properties/${device.name}.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/../scripts/git-revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/../build/${ant.project.name}-${device.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/../build/shellos" />
+        <delete file="${basedir}/../build/${release.file.name.short}.tar.gz" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: copy                                 -->
+    <!-- ============================================ -->
+    <target name="copy" depends="init">
+        <delete dir="${basedir}/../build/shellos" />
+        <copy todir="${basedir}/../build/shellos">
+            <fileset dir="${basedir}/src">
+                <exclude name="**/README*" />
+            </fileset>
+        </copy>
+        <delete dir="${basedir}/../build/shellos/pkg/example" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release (DEFAULT)                    -->
+    <!-- ============================================ -->
+    <target name="release" depends="copy, update-version, update-variables">
+        <tar destfile="${release.file.name.short}.tar" basedir="${basedir}/../build/shellos" />
+        <gzip destfile="${release.file.name.short}.tar.gz" src="${release.file.name.short}.tar" />
+        <delete file="${release.file.name.short}.tar" />
+        <delete dir="${basedir}/../build/shellos" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-version                       -->
+    <!-- ============================================ -->
+    <target name="update-version">
+        <replace
+            file="${basedir}/../build/shellos/pkg/versions"
+            token="0.0.0dev"
+            value="${project.version.full}"
+        />
+        <echo>project version has been updated</echo>
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-variables                     -->
+    <!-- ============================================ -->
+    <target name="update-variables"
+        depends="
+            set-adminname,
+            set-adminmail,
+            set-commonname,
+            set-domain,
+            set-organisation-adminmail,
+            set-device-type,
+            set-device-name,
+            set-device-role,
+            set-device-location,
+            set-device-adminmail,
+            set-device-ipaddress,
+            set-device-ipaddress1,
+            set-device-ipaddress2,
+            set-device-ipaddress3,
+            set-device-ipaddress4,
+            set-device-netmask,
+            set-device-network,
+            set-device-broadcast,
+            set-device-gateway,
+            set-device-dnsnameserver1,
+            set-device-dnsnameserver2,
+            set-device-dnsnameserver3,
+            set-device-dnsnameserver4,
+            set-device-dnssearch,
+            set-device-usebridgednetwork,
+            set-device-vpn-serverfqdn,
+            set-device-vpn-serverip,
+            set-device-vpn-network,
+            set-device-vpn-netmask,
+            set-device-vpn-ipaddress,
+            set-device-localdownloaduser,
+            set-device-localdownloadpass,
+            set-device-localdownloadurl,
+            set-device-onlinedownloaduser,
+            set-device-onlinedownloadpass,
+            set-device-onlinedownloadurl
+        ">
+        <echo>all variables have been updated</echo>
+    </target>
+
+    <!-- set-adminname -->
+    <condition property="has.adminname">
+        <isset property="adminname" />
+    </condition>
+    <target name="set-adminname" if="has.adminname">
+        <echo>ADMIN_NAME=&quot;${adminname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ADMIN_NAME=&quot;&quot;"
+            replace="ADMIN_NAME=&quot;${adminname}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-adminmail -->
+    <condition property="has.adminmail">
+        <isset property="adminmail" />
+    </condition>
+    <target name="set-adminmail" if="has.adminmail">
+        <echo>ADMIN_MAIL=&quot;${adminmail}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ADMIN_MAIL=&quot;&quot;"
+            replace="ADMIN_MAIL=&quot;${adminmail}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-commonname -->
+    <condition property="has.commonname">
+        <isset property="commonname" />
+    </condition>
+    <target name="set-commonname" if="has.commonname">
+        <echo>COMMON_NAME=&quot;${commonname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^COMMON_NAME=&quot;&quot;"
+            replace="COMMON_NAME=&quot;${commonname}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-domain -->
+    <condition property="has.domain">
+        <isset property="domain" />
+    </condition>
+    <target name="set-domain" if="has.domain">
+        <echo>DOMAIN=&quot;${domain}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DOMAIN=&quot;&quot;"
+            replace="DOMAIN=&quot;${domain}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-organisation-adminmail -->
+    <condition property="has.organisation.adminmail">
+        <isset property="organisation.adminmail" />
+    </condition>
+    <target name="set-organisation-adminmail" if="has.organisation.adminmail">
+        <echo>ORGANISATION_ADMIN_MAIL=&quot;${organisation.adminmail}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ORGANISATION_ADMIN_MAIL=&quot;&quot;"
+            replace="ORGANISATION_ADMIN_MAIL=&quot;${organisation.adminmail}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-type -->
+    <condition property="has.device.type">
+        <isset property="device.type" />
+    </condition>
+    <target name="set-device-type" if="has.device.type">
+        <echo>DEVICE=&quot;${device.type}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DEVICE=&quot;&quot;"
+            replace="DEVICE=&quot;${device.type}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-name -->
+    <condition property="has.device.name">
+        <isset property="device.name" />
+    </condition>
+    <target name="set-device-name" if="has.device.name">
+        <echo>DEVICE_NAME=&quot;${device.name}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DEVICE_NAME=&quot;&quot;"
+            replace="DEVICE_NAME=&quot;${device.name}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-role -->
+    <condition property="has.device.role">
+        <isset property="device.role" />
+    </condition>
+    <target name="set-device-role" if="has.device.role">
+        <echo>DEVICE_ROLE=&quot;${device.role}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DEVICE_ROLE=&quot;&quot;"
+            replace="DEVICE_ROLE=&quot;${device.role}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-location -->
+    <condition property="has.device.location">
+        <isset property="device.location" />
+    </condition>
+    <target name="set-device-location" if="has.device.location">
+        <echo>DEVICE_LOCATION=&quot;${device.location}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DEVICE_LOCATION=&quot;&quot;"
+            replace="DEVICE_LOCATION=&quot;${device.location}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-adminmail -->
+    <condition property="has.device.adminmail">
+        <isset property="device.adminmail" />
+    </condition>
+    <target name="set-device-adminmail" if="has.device.adminmail">
+        <echo>DEVICE_ADMIN_MAIL=&quot;${device.adminmail}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DEVICE_ADMIN_MAIL=&quot;&quot;"
+            replace="DEVICE_ADMIN_MAIL=&quot;${device.adminmail}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-ipaddress -->
+    <condition property="has.device.ipaddress">
+        <isset property="device.ipaddress" />
+    </condition>
+    <target name="set-device-ipaddress" if="has.device.ipaddress">
+        <echo>IP_ADDRESS=&quot;${device.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^IP_ADDRESS=&quot;&quot;"
+            replace="IP_ADDRESS=&quot;${device.ipaddress}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-ipaddress1 -->
+    <condition property="has.device.ipaddress1">
+        <isset property="device.ipaddress1" />
+    </condition>
+    <target name="set-device-ipaddress1" if="has.device.ipaddress1">
+        <echo>IP_ADDRESS1=&quot;${device.ipaddress1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^IP_ADDRESS1=&quot;&quot;"
+            replace="IP_ADDRESS1=&quot;${device.ipaddress1}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-ipaddress2 -->
+    <condition property="has.device.ipaddress2">
+        <isset property="device.ipaddress2" />
+    </condition>
+    <target name="set-device-ipaddress2" if="has.device.ipaddress2">
+        <echo>IP_ADDRESS2=&quot;${device.ipaddress2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^IP_ADDRESS2=&quot;&quot;"
+            replace="IP_ADDRESS2=&quot;${device.ipaddress2}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-ipaddress3 -->
+    <condition property="has.device.ipaddress3">
+        <isset property="device.ipaddress3" />
+    </condition>
+    <target name="set-device-ipaddress3" if="has.device.ipaddress3">
+        <echo>IP_ADDRESS3=&quot;${device.ipaddress3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^IP_ADDRESS3=&quot;&quot;"
+            replace="IP_ADDRESS3=&quot;${device.ipaddress3}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-ipaddress4 -->
+    <condition property="has.device.ipaddress4">
+        <isset property="device.ipaddress4" />
+    </condition>
+    <target name="set-device-ipaddress4" if="has.device.ipaddress4">
+        <echo>IP_ADDRESS4=&quot;${device.ipaddress4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^IP_ADDRESS4=&quot;&quot;"
+            replace="IP_ADDRESS4=&quot;${device.ipaddress4}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-netmask -->
+    <condition property="has.device.netmask">
+        <isset property="device.netmask" />
+    </condition>
+    <target name="set-device-netmask" if="has.device.netmask">
+        <echo>NETMASK=&quot;${device.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^NETMASK=&quot;&quot;"
+            replace="NETMASK=&quot;${device.netmask}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-network -->
+    <condition property="has.device.network">
+        <isset property="device.network" />
+    </condition>
+    <target name="set-device-network" if="has.device.network">
+        <echo>NETWORK=&quot;${device.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^NETWORK=&quot;&quot;"
+            replace="NETWORK=&quot;${device.network}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-broadcast -->
+    <condition property="has.device.broadcast">
+        <isset property="device.broadcast" />
+    </condition>
+    <target name="set-device-broadcast" if="has.device.broadcast">
+        <echo>BROADCAST=&quot;${device.broadcast}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^BROADCAST=&quot;&quot;"
+            replace="BROADCAST=&quot;${device.broadcast}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-gateway -->
+    <condition property="has.device.gateway">
+        <isset property="device.gateway" />
+    </condition>
+    <target name="set-device-gateway" if="has.device.gateway">
+        <echo>GATEWAY=&quot;${device.gateway}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^GATEWAY=&quot;&quot;"
+            replace="GATEWAY=&quot;${device.gateway}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-dnsnameserver1 -->
+    <condition property="has.device.dnsnameserver1">
+        <isset property="device.dnsnameserver1" />
+    </condition>
+    <target name="set-device-dnsnameserver1" if="has.device.dnsnameserver1">
+        <echo>DNS_NAMESERVER1=&quot;${device.dnsnameserver1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DNS_NAMESERVER1=&quot;&quot;"
+            replace="DNS_NAMESERVER1=&quot;${device.dnsnameserver1}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-dnsnameserver2 -->
+    <condition property="has.device.dnsnameserver2">
+        <isset property="device.dnsnameserver2" />
+    </condition>
+    <target name="set-device-dnsnameserver2" if="has.device.dnsnameserver2">
+        <echo>DNS_NAMESERVER2=&quot;${device.dnsnameserver2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DNS_NAMESERVER2=&quot;&quot;"
+            replace="DNS_NAMESERVER2=&quot;${device.dnsnameserver2}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-dnsnameserver3 -->
+    <condition property="has.device.dnsnameserver3">
+        <isset property="device.dnsnameserver3" />
+    </condition>
+    <target name="set-device-dnsnameserver3" if="has.device.dnsnameserver3">
+        <echo>DNS_NAMESERVER3=&quot;${device.dnsnameserver3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DNS_NAMESERVER3=&quot;&quot;"
+            replace="DNS_NAMESERVER3=&quot;${device.dnsnameserver3}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-dnsnameserver4 -->
+    <condition property="has.device.dnsnameserver4">
+        <isset property="device.dnsnameserver4" />
+    </condition>
+    <target name="set-device-dnsnameserver4" if="has.device.dnsnameserver4">
+        <echo>DNS_NAMESERVER4=&quot;${device.dnsnameserver4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DNS_NAMESERVER4=&quot;&quot;"
+            replace="DNS_NAMESERVER4=&quot;${device.dnsnameserver4}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-dnssearch -->
+    <condition property="has.device.dnssearch">
+        <isset property="device.dnssearch" />
+    </condition>
+    <target name="set-device-dnssearch" if="has.device.dnssearch">
+        <echo>DNS_SEARCH=&quot;${device.dnssearch}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^DNS_SEARCH=&quot;&quot;"
+            replace="DNS_SEARCH=&quot;${device.dnssearch}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-usebridgednetwork -->
+    <condition property="has.device.usebridgednetwork">
+        <isset property="device.usebridgednetwork" />
+    </condition>
+    <target name="set-device-usebridgednetwork" if="has.device.usebridgednetwork">
+        <echo>USE_BRIDGED_NETWORK=&quot;${device.usebridgednetwork}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^USE_BRIDGED_NETWORK=&quot;&quot;"
+            replace="USE_BRIDGED_NETWORK=&quot;${device.usebridgednetwork}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-vpn-serverfqdn -->
+    <condition property="has.device.vpn.serverfqdn">
+        <isset property="device.vpn.serverfqdn" />
+    </condition>
+    <target name="set-device-vpn-serverfqdn" if="has.device.vpn.serverfqdn">
+        <echo>VPN_DEVICE_FQDN=&quot;${device.vpn.serverfqdn}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^VPN_DEVICE_FQDN=&quot;&quot;"
+            replace="VPN_DEVICE_FQDN=&quot;${device.vpn.serverfqdn}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-vpn-serverip -->
+    <condition property="has.device.vpn.serverip">
+        <isset property="device.vpn.serverip" />
+    </condition>
+    <target name="set-device-vpn-serverip" if="has.device.vpn.serverip">
+        <echo>VPN_DEVICE_IP=&quot;${device.vpn.serverip}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^VPN_DEVICE_IP=&quot;&quot;"
+            replace="VPN_DEVICE_IP=&quot;${device.vpn.serverip}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-vpn-network -->
+    <condition property="has.device.vpn.network">
+        <isset property="device.vpn.network" />
+    </condition>
+    <target name="set-device-vpn-network" if="has.device.vpn.network">
+        <echo>VPN_NETWORK=&quot;${device.vpn.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^VPN_NETWORK=&quot;&quot;"
+            replace="VPN_NETWORK=&quot;${device.vpn.network}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-vpn-netmask -->
+    <condition property="has.device.vpn.netmask">
+        <isset property="device.vpn.netmask" />
+    </condition>
+    <target name="set-device-vpn-netmask" if="has.device.vpn.netmask">
+        <echo>VPN_NETMASK=&quot;${device.vpn.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^VPN_NETMASK=&quot;&quot;"
+            replace="VPN_NETMASK=&quot;${device.vpn.netmask}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-vpn-ipaddress -->
+    <condition property="has.device.vpn.ipaddress">
+        <isset property="device.vpn.ipaddress" />
+    </condition>
+    <target name="set-device-vpn-ipaddress" if="has.device.vpn.ipaddress">
+        <echo>VPN_IP_ADDRESS=&quot;${device.vpn.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^VPN_IP_ADDRESS=&quot;&quot;"
+            replace="VPN_IP_ADDRESS=&quot;${device.vpn.ipaddress}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-localdownloaduser -->
+    <condition property="has.device.localdownloaduser">
+        <isset property="device.localdownloaduser" />
+    </condition>
+    <target name="set-device-localdownloaduser" if="has.device.localdownloaduser">
+        <echo>LOCAL_DOWNLOAD_USER=&quot;${device.localdownloaduser}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^LOCAL_DOWNLOAD_USER=&quot;&quot;"
+            replace="LOCAL_DOWNLOAD_USER=&quot;${device.localdownloaduser}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-localdownloadpass -->
+    <condition property="has.device.localdownloadpass">
+        <isset property="device.localdownloadpass" />
+    </condition>
+    <target name="set-device-localdownloadpass" if="has.device.localdownloadpass">
+        <echo>LOCAL_DOWNLOAD_PASS=&quot;${device.localdownloadpass}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^LOCAL_DOWNLOAD_PASS=&quot;&quot;"
+            replace="LOCAL_DOWNLOAD_PASS=&quot;${device.localdownloadpass}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-localdownloadurl -->
+    <condition property="has.device.localdownloadurl">
+        <isset property="device.localdownloadurl" />
+    </condition>
+    <target name="set-device-localdownloadurl" if="has.device.localdownloadurl">
+        <echo>LOCAL_DOWNLOAD_URL=&quot;${device.localdownloadurl}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^LOCAL_DOWNLOAD_URL=&quot;&quot;"
+            replace="LOCAL_DOWNLOAD_URL=&quot;${device.localdownloadurl}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-onlinedownloaduser -->
+    <condition property="has.device.onlinedownloaduser">
+        <isset property="device.onlinedownloaduser" />
+    </condition>
+    <target name="set-device-onlinedownloaduser" if="has.device.onlinedownloaduser">
+        <echo>ONLINE_DOWNLOAD_USER=&quot;${device.onlinedownloaduser}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ONLINE_DOWNLOAD_USER=&quot;&quot;"
+            replace="ONLINE_DOWNLOAD_USER=&quot;${device.onlinedownloaduser}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-onlinedownloadpass -->
+    <condition property="has.device.onlinedownloadpass">
+        <isset property="device.onlinedownloadpass" />
+    </condition>
+    <target name="set-device-onlinedownloadpass" if="has.device.onlinedownloadpass">
+        <echo>ONLINE_DOWNLOAD_PASS=&quot;${device.onlinedownloadpass}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ONLINE_DOWNLOAD_PASS=&quot;&quot;"
+            replace="ONLINE_DOWNLOAD_PASS=&quot;${device.onlinedownloadpass}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-device-onlinedownloadurl -->
+    <condition property="has.device.onlinedownloadurl">
+        <isset property="device.onlinedownloadurl" />
+    </condition>
+    <target name="set-device-onlinedownloadurl" if="has.device.onlinedownloadurl">
+        <echo>ONLINE_DOWNLOAD_URL=&quot;${device.onlinedownloadurl}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/../build/shellos/conf/variables"
+            match="^ONLINE_DOWNLOAD_URL=&quot;&quot;"
+            replace="ONLINE_DOWNLOAD_URL=&quot;${device.onlinedownloadurl}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+</project>
+

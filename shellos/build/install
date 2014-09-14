@@ -1,0 +1,14 @@
+#!/bin/bash
+
+INSTALL_DIR=/srv && SHELLOS_DIR=$INSTALL_DIR/shellos && shellos=$(ls $INSTALL_DIR/shellos*.tar.gz) && \
+rm -rf $SHELLOS_DIR && mkdir $SHELLOS_DIR && cd /srv && tar zxf $shellos -C $SHELLOS_DIR && \
+(
+    source $SHELLOS_DIR/conf/variables > /dev/null 2>&1;
+    source $SHELLOS_DIR/lib/base > /dev/null 2>&1;
+    chmod +x $SHELLOS_DIR/sbin/install-${DEVICE} && $SHELLOS_DIR/sbin/install-${DEVICE}
+) 2>&1 | tee ~/shellos-all.log
+
+rm -f $(readlink -f $0)
+
+exit 0
+

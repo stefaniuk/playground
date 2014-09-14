@@ -1,0 +1,39 @@
+#!/bin/bash
+
+chmod +x /srv/shellos/sbin/install && /srv/shellos/sbin/install \
+    --owner daniel \
+    --lzo \
+    --zlib \
+    --openssl \
+    --openssh \
+    --git \
+    --openvpn \
+    --geoip \
+    --mysql \
+    --mongodb \
+    --perl \
+    --python \
+    --postfix \
+    --proftpd \
+    --libiconv \
+    --imagemagick \
+    --httpd \
+    --httpd-mod-geoip \
+    --php \
+    --php-fpm \
+    --php-mod-geoip \
+    --php-mod-imagick \
+    --openjdk \
+    --ant \
+    --maven \
+    --tomcat \
+    --nodejs \
+    --ruby \
+    --phpmyadmin \
+    --nvidia \
+    --eclipse \
+    --shellos \
+    $@
+
+exit 0
+

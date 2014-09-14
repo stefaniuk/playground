@@ -1,0 +1,80 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="lzo-$LZO_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.oberhumer.com/opensource/lzo/download/lzo-$LZO_VERSION.tar.gz"
+    file=lzo-$LZO_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile lzo:"
+    [ -d $INSTALL_DIR/lzo ] && rm -rf $INSTALL_DIR/lzo
+    tar -zxf lzo-$LZO_VERSION.tar.gz
+    cd lzo-$LZO_VERSION
+    ./configure \
+        --prefix=$INSTALL_DIR/lzo \
+        --enable-shared \
+    && make && make install && echo "lzo installed successfully!" \
+    && rm -rf $INSTALL_DIR/lzo/share
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/lzo/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/lzo $pkg_name
+else
+    echo "Install lzo from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/lzo/lib/liblzo2.a ]; then
+	echo "Error: lzo has NOT been installed successfully!"
+	exit 1
+fi
+
+# set files permission
+chown -R root:root $INSTALL_DIR/lzo
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/lzo/lib
+
+echo "Copy includes:"
+mkdir /usr/include/lzo
+cp -rfv $INSTALL_DIR/lzo/include/lzo/*.h /usr/include/lzo
+
+# set files permission
+chown -R root:root $INSTALL_DIR/lzo
+
+##
+## post install
+##
+
+[ -f lzo-${LZO_VERSION}${PACKAGE_SUFFIX} ] && rm lzo-${LZO_VERSION}${PACKAGE_SUFFIX}
+[ -f lzo-$LZO_VERSION.tar.gz ] && rm lzo-$LZO_VERSION.tar.gz
+[ -d lzo-$LZO_VERSION ] && rm -rf lzo-$LZO_VERSION
+
+# save package version
+package_add_version "lzo" "$LZO_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/lzo/lib
+
+exit 0

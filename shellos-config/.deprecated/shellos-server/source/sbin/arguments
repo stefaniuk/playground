@@ -1,0 +1,138 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+debug=
+do_not_configure="N"
+do_not_reboot="N"
+
+lzo_install="N"
+zlib_install="N"
+openssl_install="N"
+git_install="N"
+geoip_install="N"
+openssh_install="N"
+openvpn_install="N"
+mysql_install="N"
+postfix_install="N"
+qemu_kvm_install="N"
+lxc_install="N"
+libvirt_install="N"
+perl_install="N"
+libiconv_install="N"
+imagemagick_install="N"
+httpd_install="N"
+httpd_geoip_install="N"
+php_install="N"
+php_geoip_install="N"
+php_imagick_install="N"
+proftpd_install="N"
+dovecot_install="N"
+openjdk_install="N"
+tomcat_install="N"
+phpmyadmin_install="N"
+roundcube_install="N"
+host4ge_install="N"
+kernel_install="N"
+
+kernel_force_compilation="N"
+packages_force_compilation="N"
+do_not_use_cached_updates="N"
+
+notify="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --debug)                            debug="Y"
+                                            ;;
+        --do-not-configure)                 do_not_configure="Y"
+                                            ;;
+        --do-not-reboot)                    do_not_reboot="Y"
+                                            ;;
+        --lzo)                              lzo_install="Y"
+                                            ;;
+        --zlib)                             zlib_install="Y"
+                                            ;;
+        --openssl)                          openssl_install="Y"
+                                            ;;
+        --git)                              git_install="Y"
+                                            ;;
+        --geoip)                            geoip_install="Y"
+                                            ;;
+        --openssh)                          openssh_install="Y"
+                                            ;;
+        --openvpn)                          openvpn_install="Y"
+                                            ;;
+        --mysql)                            mysql_install="Y"
+                                            ;;
+        --postfix)                          postfix_install="Y"
+                                            ;;
+        --qemu-kvm)                         qemu_kvm_install="Y"
+                                            ;;
+        --lxc)                              lxc_install="Y"
+                                            ;;
+        --libvirt)                          libvirt_install="Y"
+                                            ;;
+        --perl)                             perl_install="Y"
+                                            ;;
+        --libiconv)                         libiconv_install="Y"
+                                            ;;
+        --imagemagick)                      imagemagick_install="Y"
+                                            ;;
+        --httpd)                            httpd_install="Y"
+                                            ;;
+        --httpd-geoip)                      httpd_geoip_install="Y"
+                                            ;;
+        --php)                              php_install="Y"
+                                            ;;
+        --php-geoip)                        php_geoip_install="Y"
+                                            ;;
+        --php-imagick)                      php_imagick_install="Y"
+                                            ;;
+        --proftpd)                          proftpd_install="Y"
+                                            ;;
+        --dovecot)                          dovecot_install="Y"
+                                            ;;
+        --openjdk)                          openjdk_install="Y"
+                                            ;;
+        --tomcat)                           tomcat_install="Y"
+                                            ;;
+        --phpmyadmin)                       phpmyadmin_install="Y"
+                                            ;;
+        --roundcube)                        roundcube_install="Y"
+                                            ;;
+        --host4ge)                          host4ge_install="Y"
+                                            ;;
+        --kernel)                           kernel_install="Y"
+                                            ;;
+        --kernel-force-compilation)         kernel_force_compilation="Y"
+                                            ;;
+        --packages-force-compilation)       packages_force_compilation="Y"
+                                            ;;
+        --do-not-use-cached-updates)        do_not_use_cached_updates="Y"
+                                            ;;
+        --notify)                           notify="Y"
+                                            ;;
+    esac
+    shift
+done
+
+################################################################################
+## include server specific arguments
+##
+
+[ -f $HOST4GE_DIR/sbin/arguments.$ROLE_NAME ] && \
+    source $HOST4GE_DIR/sbin/arguments.$ROLE_NAME
+
+################################################################################
+## include custom arguments
+##
+
+[ -f $HOST4GE_DIR/sbin/arguments.custom ] && \
+    source $HOST4GE_DIR/sbin/arguments.custom

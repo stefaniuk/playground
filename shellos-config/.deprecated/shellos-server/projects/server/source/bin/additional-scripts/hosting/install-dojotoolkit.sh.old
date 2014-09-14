@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+# File: management/install-dojotoolkit.sh
+#
+# Description: Installs Dojo Toolkit, JavaScript library.
+#
+# Usage:
+#
+#   install-dojotoolkit.sh --user system_user --path install_path --dir-name install_dir_name
+
+##
+## variables
+##
+
+DOJOTOOLKIT_VERSION="1.6.1"
+DOJOTOOLKIT_SYSTEM_USER=
+DOJOTOOLKIT_INSTALL_PATH=
+DOJOTOOLKIT_INSTALL_DIR_NAME=
+
+CURRENT_DIR=`pwd`
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --user)     shift && DOJOTOOLKIT_SYSTEM_USER=$1
+                    ;;
+        --path)     shift && DOJOTOOLKIT_INSTALL_PATH=$1
+                    ;;
+        --dir-name) shift && DOJOTOOLKIT_INSTALL_DIR_NAME=$1
+                    ;;
+    esac
+    shift
+done
+
+##
+## download
+##
+
+DOJOTOOLKIT_SRC_FILE=$DOWNLOADS_DIR/dojotoolkit-$DOJOTOOLKIT_VERSION.tar.gz
+if [ ! -s $DOJOTOOLKIT_SRC_FILE ]; then
+    [ -f $DOJOTOOLKIT_SRC_FILE ] && rm $DOJOTOOLKIT_SRC_FILE
+    wget http://download.dojotoolkit.org/release-$DOJOTOOLKIT_VERSION/dojo-release-$DOJOTOOLKIT_VERSION.tar.gz -O $DOJOTOOLKIT_SRC_FILE
+fi
+if [ ! -s $DOJOTOOLKIT_SRC_FILE ]; then
+    rm $DOJOTOOLKIT_SRC_FILE
+    echo "Error: $DOJOTOOLKIT_SRC_FILE file is missing!"
+    exit 1
+fi
+chmod 400 $DOJOTOOLKIT_SRC_FILE
+
+##
+## install
+##
+
+[ ! -d $DOJOTOOLKIT_INSTALL_PATH ] && mkdir -p $DOJOTOOLKIT_INSTALL_PATH
+cd $DOJOTOOLKIT_INSTALL_PATH
+[ -d $DOJOTOOLKIT_INSTALL_DIR_NAME ] && rm -r $DOJOTOOLKIT_INSTALL_DIR_NAME
+tar -zxf $DOJOTOOLKIT_SRC_FILE
+[ "dojo-release-$DOJOTOOLKIT_VERSION" != "$DOJOTOOLKIT_INSTALL_DIR_NAME" ] && mv dojo-release-$DOJOTOOLKIT_VERSION $DOJOTOOLKIT_INSTALL_DIR_NAME
+
+# set files permission
+chown -R $DOJOTOOLKIT_SYSTEM_USER:$DOJOTOOLKIT_SYSTEM_USER $DOJOTOOLKIT_INSTALL_DIR_NAME
+
+cd $CURRENT_DIR
+
+exit 0

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+chroot_setup_resources
+
+exit 0
+

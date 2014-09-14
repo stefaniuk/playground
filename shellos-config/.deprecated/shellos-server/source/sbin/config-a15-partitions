@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# make disk changes only if this is a dedicated server
+[ "$(server_type_ne $SERVER_TYPE_DEDICATED_ID)" == "yes" ] && exit 0
+
+# remove logical volumes (except swap and root)
+for lv in $(ls -1 /dev/mapper/vg00-*); do
+    if [ $lv != "/dev/mapper/vg00-swap" ] && [ $lv != "/dev/mapper/vg00-root" ]; then
+        umount $lv
+        kpartx -dv $lv
+        sleep 1
+        echo -e "y\n" | lvremove $lv
+    fi
+done
+# remove physical volumes (except /dev/sda*)
+for pv in $(pvdisplay | grep "PV Name" | grep -v /dev/sda | awk '{ print $3 }'); do
+    vgreduce vg00 $pv
+done
+# make volume group consistent
+vgreduce --removemissing vg00
+
+# add second hard drive to the volume group
+if [ $(hard_drive_count) -gt 1 ]; then
+    echo "d
+1
+d
+n
+p
+1
+
+
+t
+8e
+w
+" | fdisk /dev/sdb
+    mkfs.ext4 /dev/sdb1
+    pvcreate /dev/sdb1
+    vgextend vg00 /dev/sdb1
+fi
+
+echo -e " === Physical Volumes ===\n"
+pvdisplay
+
+echo -e " === Volume Groups ===\n"
+vgdisplay
+
+echo -e " === Logical Volumes ===\n"
+lvdisplay
+
+exit 0

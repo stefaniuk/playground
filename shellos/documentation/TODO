@@ -1,0 +1,58 @@
+PROJECT GOALS
+=============
+
+Deliver extended shell functionality for Linux devices.
+
+REQUIREMENTS
+============
+
+Support Ubuntu and Debian.
+
+PRIORITIES AND FEATURES
+=======================
+
+ - Create a document that describes system and service test strategy
+ - Integrate with
+        log4sh - https://sites.google.com/a/forestent.com/projects/log4sh
+        shunit2 - https://code.google.com/p/shunit2/
+ - Write service unit tests to prove a service is operating correctly
+        mysql test
+            login
+            check database access
+        postfix/dovecot test
+            send email
+            check received emails
+            monitor incoming/outgoing emails
+        php test
+            check disabled functions
+            try to read/write filesystem
+            check memory limits
+            check database access
+            send email
+            check curl
+        roundcube test
+            login
+            check application access
+        phpmyadmin test
+            login
+            check application access
+        * all *
+            monitor service usage and produce statistics
+ - Monitor system usage and produce statistics
+ - Write web application to monitor system and services usage
+ - Schedule unit tests to prove all services are operating correctly
+ - Write installation unit tests
+ - Create API to manage PHP-FPM instances
+ - implement file permission functions to stop users delete root owned files
+        http://blog.hacker.dk/2010/05/users-can-deletemove-and-rename-files-owned-by-root-eg-via-an-ftp-server-why-and-how-to-fix-unlink_override-v10/?reffed=1
+        http://stackoverflow.com/questions/426230/what-is-the-ld-preload-trick
+ - Upgrade OpenVPN to the current version
+        https://community.openvpn.net/openvpn/wiki/GettingOpenvpnBuild
+        https://community.openvpn.net/openvpn/wiki/BuildingUsingGenericBuildsystem
+ - NFS filesystem mounting
+ - System/appication hooks
+ - Data presentation templates
+ - Consider to install iRedAdmin and ClamAV
+ - Implement "revert back last package update"
+        /srv/shellos/sbin/update --php-fpm --revert-package --current-version 5.4.19 --new-version 5.4.17
+

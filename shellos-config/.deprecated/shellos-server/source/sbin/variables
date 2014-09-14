@@ -1,0 +1,91 @@
+#!/bin/bash
+#
+# Global variables for the installation process, common for all projects. These
+# are variables likely to be changed.
+
+################################################################################
+## below variables should be exported to profile and crontab
+##
+
+# operating system codename
+CODENAME=$(lsb_release -a | grep Codename | awk '{ print $2 }')
+
+# organisation details
+COMMON_NAME=""
+DOMAIN=""
+
+# admin details
+ADMIN_NAME=""
+ADMIN_MAIL=""
+
+# server details
+SERVER_NAME=""
+SERVER_LOCATION=""
+SERVER_TYPE=""
+ROLE_NAME=""
+ROLE_ID=""
+ASPECT_NAME=""
+ASPECT_ID=""
+
+# regular network settings
+IP_ADDRESS=""
+IP_ADDRESS1=""
+IP_ADDRESS2=""
+IP_ADDRESS3=""
+IP_ADDRESS4=""
+NETMASK=""
+NETWORK=""
+BROADCAST=""
+GATEWAY=""
+DNS_NAMESERVER1=""
+DNS_NAMESERVER2=""
+DNS_NAMESERVER3=""
+DNS_NAMESERVER4=""
+DNS_NAMESERVERS="$DNS_NAMESERVER1 $DNS_NAMESERVER2 $DNS_NAMESERVER3 $DNS_NAMESERVER4"
+DNS_SEARCH=""
+USE_BRIDGED_NETWORK=""
+
+# vpn network settings
+VPN_SERVER_FQDN=""
+VPN_SERVER_IP=""
+VPN_NETWORK=""
+VPN_NETMASK=""
+VPN_IP_ADDRESS=""
+
+# local download alternative
+if [[ "$IP_ADDRESS" != 192.168.* ]]; then
+    LOCAL_DOWNLOAD_USER=""
+    LOCAL_DOWNLOAD_PASS=""
+    LOCAL_DOWNLOAD_URL=""
+else
+    LOCAL_DOWNLOAD_USER="host4ge"
+    LOCAL_DOWNLOAD_PASS="3TxYFX"
+    LOCAL_DOWNLOAD_URL="ftp://192.168.1.31/host4ge"
+fi
+
+# online download alternative
+ONLINE_DOWNLOAD_USER=""
+ONLINE_DOWNLOAD_PASS=""
+ONLINE_DOWNLOAD_URL="http://dl.dropbox.com/u/7395263/host4ge"
+
+################################################################################
+## variables set only for the installation purpose
+##
+
+INSTALL_DIR=/srv
+HOST4GE_DIR=$INSTALL_DIR/host4ge
+SERVER_STATUS="installation"
+
+################################################################################
+## include server specific variables
+##
+
+[ -f $HOST4GE_DIR/sbin/variables.$ROLE_NAME ] && \
+    source $HOST4GE_DIR/sbin/variables.$ROLE_NAME
+
+################################################################################
+## include custom variables
+##
+
+[ -f $HOST4GE_DIR/sbin/variables.custom ] && \
+    source $HOST4GE_DIR/sbin/variables.custom

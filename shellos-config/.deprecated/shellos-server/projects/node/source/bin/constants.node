@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Global constants specific to the project. These are variables not likely to be
+# changed.
+
+################################################################################
+## directories
+##
+
+export CONTAINERS_DIR=$VAR_DIR/containers

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+##
+## load firewall rules
+##
+
+$CMD_IPTABLES -F
+$CMD_IPTABLES -X
+$CMD_IPTABLES -P INPUT DROP
+$CMD_IPTABLES -P OUTPUT ACCEPT
+$CMD_IPTABLES -P FORWARD DROP
+$CMD_IPTABLES -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+$CMD_IPTABLES -A INPUT -i lo -j ACCEPT
+$CMD_IPTABLES -A INPUT -p icmp --icmp echo-request -j ACCEPT
+$CMD_IPTABLES -A INPUT -p icmp --icmp echo-reply -j ACCEPT
+$CMD_IPTABLES -A INPUT -p tcp --dport $OPENSSH_PORT -m state --state NEW,ESTABLISHED -j ACCEPT
+$CMD_IPTABLES -A INPUT -m limit --limit 6/minute -j LOG --log-prefix "$iptables denied: " --log-level 7
+$CMD_IPTABLES -A INPUT -j REJECT
+$CMD_IPTABLES -L -v
+
+exit 0
+

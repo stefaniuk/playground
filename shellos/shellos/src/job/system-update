@@ -1,0 +1,81 @@
+#!/bin/bash
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="system-update"
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ $(job_lock_exists $job_name) == "yes" ]; then
+    # do not log if all jobs are locked
+    [ $(job_lock_all_exists) == "no" ] && \
+        log_info "job $job_name is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+# update system
+(   echo "System update: $(date +"%G %b %d, %T %Z")"
+    DEBIAN_FRONTEND="noninteractive"
+    apt-get --yes update
+    apt-get --yes --force-yes upgrade
+    apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+    apt-get autoremove --yes --force-yes
+    apt-get autoclean --yes --force-yes
+    apt-file update
+    fix_common_libraries | sort
+) > $UPDATE_RECENT_LOG_FILE 2>&1
+(cat $UPDATE_RECENT_LOG_FILE; echo -e "\n\n\n") >> $UPDATE_LOG_FILE
+
+# set log file permission
+chown root:root $UPDATE_LOG_FILE
+chmod 600 $UPDATE_LOG_FILE
+chown root:root $UPDATE_RECENT_LOG_FILE
+chmod 600 $UPDATE_RECENT_LOG_FILE
+
+# print info to the standard output if any changes
+numbers=$(cat $UPDATE_RECENT_LOG_FILE | grep -oEi '[0-9]+ upgraded, [0-9]+ newly installed, [0-9]+ to remove and [0-9]+ not upgraded' | awk '{print $1,$3,$6,$10;}')
+for number in $numbers; do
+    if [ $number -gt 0 ]; then
+        cat $UPDATE_RECENT_LOG_FILE
+        break
+    fi
+done
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

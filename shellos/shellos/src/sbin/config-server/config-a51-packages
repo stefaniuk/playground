@@ -1,0 +1,12 @@
+#!/bin/bash
+
+##
+## manage packages
+##
+
+# install
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    nfs-kernel-server
+
+exit 0
+

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="host4ge-node" default="release" basedir=".">
+
+    <property file="${basedir}/../../build.properties" />
+    <property file="${basedir}/../../config/properties/${server.name}.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/../../utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/../../scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/../../build/host4ge-${server.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+        <echo>Building server: ${server.name}</echo>
+        <echo>Server role: ${server.role}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete><fileset dir="${basedir}/database/" includes="*.bak" /></delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- ============================================ -->
+    <target name="release" depends="clean">
+
+        <!-- backup variables file -->
+        <echo>backup variables file (server specific)</echo>
+        <copy file="${basedir}/source/sbin/variables.${server.role}" tofile="${basedir}/variables.${server.role}.bak" />
+
+        <antcall target="update-variables"></antcall>
+
+        <!-- release source -->
+        <tar destfile="${release.file.name.short}.tar">
+            <!-- include common files -->
+            <tarfileset dir="${basedir}/../../source" prefix="source">
+                <include name="**" />
+                <exclude name="**/README" />
+                <exclude name="**/README.md" />
+                <!-- bashinator -->
+                <exclude name="**/bashinator/ChangeLog" />
+                <!-- bashsimplecurses -->
+                <exclude name="**/bashsimplecurses/AUTHORS" />
+                <exclude name="**/bashsimplecurses/INSTALL" />
+                <exclude name="**/bashsimplecurses/LICENSE" />
+                <exclude name="**/bashsimplecurses/Makefile" />
+            </tarfileset>
+            <!-- include project files -->
+            <tarfileset
+                dir="${basedir}/source"
+                prefix="source"
+                excludes="**/README"
+            />
+            <!-- include installation script -->
+            <tarfileset dir="${basedir}/../../config/scripts" prefix="source/sbin">
+                <include name="${server.name}.bash" />
+            </tarfileset>
+            <!-- include vpn configuration files -->
+            <tarfileset dir="${basedir}/../../config/vpn/${server.name}" prefix="source/pkg/resources/openvpn" erroronmissingdir="false" erroronmissingarchive="false">
+                <include name="**/clients/*" />
+                <include name="**/keys/*" />
+            </tarfileset>
+        </tar>
+        <gzip destfile="${release.file.name.short}.tar.gz" src="${release.file.name.short}.tar" />
+        <delete file="${release.file.name.short}.tar" />
+
+        <!-- restore variables file -->
+        <echo>restore variables file (server specific)</echo>
+        <move file="${basedir}/variables.${server.role}.bak" tofile="${basedir}/source/sbin/variables.${server.role}" />
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-variables                     -->
+    <!-- ============================================ -->
+    <target name="update-variables"
+        depends="
+            set-node-container-bridge-name,
+            set-node-container-bridge-ipaddress,
+            set-node-container-bridge-netmask,
+            set-node-container-bridge-network,
+            set-node-container-bridge-broadcast
+        ">
+        <echo>all variables are now updated (server specific)</echo>
+    </target>
+
+    <!-- set-node-container-bridge-name -->
+    <condition property="has.node.container.bridge.name">
+        <isset property="node.container.bridge.name" />
+    </condition>
+    <target name="set-node-container-bridge-name" if="has.node.container.bridge.name">
+        <echo>CONTAINER_BRIDGE_NAME=${node.container.bridge.name}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^CONTAINER_BRIDGE_NAME=&quot;&quot;"
+            replace="CONTAINER_BRIDGE_NAME=${node.container.bridge.name}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+
+    <!-- set-node-container-bridge-ipaddress -->
+    <condition property="has.node.container.bridge.ipaddress">
+        <isset property="node.container.bridge.ipaddress" />
+    </condition>
+    <target name="set-node-container-bridge-ipaddress" if="has.node.container.bridge.ipaddress">
+        <echo>CONTAINER_BRIDGE_IPADDRESS=${node.container.bridge.ipaddress}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^CONTAINER_BRIDGE_IPADDRESS=&quot;&quot;"
+            replace="CONTAINER_BRIDGE_IPADDRESS=${node.container.bridge.ipaddress}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-node-container-bridge-netmask -->
+    <condition property="has.node.container.bridge.netmask">
+        <isset property="node.container.bridge.netmask" />
+    </condition>
+    <target name="set-node-container-bridge-netmask" if="has.node.container.bridge.netmask">
+        <echo>CONTAINER_BRIDGE_NETMASK=${node.container.bridge.netmask}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^CONTAINER_BRIDGE_NETMASK=&quot;&quot;"
+            replace="CONTAINER_BRIDGE_NETMASK=${node.container.bridge.netmask}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-node-container-bridge-network -->
+    <condition property="has.node.container.bridge.network">
+        <isset property="node.container.bridge.network" />
+    </condition>
+    <target name="set-node-container-bridge-network" if="has.node.container.bridge.network">
+        <echo>CONTAINER_BRIDGE_NETWORK=${node.container.bridge.network}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^CONTAINER_BRIDGE_NETWORK=&quot;&quot;"
+            replace="CONTAINER_BRIDGE_NETWORK=${node.container.bridge.network}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-node-container-bridge-broadcast -->
+    <condition property="has.node.container.bridge.broadcast">
+        <isset property="node.container.bridge.broadcast" />
+    </condition>
+    <target name="set-node-container-bridge-broadcast" if="has.node.container.bridge.broadcast">
+        <echo>CONTAINER_BRIDGE_BROADCAST=${node.container.bridge.broadcast}</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables.${server.role}"
+            match="^CONTAINER_BRIDGE_BROADCAST=&quot;&quot;"
+            replace="CONTAINER_BRIDGE_BROADCAST=${node.container.bridge.broadcast}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+</project>

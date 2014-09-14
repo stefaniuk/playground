@@ -1,0 +1,119 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/geoip/bin/geoiplookup ]; then
+    echo "Error: GeoIP module for Apache HTTPD Server requires GeoIP!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/httpd/bin/httpd ]; then
+    echo "Error: GeoIP module for Apache HTTPD Server requires Apache HTTPD Server!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="httpd-geoip-$VER_HTTPD_MOD_GEOIP"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://geolite.maxmind.com/download/geoip/api/mod_geoip2/mod_geoip2_$VER_HTTPD_MOD_GEOIP.tar.gz"
+    file=mod_geoip2_$VER_HTTPD_MOD_GEOIP.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 10000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile GeoIP Apache HTTPD Server module:"
+    tar -zxf mod_geoip2_$VER_HTTPD_MOD_GEOIP.tar.gz
+    cd mod_geoip2_$VER_HTTPD_MOD_GEOIP
+    $INSTALL_DIR/httpd/bin/apxs \
+        -i -a -L$INSTALL_DIR/geoip/lib -I$INSTALL_DIR/geoip/include -lGeoIP -c mod_geoip.c \
+    && echo "GeoIP Apache HTTPD Server module installed successfully!"
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/httpd/modules/mod_geoip.so
+    echo "Create package:"
+    package_create_files $INSTALL_DIR/httpd/modules $pkg_name mod_geoip.so
+else
+    echo "Install GeoIP Apache HTTPD Server module from package:"
+    package_restore_files $pkg_name $INSTALL_DIR/httpd/modules
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/httpd/modules/mod_geoip.so ]; then
+    echo "Error: GeoIP module for Apache HTTPD Server has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/httpd/modules/mod_geoip.so:"
+ldd $INSTALL_DIR/httpd/modules/mod_geoip.so
+
+# httpd.conf
+if [ "$pkg_result" == "success" ]; then
+    replace_in_file '# end of modules' 'LoadModule geoip_module modules\/mod_geoip.so\n# end of modules' $INSTALL_DIR/httpd/conf/httpd.conf
+else
+    replace_in_file 'LoadModule geoip_module[ \t]*modules\/mod_geoip.so' 'LoadModule geoip_module modules\/mod_geoip.so' $INSTALL_DIR/httpd/conf/httpd.conf
+fi
+(   echo -e "\n<IfModule mod_geoip.c>" && \
+    echo -e "    GeoIPEnable On" && \
+    echo -e "    GeoIPEnableUTF8 On" && \
+    echo -e "    GeoIPDBFile $INSTALL_DIR/geoip/share/GeoIP/GeoIPCity.dat" && \
+    echo -e "    # ISO 3166 Country Codes - http://www.maxmind.com/app/iso3166" && \
+    echo -e "    SetEnvIf GEOIP_COUNTRY_CODE CN BlockCountry" && \
+    echo -e "    SetEnvIf GEOIP_COUNTRY_CODE IL BlockCountry" && \
+    echo -e "    SetEnvIf GEOIP_COUNTRY_CODE RU BlockCountry" && \
+    echo -e "    SetEnvIf GEOIP_COUNTRY_CODE SY BlockCountry" && \
+    echo -e "    SetEnvIf GEOIP_COUNTRY_CODE TR BlockCountry" && \
+    echo -e "    <Location \"/\">" && \
+    echo -e "        Deny from env=BlockCountry" && \
+    echo -e "    </Location>" && \
+    echo -e "</IfModule>" \
+) >> $INSTALL_DIR/httpd/conf/httpd.conf
+
+# geoip.php
+cat << EOF > $HOSTING_PUBLIC_DIR/geoip.php
+Continent Code: <?php echo apache_note('GEOIP_CONTINENT_CODE'); ?><br />
+Country Code: <?php echo apache_note('GEOIP_COUNTRY_CODE'); ?><br />
+Country: <?php echo apache_note('GEOIP_COUNTRY_NAME'); ?><br />
+Region: <?php echo apache_note('GEOIP_REGION_NAME'); ?><br />
+City: <?php echo apache_note('GEOIP_CITY'); ?><br />
+Latitude: <?php echo apache_note('GEOIP_LATITUDE'); ?><br />
+Longitude: <?php echo apache_note('GEOIP_LONGITUDE'); ?><br />
+EOF
+
+# set files permission
+chown -R root:root $INSTALL_DIR/httpd/modules/mod_geoip.so
+chmod 755 $INSTALL_DIR/httpd/modules/mod_geoip.so
+mkdir -p ${HOSTING_DIR}${INSTALL_DIR}/geoip/share/GeoIP
+# chroot
+ln $INSTALL_DIR/geoip/share/GeoIP/GeoIPCity.dat ${HOSTING_DIR}${INSTALL_DIR}/geoip/share/GeoIP/GeoIPCity.dat
+
+##
+## post install
+##
+
+[ -f httpd-geoip-${VER_HTTPD_MOD_GEOIP}${PACKAGE_SUFFIX} ] && rm httpd-geoip-${VER_HTTPD_MOD_GEOIP}${PACKAGE_SUFFIX}
+[ -f mod_geoip2_$VER_HTTPD_MOD_GEOIP.tar.gz ] && rm mod_geoip2_$VER_HTTPD_MOD_GEOIP.tar.gz
+[ -d mod_geoip2_$VER_HTTPD_MOD_GEOIP ] && rm -rf mod_geoip2_$VER_HTTPD_MOD_GEOIP
+
+# save package version
+package_add_version "httpd-geoip" "$VER_HTTPD_MOD_GEOIP"
+
+exit 0
+

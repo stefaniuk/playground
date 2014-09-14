@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# This script defines server specific firewall rules.
+
+##
+## variables
+##
+
+extbr="br0"
+intbr="br1"
+
+##
+## main
+##
+
+if [ "$1" == "--ipv4" ]; then
+
+    if [ "$mode" == "online" ]; then
+
+        for ip in $NODE_IP_ADDRESSES; do
+            # going out from node
+            $iptv4 -i $extbr -A FORWARD -s $ip -j ACCEPT
+            # comming in to node
+            $iptv4 -i $extbr -A FORWARD -d $ip -j ACCEPT
+        done
+
+    elif [ "$mode" == "safe" ]; then
+
+        for ip in $NODE_IP_ADDRESSES; do
+            # going out from node
+            $iptv4 -i $extbr -A FORWARD -s $ip -j ACCEPT
+            # comming in to node
+            $iptv4 -i $extbr -A FORWARD -s $IP_ADDRESS -d $ip -j ACCEPT
+            $iptv4 -i $extbr -A FORWARD -d $ip -m state --state ESTABLISHED,RELATED -j ACCEPT
+        done
+
+    fi
+
+fi
+
+#if [ "$1" == "--ipv6" ]; then
+#fi
+
+exit 0

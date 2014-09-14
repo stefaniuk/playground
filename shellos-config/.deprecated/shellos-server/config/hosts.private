@@ -1,0 +1,15 @@
+# BEGIN: custom hosts
+
+192.168.1.10    vms1.host4ge.com
+192.168.1.11    vm11.host4ge.com
+192.168.1.12    vm12.host4ge.com
+192.168.1.13    vm13.host4ge.com
+192.168.1.14    vm14.host4ge.com tomcat.vm14.host4ge.com
+192.168.1.15    vm15.host4ge.com phpmyadmin.vm15.host4ge.com roundcube.vm15.host4ge.com tomcat.vm15.host4ge.com
+
+192.168.1.20    vms2.host4ge.com
+192.168.1.21    vm21.host4ge.com
+192.168.1.22    vm22.host4ge.com
+192.168.1.23    vm23.host4ge.com
+
+# END: custom hosts

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# https://wiki.ubuntu.com/PrecisePangolin/ReleaseNotes/TechnicalOverviewUpstart
+
+# disable upstart jobs
+patterns="hvc0.conf"
+for pattern in $patterns; do
+    files=$(ls -1 /etc/init/$pattern 2> /dev/null)
+    for file in $files; do
+        [ -f $file ] && mv $file $file.disabled
+    done
+done
+
+exit 0

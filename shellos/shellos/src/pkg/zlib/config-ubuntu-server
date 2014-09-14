@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/zlib/lib
+
+echo "Copy includes:"
+rm /usr/include/{zconf.h,zlib.h}
+cp -rfv $INSTALL_DIR/zlib/include/*.h /usr/include/
+
+echo "Copy pkgconfig:"
+cp -rfv $INSTALL_DIR/zlib/lib/pkgconfig/* /usr/lib/pkgconfig
+
+exit 0
+

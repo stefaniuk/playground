@@ -1,0 +1,533 @@
+#!/bin/bash
+#
+# Global functions specific to the project. These functions may depend on
+# variables and constants.
+
+################################################################################
+## node routines
+##
+
+# Lists nodes.
+function node_list() {
+
+    virsh -c qemu:///system list --all | awk '{ if ( NR > 2 ) { print } }' | awk '{ print $2  }' | grep -v '^$'
+}
+
+# Gets node status.
+#
+# parameters:
+#   $1 node name
+function node_status() {
+
+    local status=$(virsh -c qemu:///system list --all | awk '{ if ( NR > 2 ) { print } }' | grep $1 | awk '{ $1=""; $2=""; print $0 }')
+
+    echo $(trim "$status")
+}
+
+# Gets status of all nodes.
+function node_status_all() {
+
+    local old_ifs=$IFS
+    IFS=$'\n'
+    local statuses=$(virsh -c qemu:///system list --all | awk '{ if ( NR > 2 ) { print } }' | awk '{ $1=""; print $0 }')
+    for status in $statuses; do
+        echo $(trim "$status")
+    done
+    IFS=$old_ifs
+}
+
+# Checks if node is running.
+#
+# parameters:
+#   $1 node name
+function node_is_running() {
+
+    local status=$(node_status $1)
+
+    if [ "$status" == "running" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Returns node number.
+#
+# parameters:
+#   $1 node name
+function node_get_number() {
+
+    local node=$1
+
+    for i in $(seq 1 $NODE_NUMBER); do
+        local hostname=$(split_part "$NODE_HOSTNAMES" ',' $i)
+        if [ "$node" == "$hostname" ]; then
+            break
+        fi
+    done
+
+    echo $i
+}
+
+# Checks if node exists.
+#
+# parameters:
+#   $1 node name
+function node_exists() {
+
+    local node=$1
+
+    if [ -n "$(node_list | grep ^$node$)" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Creates node.
+#
+# parameters:
+#   $1 node name
+#   --clear-disk
+#   --start
+function node_create() {
+
+    local node=$1
+    local clear_disk=
+    local start="N"
+
+    # arguments
+    while [ "$1" != "" ]; do
+        case $1 in
+            --clear-disk)   clear_disk="--clear-disk"
+                            ;;
+            --start)        start="Y"
+                            ;;
+        esac
+        shift
+    done
+
+    # get configuration
+    local number=$(node_get_number $node)
+    cpus=$(split_part "$NODE_CPUS" ',' $number)
+    mem=$(split_part "$NODE_MEMORY" ',' $number)
+    disk=$(split_part "$NODE_DISKS" ',' $number)
+    root=$(split_part "$NODE_ROOTS" ',' $number)
+    hostname=$(split_part "$NODE_HOSTNAMES" ',' $number)
+    ip=$(split_part "$NODE_IP_ADDRESSES" ',' $number)
+
+    # node has to be defined
+    if [ -z "$hostname" ] || [ "$hostname" != "$node" ]; then
+        echo "node '$node' is undefined"
+        return
+    fi
+    # node cannot be created
+    if [ $(node_exists $node) == "yes" ]; then
+        echo "node '$node' already exists"
+        return
+    fi
+
+    (
+
+        # make sure node does not start
+        local lock_file=$NODE_STOP_DIR/host4ge-node-$hostname.stop
+        touch $lock_file
+        chown root:root $lock_file > /dev/null 2>&1
+        chmod 600 $lock_file > /dev/null 2>&1
+
+        # print info
+        echo -e "\nNode $number configuration\n"
+        echo "Number of processors: $cpus"
+        echo "Memory: ${mem}MB"
+        echo "Disk size: ${disk}GB"
+        echo "First partition size: ${root}GB"
+        echo "Hostname: $hostname"
+        echo -e "IP address: $ip\n"
+
+        # all parameters have to be known
+        if [ "$cpus" != "?" ] && [ "$mem" != "?" ] && [ "$disk" != "?" ] && [ "$root" != "?" ] && [ "$hostname" != "?" ] && [ "$ip" != "?" ]; then
+
+            # check configuration
+            str_cpus="--cpus $cpus"
+            str_mem="--mem $mem"
+            if [ "$disk" == "max" ]; then
+                str_disk="--disk-max-size"
+            else
+                str_disk="--disk-size $disk"
+            fi
+            str_root="--root-size $root"
+            str_hostname="--hostname $hostname"
+            str_ip="--ip $ip"
+
+            # repeat until node responds
+            done="no"
+            while [ "$done" == "no" ]; do
+
+                # create node
+                (. $HOST4GE_DIR/bin/node-create --id $number $str_cpus $str_mem $str_disk $clear_disk $str_root $str_hostname $str_ip)
+                clear_disk= # clear disk only the first time node is created
+
+                # check if node responds
+                virsh start $hostname
+                sleep 60
+                if [ "$(network_is_responding $ip)" == "yes" ]; then
+                    echo "node created"
+                    log_info "node '$hostname' created"
+                    if [ "$start" == "N" ]; then
+                        virsh shutdown $hostname
+                    else
+                        rm -rf $lock_file
+                    fi
+                    done="yes"
+                else
+                    echo "node does not respond, trying again..."
+                    log_info "node '$hostname' does not respond, trying again..."
+                    node_remove $hostname
+                    done="no"
+                fi
+
+            done
+
+        fi
+
+    ) 2>&1 | tee $LOG_DIR/node-create-$number-$hostname.log
+}
+
+# Removes node.
+#
+# parameters:
+#   $1 node name
+function node_remove() {
+
+    local node=$1
+
+    # remove node
+    virsh -c qemu:///system shutdown $node
+    sleep 1
+    virsh -c qemu:///system undefine $node
+    sleep 1
+    virsh -c qemu:///system destroy $node
+    sleep 1
+
+    # remove partition
+    umount /dev/mapper/vg00-$node
+    kpartx -dv /dev/mapper/vg00-$node
+    sleep 1
+    echo -e "y\n" | lvremove /dev/mapper/vg00-$node
+
+    log_info "node '$node' removed"
+}
+
+# Starts or stops a node.
+#
+# parameters:
+#   $1 node name
+#   $2 action
+function node_monitor() {
+
+    local name=$1
+    local action="$2"
+    # log_errors - additional variable set elsewhere, ie. system-services job
+
+    local running=$(node_is_running $name)
+    # start
+    if [ "$running" == "no" ] && [ "$action" == "start" ]; then
+        [ "$log_errors" == "Y" ] && log_error "node $name not running"
+        log_info "start node $name"
+        virsh -c qemu:///system start $name > /dev/null 2>&1
+        if [ "$log_errors" == "Y" ]; then
+            sleep 10
+            running=$(node_is_running $name)
+            if [ "$running" == "no" ]; then
+                log_error "node $name NOT started!"
+            fi
+        fi
+    # restart
+    elif [ "$running" == "yes" ] && [ "$action" == "restart" ]; then
+        log_info "restart node $name"
+        virsh -c qemu:///system reboot $name > /dev/null 2>&1
+    # stop
+    elif [ "$running" == "yes" ] && [ "$action" == "stop" ]; then
+        log_info "stop node $name"
+        virsh -c qemu:///system shutdown $name > /dev/null 2>&1
+    fi
+}
+
+# Starts node.
+#
+# parameters:
+#   $1 node name
+function node_start() {
+
+    local name=$1
+
+    node_monitor $name "start"
+
+    # file
+    local file=$NODE_STOP_DIR/host4ge-node-$name.stop
+    rm $file > /dev/null 2>&1
+}
+
+# Starts all nodes.
+function node_start_all() {
+
+    for node in $(node_list); do
+        node_start $node
+    done
+
+    # file
+    rm $NODE_STOP_ALL_FILE > /dev/null 2>&1
+}
+
+# Restarts node.
+#
+# parameters:
+#   $1 node name
+function node_restart() {
+
+    local name=$1
+
+    node_monitor $name "restart"
+
+    # file
+    local file=$NODE_STOP_DIR/host4ge-node-$name.stop
+    rm $file > /dev/null 2>&1
+}
+
+# Restarts all nodes.
+function node_restart_all() {
+
+    for node in $(node_list); do
+        node_restart $node
+    done
+
+    # file
+    rm $NODE_STOP_ALL_FILE > /dev/null 2>&1
+}
+
+# Forces node to stop.
+#
+# parameters:
+#   $1 node name
+function node_stop() {
+
+    local name=$1
+
+    # file
+    local file=$NODE_STOP_DIR/host4ge-node-$name.stop
+    touch $file
+    chown root:root $file > /dev/null 2>&1
+    chmod 600 $file > /dev/null 2>&1
+
+    node_monitor $name "stop"
+}
+
+# Forces all nodes to stop.
+function node_stop_all() {
+
+    for node in $(node_list); do
+        node_stop $node
+    done
+
+    # file
+    touch $NODE_STOP_ALL_FILE
+    chown root:root $NODE_STOP_ALL_FILE > /dev/null 2>&1
+    chmod 600 $NODE_STOP_ALL_FILE > /dev/null 2>&1
+}
+
+# Lists node snapshots.
+#
+# parameters:
+#   $1 node name
+function node_snapshot_list() {
+
+    local node=$1
+
+    # TODO
+}
+
+# Creates node snapshot.
+#
+# parameters:
+#   $1 node name
+#   --partition <number|'full'>
+#   --description <text>
+function node_snapshot_create() {
+
+    local node=$1
+    local partition=
+    local description=
+
+    # arguments
+    while [ "$1" != "" ]; do
+        case $1 in
+            --partition)    shift; partition=$1
+                            ;;
+            --description)  shift; description=$1
+                            ;;
+        esac
+        shift
+    done
+
+    # select main partition
+    if [ -z "$partition" ]; then
+        partition=1
+    fi
+
+    # create device maps over partitions segments detected
+    kpartx -av /dev/mapper/vg00-$node
+    sleep 1
+
+    # choose device and image name
+    local device=/dev/mapper/vg00-${node}
+    local image=${node}_full.img.lzo
+    if [ "$partition" != "full" ]; then
+        device=/dev/mapper/vg00-${node}${partition}
+        [ -L /dev/mapper/vg00-${node}p${partition} ] && device=/dev/mapper/vg00-${node}p${partition}
+        image=${node}_p${partition}.img.lzo
+    fi
+
+    # create snapshot
+    local timestamp=$(date +"%G%m%d%H%M")
+    local snapshot_dir=$NODE_BACKUP_SNAPSHOTS_DIR/$node/$timestamp
+    mkdir -p $snapshot_dir
+    chmod 500 $snapshot_dir
+
+    # create info file
+    touch $snapshot_dir/info
+    local number=$(node_get_number $node)
+
+    file_set_conf_option "hypervisor_hostname" $(hostname) $snapshot_dir/info
+    file_set_conf_option "hypervisor_ipaddress" $IP_ADDRESS $snapshot_dir/info
+
+    file_set_conf_option "node_cpu" $(split_part "$NODE_CPUS" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_memory" $(split_part "$NODE_MEMORY" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_disk" $(split_part "$NODE_DISKS" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_root" $(split_part "$NODE_ROOTS" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_hostname" $(split_part "$NODE_HOSTNAMES" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_ipaddress" $(split_part "$NODE_IP_ADDRESSES" ',' $number) $snapshot_dir/info
+    file_set_conf_option "node_description" "$description" $snapshot_dir/info
+
+    virsh -c qemu:///system dumpxml $node > $snapshot_dir/$node.xml
+    ionice -c 2 -n 7 dd if=$device bs=4M | nice -n 19 lzop -c > $snapshot_dir/$image
+    chmod 400 $snapshot_dir/*
+
+    log_info "node '$node' snapshot '$timestamp' created"
+}
+
+# Restores node snapshot.
+#
+# parameters:
+#   $1 node name
+#   $2 timestamp
+function node_snapshot_restore() {
+
+    local node=$1
+    local timestamp=$2
+
+    # create device maps over partitions segments detected
+    kpartx -av /dev/mapper/vg00-$node
+    sleep 1
+
+    # choose device
+    local device=/dev/mapper/vg00-${node}
+    if [ "$partition" != "full" ]; then
+        device=/dev/mapper/vg00-${node}${partition}
+        [ -L /dev/mapper/vg00-${node}p${partition} ] && device=/dev/mapper/vg00-${node}p${partition}
+    fi
+
+    # restore snapshot
+    local timestamp=$(date +"%G%m%d%H%M")
+    local snapshot_dir=$NODE_BACKUP_SNAPSHOTS_DIR/$node/$timestamp
+    local image=$(ls -1 $snapshot_dir/${node}_*.img.lzo)
+    # TODO
+    echo "TODO: restore snapshot $image"
+}
+
+# Removes node snapshot.
+#
+# parameters:
+#   $1 node name
+#   $2 snapshot name
+function node_snapshot_remove() {
+
+    local node=$1
+    local snapshot=$2
+
+    # TODO
+}
+
+# Mounts node filesystem.
+#
+# parameters:
+#   $1 node name
+#   $2 filesystem mount point (optional)
+function node_mount_fs() {
+
+    local node=$1
+    local mountpoint=$2
+
+    [ -z "$mountpoint" ] && mountpoint=/mnt/$node
+    [ ! -d $mountpoint ] && mkdir -p $mountpoint
+
+    # create device maps over partitions segments detected
+    kpartx -av /dev/mapper/vg00-$node
+    sleep 1
+    # wait additional 2 seconds during the installation process
+    [ "$SERVER_STATUS" == "installation" ] && sleep 2
+
+    local device=/dev/mapper/vg00-${node}1
+    [ -L /dev/mapper/vg00-${node}p1 ] && device=/dev/mapper/vg00-${node}p1
+    mount $device $mountpoint
+
+    log_info "node '$node' filesystem mounted"
+}
+
+# Umounts node filesystem.
+#
+# parameters:
+#   $1 node name
+function node_umount_fs() {
+
+    local node=$1
+
+    sync
+
+    local partition=/dev/mapper/vg00-${node}1
+    [ -L /dev/mapper/vg00-${node}p1 ] && partition=/dev/mapper/vg00-${node}p1
+    umount $partition
+
+    # delete device maps over partitions segments detected
+    kpartx -dv /dev/mapper/vg00-$node
+    sleep 1
+    # wait additional 2 seconds during the installation process
+    [ "$SERVER_STATUS" == "installation" ] && sleep 2
+
+    log_info "node '$node' filesystem umounted"
+}
+
+# Migrates node from this host to another over the network.
+#
+# parameters:
+#   $1 node name
+#   ...
+function node_migrate() {
+
+    local node=$1
+
+    # TODO
+}
+
+################################################################################
+## hypervisor routines
+##
+
+# Reboots hypervisor. This overwritten the original function.
+function server_reboot() {
+
+    # TODO: generate an event
+
+    # TODO: shutdown nodes
+
+    reboot
+}

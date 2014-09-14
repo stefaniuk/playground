@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# File: management/install-jquery.sh
+#
+# Description: Installs jQuery, JavaScript library.
+#
+# Usage:
+#
+#   install-jquery.sh --user system_user --path install_path --dir-name install_dir_name
+
+##
+## variables
+##
+
+JQUERY_VERSION="1.6.4"
+JQUERY_SYSTEM_USER=
+JQUERY_INSTALL_PATH=
+JQUERY_INSTALL_DIR_NAME=
+
+CURRENT_DIR=`pwd`
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --user)     shift && JQUERY_SYSTEM_USER=$1
+                    ;;
+        --path)     shift && JQUERY_INSTALL_PATH=$1
+                    ;;
+        --dir-name) shift && JQUERY_INSTALL_DIR_NAME=$1
+                    ;;
+    esac
+    shift
+done
+
+##
+## download
+##
+
+JQUERY_SRC_FILE=$DOWNLOADS_DIR/jquery-$JQUERY_VERSION.js
+if [ ! -s $JQUERY_SRC_FILE ]; then
+    [ -f $JQUERY_SRC_FILE ] && rm $JQUERY_SRC_FILE
+    wget http://code.jquery.com/jquery-$JQUERY_VERSION.min.js -O $JQUERY_SRC_FILE
+fi
+if [ ! -s $JQUERY_SRC_FILE ]; then
+    rm $JQUERY_SRC_FILE
+    echo "Error: $JQUERY_SRC_FILE file is missing!"
+    exit 1
+fi
+chmod 400 $JQUERY_SRC_FILE
+
+##
+## install
+##
+
+[ ! -d $JQUERY_INSTALL_PATH ] && mkdir -p $JQUERY_INSTALL_PATH
+cd $JQUERY_INSTALL_PATH
+[ -d $JQUERY_INSTALL_DIR_NAME ] && rm -r $JQUERY_INSTALL_DIR_NAME
+mkdir $JQUERY_INSTALL_DIR_NAME
+cp $JQUERY_SRC_FILE $JQUERY_INSTALL_DIR_NAME
+
+# set files permission
+chown -R $JQUERY_SYSTEM_USER:$JQUERY_SYSTEM_USER $JQUERY_INSTALL_DIR_NAME
+chmod 644 $JQUERY_INSTALL_DIR_NAME/jquery-$JQUERY_VERSION.js
+
+cd $CURRENT_DIR
+
+exit 0

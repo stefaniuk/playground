@@ -1,0 +1,57 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/openjdk/bin/javac ]; then
+    echo "Error: Tomcat requires OpenJDK!"
+    exit 1
+fi
+
+##
+## download
+##
+
+url="http://ftp.ps.pl/pub/apache/maven/maven-3/$VER_MAVEN/binaries/apache-maven-$VER_MAVEN-bin.tar.gz"
+file=apache-maven-$VER_MAVEN-bin.tar.gz
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 4000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+##
+## install
+##
+
+# extract
+[ -d $INSTALL_DIR/maven ] && rm -rf $INSTALL_DIR/maven
+tar -zxf $file
+mv apache-maven-$VER_MAVEN $INSTALL_DIR/maven
+
+# check
+if [ ! -x $INSTALL_DIR/maven/bin/mvn ]; then
+    echo "Error: Maven has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# set files permission
+chown -R root:root $INSTALL_DIR/ant
+
+# remove file
+[ -f $file ] && rm $file
+
+# save package version
+package_add_version "maven" "$VER_MAVEN"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/maven/bin
+hashes_add_dir $INSTALL_DIR/maven/lib
+
+exit 0
+

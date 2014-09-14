@@ -1,0 +1,75 @@
+#!/bin/bash
+
+##
+## configure network interfaces
+##
+
+[ ! -f /etc/network/interfaces.old ] && cp /etc/network/interfaces /etc/network/interfaces.old
+
+# /etc/network/interfaces (loopback network interface)
+cat << EOF > /etc/network/interfaces
+# loopback network interface
+auto lo
+iface lo inet loopback
+    address 127.0.0.1
+    netmask 255.0.0.0
+EOF
+
+# /etc/network/interfaces (primary network interface)
+if [ "$USE_BRIDGED_NETWORK" == "N" ]; then
+cat << EOF >> /etc/network/interfaces
+
+# primary network interface
+auto eth0
+iface eth0 inet static
+    address $IP_ADDRESS1
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+    gateway $GATEWAY
+EOF
+[ -n "$(trim "$DNS_NAMESERVERS")" ] && cat << EOF >> /etc/network/interfaces
+    dns-nameservers $(trim "$DNS_NAMESERVERS")
+EOF
+[ -n "$DNS_SEARCH" ] && cat << EOF >> /etc/network/interfaces
+    dns-search $DNS_SEARCH
+EOF
+fi
+
+# /etc/network/interfaces (secondary network interface)
+[ -n "$IP_ADDRESS2" ] && [ $(role_le $ROLE_NODE_ID) == "yes" ] && cat << EOF >> /etc/network/interfaces
+
+# secondary network interface
+auto eth0:0
+iface eth0:0 inet static
+    address $IP_ADDRESS2
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+EOF
+
+# /etc/network/interfaces (tertiary network interface)
+[ -n "$IP_ADDRESS3" ] && [ $(role_le $ROLE_NODE_ID) == "yes" ] && cat << EOF >> /etc/network/interfaces
+
+# tertiary network interface
+auto eth0:1
+iface eth0:1 inet static
+    address $IP_ADDRESS3
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+EOF
+
+# /etc/network/interfaces (quaternary network interface)
+[ -n "$IP_ADDRESS4" ] && [ $(role_le $ROLE_NODE_ID) == "yes" ] && cat << EOF >> /etc/network/interfaces
+
+# quaternary network interface
+auto eth0:2
+iface eth0:2 inet static
+    address $IP_ADDRESS4
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+EOF
+
+exit 0

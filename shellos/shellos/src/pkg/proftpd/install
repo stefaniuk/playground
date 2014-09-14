@@ -1,0 +1,219 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: ProFTPD requires MySQL!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="proftpd-$VER_PROFTPD"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="ftp://ftp.proftpd.org/distrib/source/proftpd-$VER_PROFTPD.tar.gz"
+    file=proftpd-$VER_PROFTPD.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 5000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill proftpd
+
+# create user and group
+user_create "$PROFTPD_USER" $PROFTPD_UID "$PROFTPD_GROUP" $PROFTPD_GID
+
+# add jail group
+groupadd -g $PROFTPD_JAIL_GID "$PROFTPD_JAIL_GROUP"
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile ProFTPD":
+    [ -d $INSTALL_DIR/proftpd ] && rm -rf $INSTALL_DIR/proftpd
+    tar -zxf proftpd-$VER_PROFTPD.tar.gz
+    cd proftpd-$VER_PROFTPD
+    install_user=root install_group=root CFLAGS=-DHAVE_OPENSSL LIBS=-lcrypto ./configure \
+        --prefix=$INSTALL_DIR/proftpd \
+        --sbindir=$INSTALL_DIR/proftpd/bin \
+        --sysconfdir=$INSTALL_DIR/proftpd/conf \
+        --localstatedir=$INSTALL_DIR/proftpd/log \
+        --enable-openssl \
+        --enable-auth-pam \
+        --with-modules=mod_sql:mod_sql_mysql:mod_quotatab:mod_quotatab_sql:mod_sql_passwd:mod_tls:mod_wrap:mod_wrap2:mod_wrap2_sql \
+        --with-includes=$INSTALL_DIR/mysql/include \
+    && make && make install && echo "ProFTPD installed successfully!"
+    rm -rf $INSTALL_DIR/proftpd/share
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/proftpd/bin
+    echo "Create package:"
+    package_create $INSTALL_DIR/proftpd $pkg_name
+else
+    echo "Install ProFTPD from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/proftpd/bin/proftpd ]; then
+    echo "Error: ProFTPD has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/proftpd/bin/proftpd:"
+ldd $INSTALL_DIR/proftpd/bin/proftpd
+
+echo "Copy includes:"
+cp -rfv $INSTALL_DIR/proftpd/include/* /usr/include
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/proftpd/lib/pkgconfig/* /usr/lib/pkgconfig
+
+# create links to the log files
+ln -sfv /var/log/ftp.log $INSTALL_DIR/proftpd/log/ftp.log
+
+# log queue
+mkfifo -m644 $INSTALL_DIR/proftpd/log/proftpd-log.fifo
+
+# database access
+ftp_db_name="ftp"
+ftp_db_user="ftp"
+ftp_db_pass=$(random 32)
+mysql_add_user_password "$ftp_db_user" "$ftp_db_pass"
+shellos_conf_set_option "ftp_db_host" "localhost"
+shellos_conf_set_option "ftp_db_port" "$MYSQL_PORT"
+shellos_conf_set_option "ftp_db_type" "mysql"
+shellos_conf_set_option "ftp_db_name" "$ftp_db_name"
+shellos_conf_set_option "ftp_db_user" "$ftp_db_user"
+shellos_conf_set_option "ftp_db_pass" "$ftp_db_pass"
+
+# generate certificate
+generate_certificate "ftp"
+
+# proftpd.conf
+cat << EOF > $INSTALL_DIR/proftpd/conf/proftpd.conf
+ServerType standalone
+ServerIdent on "FTP Server"
+DefaultServer on
+UseReverseDNS off
+IdentLookups off
+Port 21
+PassivePorts $PROFTPD_PORT_MIN $PROFTPD_PORT_MAX
+MaxInstances 10
+
+User $PROFTPD_USER
+Group $PROFTPD_GROUP
+Umask 022
+
+SyslogFacility ftp
+SyslogLevel info
+LogFormat custom_log "%a %u \"%r\" %s %b"
+ExtendedLog $INSTALL_DIR/proftpd/log/proftpd-log.fifo ALL custom_log
+
+RootLogin off
+RequireValidShell off
+DefaultRoot ~ $PROFTPD_JAIL_GROUP
+AllowOverwrite on
+ShowSymlinks off
+
+<IfModule mod_tls.c>
+    TLSEngine on
+    TLSLog $INSTALL_DIR/proftpd/log/proftpd-log.fifo
+    TLSProtocol SSLv3 TLSv1
+    TLSVerifyClient off
+    TLSRequired off
+    TLSRenegotiate none
+    TLSOptions NoCertRequest NoSessionReuseRequired
+    TLSRSACertificateFile $CERTIFICATES_DIR/ftp.crt
+    TLSRSACertificateKeyFile $CERTIFICATES_DIR/ftp.key
+</IfModule>
+
+SQLBackend mysql
+SQLAuthTypes Plaintext
+SQLAuthenticate users groups
+SQLMinID 10001
+SQLConnectInfo $ftp_db_name@localhost $ftp_db_user $ftp_db_pass
+SQLGroupInfo groups name gid user
+SQLUserInfo users name password uid gid homedir shell
+
+# update count and accessed everytime user logs in
+SQLLog PASS updatecount
+SQLNamedQuery updatecount UPDATE "count=count+1, accessed=now() WHERE name='%u'" users
+
+# update modified everytime user uploads or deletes a file
+SQLLog STOR,DELE modified
+SQLNamedQuery modified UPDATE "modified=now() WHERE name='%u'" users
+EOF
+
+# get mysql root password
+db_pass=$(mysql_get_user_password root)
+# config database
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+cat << EOF | $INSTALL_DIR/mysql/bin/mysql --user=root --password=$db_pass
+CREATE DATABASE $ftp_db_name;
+GRANT SELECT, INSERT, UPDATE, DELETE ON $ftp_db_name.* TO '$ftp_db_user'@'localhost' IDENTIFIED BY '$ftp_db_pass';
+USE $ftp_db_name;
+CREATE TABLE groups (
+    name varchar(30) NOT NULL,
+    gid int(11) NOT NULL,
+    user varchar(30) NOT NULL,
+    KEY name (name),
+    UNIQUE KEY group_user (name, user)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE users (
+    id int(11) NOT NULL auto_increment,
+    name varchar(30) NOT NULL,
+    password varchar(255) NOT NULL,
+    uid int(11) NOT NULL,
+    gid int(11) NOT NULL,
+    homedir varchar(255) NOT NULL,
+    shell varchar(255) NOT NULL default '/usr/sbin/nologin',
+    count int(11) NOT NULL default '0',
+    accessed datetime NOT NULL default '0000-00-00 00:00:00',
+    modified datetime NOT NULL default '0000-00-00 00:00:00',
+    PRIMARY KEY (id),
+    UNIQUE KEY name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+EOF
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user=root --password=$db_pass shutdown
+sleep 1
+db_pass=
+
+# set files permission
+chmod 700 $INSTALL_DIR/proftpd/bin
+chmod 500 $INSTALL_DIR/proftpd/bin/*
+chmod 700 $INSTALL_DIR/proftpd/conf
+chmod 600 $INSTALL_DIR/proftpd/conf/proftpd.conf
+
+##
+## post install
+##
+
+[ -f proftpd-${VER_PROFTPD}${PACKAGE_SUFFIX} ] && rm proftpd-${VER_PROFTPD}${PACKAGE_SUFFIX}
+[ -f proftpd-$VER_PROFTPD.tar.gz ] && rm proftpd-$VER_PROFTPD.tar.gz
+[ -d proftpd-$VER_PROFTPD ] && rm -rf proftpd-$VER_PROFTPD
+
+# save package version
+package_add_version "proftpd" "$VER_PROFTPD"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/proftpd/bin
+hashes_add_dir $INSTALL_DIR/proftpd/lib
+
+exit 0
+

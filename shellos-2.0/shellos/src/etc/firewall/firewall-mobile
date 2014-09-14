@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# This script defines device specific firewall rules.
+# Template file. Edit etc/firewall/config file instead.
+
+##
+## main
+##
+
+#if [ "$1" == "--ipv4" ]; then
+#fi
+
+#if [ "$1" == "--ipv6" ]; then
+#fi
+
+exit 0
+

@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Global variables for the installation process, common for all projects. These
+# are variables that hold versions of the installed packages.
+
+echo "Loading versions..."
+
+# current version of the project
+VER_SHELLOS="0.0.0dev"
+
+################################################################################
+## common versions
+##
+
+VER_LZO="2.06"
+VER_ZLIB="1.2.8"
+VER_OPENSSL="1.0.1e"
+VER_OPENSSH="6.2p2"
+VER_GIT="1.8.3.4"
+VER_OPENVPN="2.3.2"
+VER_GEOIP="1.5.0"
+VER_MYSQL="5.6.13"
+VER_MONGODB="2.4.1"
+VER_PYTHON="3.3.2"
+VER_POSTFIX="2.10.1"
+VER_PROFTPD="1.3.5rc3"
+VER_LIBICONV="1.14"
+VER_IMAGEMAGICK="6.8.6-7"
+VER_APR="1.4.8"
+VER_APR_UTIL="1.5.2"
+VER_APR_ICONV="1.2.1"
+VER_HTTPD="2.4.6"
+VER_HTTPD_MOD_FCGID="2.3.7"
+VER_HTTPD_MOD_GEOIP="1.2.8"
+VER_NGINX="1.3.15"
+VER_PHP="5.4.19"
+VER_PHP_FPM_LIST="5.3.27 5.4.19 5.5.3"
+VER_PHP_MOD_GEOIP="1.0.8"
+VER_PHP_MOD_IMAGICK="3.1.0RC2"
+VER_DOVECOT="2.2.5"
+VER_OPENJDK_NUMBER="7"
+VER_OPENJDK_UPDATE="40"
+VER_OPENJDK_BUILD="b35"
+VER_OPENJDK_DATE="24_jul_2013"
+VER_OPENJDK="${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-${VER_OPENJDK_BUILD}"
+VER_ANT="1.9.2"
+VER_MAVEN="3.1.0"
+VER_TOMCAT="7.0.42"
+VER_NODEJS="0.10.2"
+VER_RUBY="2.0.0-p0"
+VER_PHPMYADMIN="4.0.5"
+VER_ROUNDCUBE="0.9.2"
+VER_ECLIPSE="jee-juno-SR2"
+
+VER_ENLIGHTENMENT="84475"
+
+VER_UBUNTU="12.04"
+VER_UBUNTU_FULL="${VER_UBUNTU}.1"
+UBUNTU_ISO_FILE="ubuntu-${VER_UBUNTU_FULL}-server-amd64.iso"
+UBUNTU_ISO_HASH="2335955c36491c96deb0880efc84d0d4bed4ba88"
+

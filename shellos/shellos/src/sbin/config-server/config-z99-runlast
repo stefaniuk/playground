@@ -1,0 +1,30 @@
+#!/bin/bash
+
+[ "$script_type" != "install" ] && exit 0
+
+# /root/runonce.sh
+cat << EOF > /root/runonce.sh
+#!/bin/bash
+sleep 10
+INSTALL_DIR=$INSTALL_DIR SHELLOS_DIR=$SHELLOS_DIR DEVICE=$DEVICE $SHELLOS_DIR/job/system-start --on-initial-reboot
+(cat $SHELLOS_DIR/conf/.crontab-variables; cat $SHELLOS_DIR/conf/.crontab-jobs) | crontab
+exit 0
+EOF
+chmod u+x /root/runonce.sh
+
+# /etc/rc.local
+[ ! -f /etc/rc.local.old ] && cp /etc/rc.local /etc/rc.local.old
+cat << EOF > /etc/rc.local
+#!/bin/sh -e
+/root/runonce.sh > $LOG_DIR/runonce.log 2>&1
+chmod 400 $LOG_DIR/runonce.log
+mv $LOG_DIR/runonce.log $LOG_DIR/$timestamp
+rm /root/runonce.sh
+mv -fv /etc/rc.local.old /etc/rc.local
+chmod u+x /etc/rc.local
+exit 0
+EOF
+chmod u+x /etc/rc.local
+
+exit 0
+

@@ -1,0 +1,316 @@
+#!/bin/bash
+#
+# USAGE: chmod u+x /srv/shellos/sbin/update; /srv/shellos/sbin/update
+
+##
+## check
+##
+
+[ "$(id -u)" != 0 ] && echo "You need to become root to run this script!" && exit 1
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$time_start" ] && time_start=$(date +%s)
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+
+args=$*
+result=0
+current_dir=$(pwd)
+
+# variables set only for the update purpose
+INSTALL_DIR=/srv
+SHELLOS_DIR=$INSTALL_DIR/shellos
+script_type="update"
+
+##
+## includes
+##
+
+# include arguments parser
+echo "Loading arguments parser..."
+source $script_dir/arguments
+
+# include base functionality
+echo "Loading base functionality..."
+source $script_dir/../lib/base
+
+##
+## functions
+##
+
+# Updates a package.
+#
+#   $1 package name
+function update_package() {
+
+    local package=$1
+    local package_update_script=update
+
+    (
+
+        # run update script
+        cd $script_dir/../pkg/$package
+        if [ -f ./${package_update_script} ]; then
+            echo "Updating package $package..."
+            chmod u+x ./${package_update_script}
+            (. ./${package_update_script} $args)
+            result=${PIPESTATUS[0]}
+            if [ "$result" != 0 ]; then
+                echo "Error in package updating script ($package)."
+                exit 1
+            fi
+        fi
+
+    ) 2>&1 | tee $LOG_DIR/$timestamp/$package.log
+    result=${PIPESTATUS[0]}
+
+    # set log file permissions
+    if [ "$OWNER" != "root" ]; then
+        chmod 444 $LOG_DIR/$timestamp/$package.log
+    else
+        chmod 400 $LOG_DIR/$timestamp/$package.log
+    fi
+
+    # log event
+    if [ "$result" != 0 ]; then
+        log_info "$package NOT updated"
+        echo "$package NOT updated"
+        exit $result
+    else
+        log_info "updated $package"
+        echo "Updated $package"
+    fi
+}
+
+##
+## main
+##
+
+# switch on debuging
+if [ "$debug" == "Y" ]; then
+    echo "================================================================================"
+    set
+    echo "================================================================================"
+    set -xv
+fi
+
+# log event
+log_info "update script started"
+echo "Update script started"
+
+echo "    OS: $OS"
+echo "    DIST: $DIST"
+echo "    DIST BASED ON: $DIST_BASED_ON"
+echo "    PSEUDO NAME: $PSEUDO_NAME"
+echo "    VERSION: $VERSION"
+echo "    ARCH: $ARCH"
+echo "    KERNEL: $KERNEL"
+echo "    DEVICE: $DEVICE"
+
+# create update log directory
+[ ! -d $LOG_DIR/$timestamp ] && (
+    mkdir -p $LOG_DIR/$timestamp
+    chown $OWNER:$OWNER $LOG_DIR/$timestamp
+)
+
+# TODO
+if [ "$install_shellos" = "Y" ]; then
+    update_projet_from_url
+fi
+
+# call update script
+cd $script_dir
+if [ "$result" == 0 ]; then
+    (
+
+        # update lzo
+        [ "$install_lzo" == "Y" ] && \
+            update_package "lzo"
+
+        # update zlib
+        [ "$install_zlib" == "Y" ] && \
+            update_package "zlib"
+
+        # update openssl
+        [ "$install_openssl" == "Y" ] && \
+            update_package "openssl"
+
+        # update openssh
+        [ "$install_openssh" == "Y" ] && \
+            update_package "openssh"
+
+        # update git
+        [ "$install_git" == "Y" ] && \
+            update_package "git"
+
+        # update openvpn
+        [ "$install_openvpn" == "Y" ] && \
+            update_package "openvpn"
+
+        # update geoip
+        [ "$install_geoip" == "Y" ] && \
+            update_package "geoip"
+
+        # update mysql
+        [ "$install_mysql" == "Y" ] && \
+            update_package "mysql"
+
+        # install mongodb
+        [ "$install_mongodb" == "Y" ] && \
+            install_package "mongodb"
+
+        # update perl
+        [ "$install_perl" == "Y" ] && \
+            update_package "perl"
+
+        # install python
+        [ "$install_python" == "Y" ] && \
+            install_package "python"
+
+        # update postfix
+        [ "$install_postfix" == "Y" ] && \
+            update_package "postfix"
+
+        # update proftpd
+        [ "$install_proftpd" == "Y" ] && \
+            update_package "proftpd"
+
+        # update libiconv
+        [ "$install_libiconv" == "Y" ] && \
+            update_package "libiconv"
+
+        # update imagemagick
+        [ "$install_imagemagick" == "Y" ] && \
+            update_package "imagemagick"
+
+        # update httpd
+        [ "$install_httpd" == "Y" ] && \
+            update_package "httpd"
+
+        # update httpd mod geoip
+        [ "$install_httpd_mod_geoip" == "Y" ] && \
+            update_package "httpd-mod-geoip"
+
+        # update nginx
+        [ "$install_nginx" == "Y" ] && \
+            update_package "nginx"
+
+        # update php
+        [ "$install_php" == "Y" ] && \
+            update_package "php"
+
+        # update php-fpm
+        [ "$install_php_fpm" == "Y" ] && \
+            update_package "php-fpm"
+
+        # update php mod geoip
+        [ "$install_php_mod_geoip" == "Y" ] && \
+            update_package "php-mod-geoip"
+
+        # update php mod imagick
+        [ "$install_php_mod_imagick" == "Y" ] && \
+            update_package "php-mod-imagick"
+
+        # update dovecot
+        [ "$install_dovecot" == "Y" ] && \
+            update_package "dovecot"
+
+        # update openjdk
+        [ "$install_openjdk" == "Y" ] && \
+            update_package "openjdk"
+
+        # update ant
+        [ "$install_ant" == "Y" ] && \
+            update_package "ant"
+
+        # update maven
+        [ "$install_maven" == "Y" ] && \
+            update_package "maven"
+
+        # update tomcat
+        [ "$install_tomcat" == "Y" ] && \
+            update_package "tomcat"
+
+        # install nodejs
+        [ "$install_nodejs" == "Y" ] && \
+            install_package "nodejs"
+
+        # install ruby
+        [ "$install_ruby" == "Y" ] && \
+            install_package "ruby"
+
+        # update phpmyadmin
+        [ "$install_phpmyadmin" == "Y" ] && \
+            update_package "phpmyadmin"
+
+        # update roundcube
+        [ "$install_roundcube" == "Y" ] && \
+            update_package "roundcube"
+
+        # install enlightenment
+        [ "$install_enlightenment" == "Y" ] && \
+            install_package "enlightenment"
+
+        # install nvidia
+        [ "$install_nvidia" == "Y" ] && \
+            install_package "nvidia"
+
+        # install eclipse
+        [ "$install_eclipse" == "Y" ] && \
+            install_package "eclipse"
+
+        # install shellos
+        [ "$install_shellos" == "Y" ] && \
+            install_package "shellos"
+
+        exit 0
+
+    ) 2>&1 | tee $LOG_DIR/$timestamp/update.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in update script."
+    else
+        # log event
+        log_info "finished update script"
+        echo "Finished update script"
+    fi
+fi
+
+# change directory back
+cd $current_dir
+
+# calculate time
+time_end=$(date +%s)
+time=$((time_end-time_start))
+minutes=$(expr $time / 60)
+
+if [ "$result" == 0 ]; then
+    # send email notification
+    if [ "$notify" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ] && [ "$DEVICE" == "server" ]; then
+        (   echo -e "$(hostname -f) ($IP_ADDRESS) has been updated at `date +\"%T %Z (%d %b %G)\"`, the whole process took $minutes minutes.\n\nList of installed packages:\n"
+            cat $PACKAGES_FILE | sed 's/=/ /g'
+        ) | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - update script completed" $ADMIN_MAIL
+    fi
+    # log event
+    log_info "update script completed successfully (time: $minutes min)"
+    echo "Update script completed successfully (time: $minutes min)"
+else
+    # log event
+    log_info "update script stopped due to an error (time: $minutes min)"
+    echo "Update script stopped due to an error (time: $minutes min)"
+fi
+
+# system restart
+if [ "$result" == 0 ] && [ "$reboot" == "Y" ]; then
+    echo "reboot"
+    reboot
+fi
+
+# switch off debuging
+[ "$debug" == "Y" ] && set +xv
+
+exit $result
+

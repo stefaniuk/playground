@@ -1,0 +1,83 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="zlib-$ZLIB_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.zlib.net/zlib-$ZLIB_VERSION.tar.gz"
+    file=zlib-$ZLIB_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    if [ ! -d $INSTALL_DIR/zlib ]; then
+        echo "Compile zlib:"
+        tar -zxf zlib-$ZLIB_VERSION.tar.gz
+        cd zlib-$ZLIB_VERSION
+        ./configure \
+            --prefix=$INSTALL_DIR/zlib \
+        && make && make install && echo "zlib installed successfully!" \
+        && rm -rf $INSTALL_DIR/zlib/share
+        cd ..
+        echo "Create package:"
+        package_create $INSTALL_DIR/zlib $pkg_name
+    else
+        echo "zlib has already been installed successfully!"
+    fi
+else
+    echo "Install zlib from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: zlib has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/zlib/lib
+
+echo "Copy includes:"
+rm /usr/include/{zconf.h,zlib.h}
+cp -rfv $INSTALL_DIR/zlib/include/*.h /usr/include/
+
+echo "Copy pkgconfig:"
+cp -rfv $INSTALL_DIR/zlib/lib/pkgconfig/* /usr/lib/pkgconfig
+
+echo "Shared library dependencies for $INSTALL_DIR/zlib/lib/libz.so:"
+ldd $INSTALL_DIR/zlib/lib/libz.so
+
+# set files permission
+chown -R root:root $INSTALL_DIR/zlib
+
+##
+## post install
+##
+
+[ -f zlib-${ZLIB_VERSION}${PACKAGE_SUFFIX} ] && rm zlib-${ZLIB_VERSION}${PACKAGE_SUFFIX}
+[ -f zlib-$ZLIB_VERSION.tar.gz ] && rm zlib-$ZLIB_VERSION.tar.gz
+[ -d zlib-$ZLIB_VERSION ] && rm -rf zlib-$ZLIB_VERSION
+
+# save package version
+package_add_version "zlib" "$ZLIB_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/zlib/lib
+
+exit 0

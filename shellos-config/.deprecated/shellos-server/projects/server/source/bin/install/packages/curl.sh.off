@@ -1,0 +1,199 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: cURL requires zlib!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+    echo "Error: cURL requires OpenSSL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/libiconv/bin/iconv ]; then
+    echo "Error: cURL requires libiconv!"
+    exit 1
+fi
+
+##
+## download
+##
+
+URL="ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-$LIBGPG_ERROR_VERSION.tar.gz"
+FILE=libgpg-error-$LIBGPG_ERROR_VERSION.tar.gz
+RESULT=$(file_download --url $URL --cache-dir-name downloads --file $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+URL="ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-$LIBGCRYPT_VERISON.tar.bz2"
+FILE=libgcrypt-$LIBGCRYPT_VERISON.tar.bz2
+RESULT=$(file_download --url $URL --cache-dir-name downloads --file $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+URL="http://www.libssh2.org/download/libssh2-$LIBSSH2_VERISON.tar.gz"
+FILE=libssh2-$LIBSSH2_VERISON.tar.gz
+RESULT=$(file_download --url $URL --cache-dir-name downloads --file $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+URL="http://curl.haxx.se/download/curl-$CURL_VERSION.tar.gz"
+FILE=curl-$CURL_VERSION.tar.gz
+RESULT=$(file_download --url $URL --cache-dir-name downloads --file $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+##
+## install
+##
+
+# libgpg-error
+echo "Installing libgpg-error":
+[ -d $INSTALL_DIR/libgpg-error ] && rm -rf $INSTALL_DIR/libgpg-error
+[ -d libgpg-error-$LIBGPG_ERROR_VERSION ] && rm -rf libgpg-error-$LIBGPG_ERROR_VERSION
+tar -zxf libgpg-error-$LIBGPG_ERROR_VERSION.tar.gz
+cd libgpg-error-$LIBGPG_ERROR_VERSION
+./configure \
+    --prefix=$INSTALL_DIR/libgpg-error \
+    --with-libiconv-prefix=$INSTALL_DIR/libiconv \
+&& make && make install && echo "libgpg-error installed successfully!"
+cd ..
+# check
+if [ ! -f $INSTALL_DIR/libgpg-error/bin/gpg-error-config ]; then
+    echo "Error: libgpg-error has NOT been installed successfully!"
+    exit 1
+fi
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/libgpg-error/bin
+strip_debug_symbols $INSTALL_DIR/libgpg-error/lib
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/libgpg-error/lib
+echo "Copy includes:"
+cp -vf $INSTALL_DIR/libgpg-error/include/*.h /usr/include/
+
+# libgcrypt
+echo "Installing libgcrypt":
+[ -d $INSTALL_DIR/libgcrypt ] && rm -rf $INSTALL_DIR/libgcrypt
+[ -d libgcrypt-$LIBGCRYPT_VERISON ] && rm -rf libgcrypt-$LIBGCRYPT_VERISON
+tar -jxf libgcrypt-$LIBGCRYPT_VERISON.tar.bz2
+cd libgcrypt-$LIBGCRYPT_VERISON
+./configure \
+    --prefix=$INSTALL_DIR/libgcrypt \
+    --with-gpg-error-prefix=$INSTALL_DIR/libgpg-error \
+&& make && make install && echo "libgcrypt installed successfully!"
+cd ..
+# check
+if [ ! -f $INSTALL_DIR/libgcrypt/bin/libgcrypt-config ]; then
+    echo "Error: libgcrypt has NOT been installed successfully!"
+    exit 1
+fi
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/libgcrypt/bin
+strip_debug_symbols $INSTALL_DIR/libgcrypt/lib
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/libgcrypt/lib
+echo "Copy includes:"
+cp -vf $INSTALL_DIR/libgcrypt/include/*.h /usr/include/
+
+# libssh2
+echo "Installing libssh2":
+[ -d $INSTALL_DIR/libssh2 ] && rm -rf $INSTALL_DIR/libssh2
+[ -d libssh2-$LIBSSH2_VERISON ] && rm -rf libssh2-$LIBSSH2_VERISON
+tar -zxf libssh2-$LIBSSH2_VERISON.tar.gz
+cd libssh2-$LIBSSH2_VERISON
+./configure \
+    --prefix=$INSTALL_DIR/libssh2 \
+    --with-libz-prefix=shared,$INSTALL_DIR/zlib \
+    --with-libssl-prefix=shared,$INSTALL_DIR/openssl \
+    --with-libgcrypt-prefix=shared,$INSTALL_DIR/libgcrypt \
+&& make && make install && echo "libssh2 installed successfully!"
+cd ..
+# check
+if [ ! -f $INSTALL_DIR/libssh2/lib/libssh2.so ]; then
+    echo "Error: libssh2 has NOT been installed successfully!"
+    exit 1
+fi
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/libssh2/lib
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/libssh2/lib
+echo "Copy includes:"
+cp -vf $INSTALL_DIR/libssh2/include/*.h /usr/include/
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/libssh2/lib/pkgconfig/* /usr/lib/pkgconfig
+
+# cURL
+echo "Installing cURL":
+[ -d $INSTALL_DIR/curl ] && rm -rf $INSTALL_DIR/curl
+[ -d curl-$CURL_VERSION ] && rm -rf curl-$CURL_VERSION
+tar -zxf curl-$CURL_VERSION.tar.gz
+cd curl-$CURL_VERSION
+./configure \
+    --prefix=$INSTALL_DIR/curl \
+    --with-zlib=$INSTALL_DIR/zlib \
+    --with-ssl=$INSTALL_DIR/openssl \
+    --with-libssh2=$INSTALL_DIR/libssh2 \
+&& make && make install && echo "cURL installed successfully!"
+cd ..
+# check
+if [ ! -f $INSTALL_DIR/curl/bin/curl ]; then
+    echo "Error: cURL has NOT been installed successfully!"
+    exit 1
+fi
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/curl/bin
+strip_debug_symbols $INSTALL_DIR/curl/lib
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/curl/lib
+echo "Copy includes:"
+cp -rfv $INSTALL_DIR/curl/include/curl /usr/include/
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/curl/lib/pkgconfig/* /usr/lib/pkgconfig
+echo "Shared library dependencies for $INSTALL_DIR/curl/bin/curl:"
+ldd $INSTALL_DIR/curl/bin/curl
+
+##
+## post install
+##
+
+[ -f libgpg-error-$LIBGPG_ERROR_VERSION.tar.gz ] && rm libgpg-error-$LIBGPG_ERROR_VERSION.tar.gz
+[ -f libgcrypt-$LIBGCRYPT_VERISON.tar.bz2 ] && rm libgcrypt-$LIBGCRYPT_VERISON.tar.bz2
+[ -f libssh2-$LIBSSH2_VERISON.tar.gz ] && rm libssh2-$LIBSSH2_VERISON.tar.gz
+[ -f curl-$CURL_VERSION.tar.gz ] && rm curl-$CURL_VERSION.tar.gz
+[ -d libgpg-error-$LIBGPG_ERROR_VERSION ] && rm -rf libgpg-error-$LIBGPG_ERROR_VERSION
+[ -d libgcrypt-$LIBGCRYPT_VERISON ] && rm -rf libgcrypt-$LIBGCRYPT_VERISON
+[ -d libssh2-$LIBSSH2_VERISON ] && rm -rf libssh2-$LIBSSH2_VERISON
+[ -d curl-$CURL_VERSION ] && rm -rf curl-$CURL_VERSION
+
+# log event
+logger -p local0.notice -t host4ge "libgpg-error $LIBGPG_ERROR_VERSION installed successfully"
+logger -p local0.notice -t host4ge "libgcrypt $LIBGCRYPT_VERISON installed successfully"
+logger -p local0.notice -t host4ge "libssh2 $LIBSSH2_VERISON installed successfully"
+logger -p local0.notice -t host4ge "curl $CURL_VERSION installed successfully"
+
+# save package version
+package_add_version "libgpg-error" "$LIBGPG_ERROR_VERSION"
+package_add_version "libgcrypt" "$LIBGCRYPT_VERISON"
+package_add_version "libssh2" "$LIBSSH2_VERISON"
+package_add_version "curl" "$CURL_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/libgpg-error/bin
+hashes_add_dir $INSTALL_DIR/libgpg-error/lib
+hashes_add_dir $INSTALL_DIR/libgcrypt/bin
+hashes_add_dir $INSTALL_DIR/libgcrypt/lib
+hashes_add_dir $INSTALL_DIR/libssh2/lib
+hashes_add_dir $INSTALL_DIR/curl/bin
+hashes_add_dir $INSTALL_DIR/curl/lib
+
+exit 0

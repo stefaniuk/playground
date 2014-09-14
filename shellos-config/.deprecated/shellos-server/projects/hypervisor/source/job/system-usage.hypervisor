@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Scheduled job. This script writes into a database performance indicators
+# specific to the server role of the system.
+
+# TODO
+
+exit 0

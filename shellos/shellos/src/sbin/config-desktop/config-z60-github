@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# SEE: https://help.github.com/articles/generating-ssh-keys
+
+# generate github keys
+if [ ! -f /home/$OWNER/.ssh/keys/github ]; then
+    mkdir -p /home/$OWNER/.ssh/keys
+    chmod 700 /home/$OWNER/.ssh/keys
+    github_key_passphrase="$(random 32)"
+    echo "$github_key_passphrase" > /home/$OWNER/.ssh/keys/github.passphrase
+    chmod 400 /home/$OWNER/.ssh/keys/github.passphrase
+    ssh-keygen -t rsa -b 4096 -N "$github_key_passphrase" -C "$ADMIN_MAIL" -f /home/$OWNER/.ssh/keys/github -q
+    chown -R $OWNER:$OWNER /home/$OWNER/.ssh/keys
+    chown root:root /home/$OWNER/.ssh/keys/github.passphrase
+    echo "Make sure you have a valid key saved in ~/.ssh/keys/github to access GitHub repositories"
+    echo "You may need to execute 'xclip -sel clip < ~/.ssh/keys/github.pub' command and register the key at the GitHub web site."
+    read -p "Press any key to continue..."
+fi
+
+# copy keys to the root's directory
+if [ "$OWNER" != "root" ]; then
+    mkdir -p /root/.ssh/keys
+    cp -fv /home/$OWNER/.ssh/keys/github* /root/.ssh/keys/
+    chown -R root:root /root/.ssh/keys/
+fi
+
+exit 0
+
+# ======================================================================================================================
+
+# This doesn't work ...
+
+cat << EOF > ~/github
+#!/usr/bin/expect -f
+spawn ssh -T git@github.com
+expect {
+    -re ".*Are.*.*yes.*no.*" {
+        send "yes\r"
+        exp_continue
+    }
+}
+EOF
+chmod 755 ~/github; ~/github; rm ~/github
+
+# xclip -sel clip < ~/.ssh/keys/github.pub
+# cat ~/.ssh/keys/github.passphrase
+$CMD_OPENSSH_SSH_ADD ~/.ssh/keys/github
+
+# clone repositories
+cd $WORKSPACE_DIR
+repositories=""
+for repository in $repositories; do
+    if [ ! -d ./${repository} ]; then
+        $CMD_GIT clone git@github.com:stefaniuk/${repository}.git
+        if [ ! -f ./${repository}/.git/config ]; then
+            $CMD_GIT clone git://github.com/stefaniuk/${repository}.git
+            if [ -f ./${repository}/.git/config ]; then
+                replace_in_file "git:\/\/github.com\/stefaniuk\/${repository}.git" "git@github.com:stefaniuk\/${repository}.git" ./${repository}/.git/config
+            fi
+        fi
+    fi
+done
+
+chown -R $OWNER:$OWNER $WORKSPACE_DIR
+
+exit 0
+

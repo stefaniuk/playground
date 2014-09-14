@@ -1,0 +1,68 @@
+#!/bin/bash
+
+echo "Loading aliases..."
+
+# memory usage
+alias psm='data=$(ps -eo size,rss,vsz,pid,user,cmd | awk "{ if ( NR > 1 ) { print } }"); echo "$data" | egrep -v "[ ^I]+0[ ^I]+0[ ^I]+" | grep -v "ps -eo " | grep -v "awk { if ( NR > 1 ) { print } }" | sort -nr'
+
+# source common files
+alias srcver='source $SHELLOS_DIR/pkg/versions'
+alias srcvar='source $SHELLOS_DIR/conf/variables'
+alias srcconst='source $SHELLOS_DIR/lib/constants'
+alias srcfunc='source $SHELLOS_DIR/lib/core'
+alias srcalias='source $SHELLOS_DIR/lib/aliases'
+alias srcall='srcver; srcvar; srcconst; srcfunc; srcalias'
+
+# firewall
+alias fwe='firewall --enable'
+alias fwd='firewall --disable'
+
+# search/replace files
+alias ffi='file_find_in'
+alias fri='file_replace_in'
+
+# check file hashes
+alias hcb='hashes_count_bad'
+alias hlb='hashes_list_bad'
+alias hcl='hashes_create_list'
+
+# lock/unlock jobs
+alias jla='job_lock_all'
+alias jua='job_unlock_all'
+
+# print logs
+alias tlau='tail /var/log/auth.log'
+alias tlsy='tail /var/log/sys.log'
+alias tlcr='tail /var/log/cron.log'
+alias tlda='tail /var/log/daemon.log'
+alias tlke='tail /var/log/kern.log'
+alias tlus='tail /var/log/user.log'
+alias tlso='tail /var/log/shellos.log'
+alias tlsoe='tail /var/log/shellos.err'
+alias tlos='tail /var/log/openssh.log'
+alias tlose='tail /var/log/openssh.err'
+alias tlov='tail /var/log/openvpn.log'
+alias tlove='tail /var/log/openvpn.err'
+alias tlms='tail /var/log/mysql.log'
+alias tlmse='tail /var/log/mysql.err'
+alias tlht='tail /var/log/httpd.log'
+alias tlhte='tail /var/log/httpd.err'
+alias tlf2b='tail /var/log/fail2ban.log'
+alias tlf2be='tail /var/log/fail2ban.err'
+alias tlft='tail /var/log/ftp.log'
+alias tlma='tail /var/log/mail.log'
+alias tlmae='tail /var/log/mail.err'
+
+# change current directory
+alias csd='cd $SHELLOS_DIR'
+alias cvl='cd /var/log'
+alias cws='cd $WORKSPACE_DIR'
+alias chu='cd $HOSTING_USER_DIR'
+alias chp='cd $HOSTING_PUBLIC_DIR'
+
+# mysql
+alias mur='mysql --user=root --password=$(mysql_get_user_password root) --auto-rehash'
+
+# hardware
+alias reboot='device_reboot'
+

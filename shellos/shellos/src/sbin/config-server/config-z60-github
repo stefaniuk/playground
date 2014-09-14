@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# SEE: https://help.github.com/articles/generating-ssh-keys
+
+# generate github keys
+if [ ! -f ~/.ssh/keys/github ]; then
+    mkdir -p ~/.ssh/keys
+    chmod 700 ~/.ssh/keys
+    github_key_passphrase="$(random 32)"
+    echo "$github_key_passphrase" > ~/.ssh/keys/github.passphrase
+    chmod 400 ~/.ssh/keys/github.passphrase
+    ssh-keygen -t rsa -b 4096 -N "$github_key_passphrase" -C "$ADMIN_MAIL" -f ~/.ssh/keys/github -q
+    echo "Make sure you have a valid key saved in ~/.ssh/keys/github to access GitHub repositories"
+    echo "You may need to register the public key at the GitHub web site."
+fi
+
+exit 0
+

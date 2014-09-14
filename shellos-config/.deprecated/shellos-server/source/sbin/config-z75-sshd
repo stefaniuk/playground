@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -x $INSTALL_DIR/openssh/bin/sshd ]; then
+    [ -f /etc/init/ssh.conf ] && mv /etc/init/ssh.conf /etc/init/ssh.conf.disabled
+fi
+
+exit 0

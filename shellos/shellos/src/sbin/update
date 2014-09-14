@@ -1,0 +1,336 @@
+#!/bin/bash
+#
+# USAGE: chmod u+x /srv/shellos/sbin/update && /srv/shellos/sbin/update [options]
+
+##
+## check
+##
+
+[ "$(id -u)" != 0 ] && echo "You need to become root to run this script!" && exit 1
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$time_start" ] && time_start=$(date +%s)
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+
+args=$*
+result=0
+current_dir=$(pwd)
+
+# variables set only for the update purpose
+INSTALL_DIR=/srv
+SHELLOS_DIR=$INSTALL_DIR/shellos
+script_type="update"
+
+##
+## includes
+##
+
+# include arguments parser
+source $script_dir/arguments
+
+# include base functionality
+source $script_dir/../lib/base
+
+##
+## functions
+##
+
+# Updates a package.
+#
+#   $1 package name
+function update_package() {
+
+    local package=$1
+    local package_update_script="update"
+
+    if [ $update_build == "Y" ] && [ $update_replace == "N" ] && [ $(is_chroot) == "no" ]; then
+
+        chroot_create_compile_env $COMPILE_DIR --exclude "$package"
+        schroot -c "shellos-build-package" -p $SHELLOS_DIR/sbin/update -- $args
+        chroot_remove_compile_env
+
+    else
+
+        # run update script
+        (
+            cd $script_dir/../pkg/$package
+            package_dir=$(pwd)
+            if [ -f ./${package_update_script} ]; then
+                echo "Updating ($update_action) package $package..."
+                chmod u+x ./${package_update_script} > /dev/null 2>&1
+                (. ./${package_update_script} $args)
+                result=${PIPESTATUS[0]}
+                if [ "$result" != 0 ]; then
+                    echo "Error in package updating ($update_action) script ($package)."
+                    exit 1
+                fi
+            fi
+        ) 2>&1 | tee $LOG_DIR/$timestamp/$package.log
+        result=${PIPESTATUS[0]}
+
+        # set log file permissions
+        if [ "$OWNER" != "root" ]; then
+            chmod 444 $LOG_DIR/$timestamp/$package.log
+        else
+            chmod 400 $LOG_DIR/$timestamp/$package.log
+        fi
+
+        # log event
+        if [ "$result" != 0 ]; then
+            log_info "$package NOT updated ($update_action)"
+            echo "$package NOT updated ($update_action)"
+            exit $result
+        else
+            log_info "updated ($update_action) $package"
+            echo "Updated ($update_action) $package"
+        fi
+
+    fi
+}
+
+##
+## main
+##
+
+# switch on debuging
+if [ "$debug" == "Y" ]; then
+    echo "================================================================================"
+    set
+    echo "================================================================================"
+    set -xv
+fi
+
+echo "    OS: $OS"
+echo "    DIST: $DIST"
+echo "    DIST BASED ON: $DIST_BASED_ON"
+echo "    PSEUDO NAME: $PSEUDO_NAME"
+echo "    VERSION: $VERSION"
+echo "    ARCH: $ARCH"
+echo "    ARCH NAME: $ARCH_NAME"
+echo "    KERNEL: $KERNEL"
+echo "    DEVICE: $DEVICE"
+echo "    IS CHROOT: $(is_chroot)"
+echo "    ID: $(id)"
+
+# log event
+log_info "update script ($update_action) started"
+echo "Update script ($update_action) started"
+
+# create update log directory
+[ ! -d $LOG_DIR/$timestamp ] && (
+    mkdir -p $LOG_DIR/$timestamp
+    chown $OWNER:$OWNER $LOG_DIR/$timestamp
+)
+
+# call update script
+cd $script_dir
+if [ "$result" == 0 ]; then
+    (
+
+        # update lzo
+        if [ "$arg_lzo" == "Y" ]; then
+            update_package "lzo"
+
+        # update zlib
+        elif [ "$arg_zlib" == "Y" ]; then
+            update_package "zlib"
+
+        # update openssl
+        elif [ "$arg_openssl" == "Y" ]; then
+            update_package "openssl"
+
+        # update openssh
+        elif [ "$arg_openssh" == "Y" ]; then
+            update_package "openssh"
+
+        # update git
+        elif [ "$arg_git" == "Y" ]; then
+            update_package "git"
+
+        # update openvpn
+        elif [ "$arg_openvpn" == "Y" ]; then
+            update_package "openvpn"
+
+        # update geoip
+        elif [ "$arg_geoip" == "Y" ]; then
+            update_package "geoip"
+
+        # update mysql
+        elif [ "$arg_mysql" == "Y" ]; then
+            update_package "mysql"
+
+        # update mongodb
+        elif [ "$arg_mongodb" == "Y" ]; then
+            update_package "mongodb"
+
+        # update perl
+        elif [ "$arg_perl" == "Y" ]; then
+            update_package "perl"
+
+        # update python
+        elif [ "$arg_python" == "Y" ]; then
+            update_package "python"
+
+        # update postfix
+        elif [ "$arg_postfix" == "Y" ]; then
+            update_package "postfix"
+
+        # update proftpd
+        elif [ "$arg_proftpd" == "Y" ]; then
+            update_package "proftpd"
+
+        # update libiconv
+        elif [ "$arg_libiconv" == "Y" ]; then
+            update_package "libiconv"
+
+        # update imagemagick
+        elif [ "$arg_imagemagick" == "Y" ]; then
+            update_package "imagemagick"
+
+        # update httpd
+        elif [ "$arg_httpd" == "Y" ]; then
+            update_package "httpd"
+
+        # update httpd mod geoip
+        elif [ "$arg_httpd_mod_geoip" == "Y" ]; then
+            update_package "httpd-mod-geoip"
+
+        # update nginx
+        elif [ "$arg_nginx" == "Y" ]; then
+            update_package "nginx"
+
+        # update php
+        elif [ "$arg_php" == "Y" ]; then
+            update_package "php"
+
+        # update php-fpm
+        elif [ "$arg_php_fpm" == "Y" ]; then
+            update_package "php-fpm"
+
+        # update php mod geoip
+        elif [ "$arg_php_mod_geoip" == "Y" ]; then
+            update_package "php-mod-geoip"
+
+        # update php mod imagick
+        elif [ "$arg_php_mod_imagick" == "Y" ]; then
+            update_package "php-mod-imagick"
+
+        # update dovecot
+        elif [ "$arg_dovecot" == "Y" ]; then
+            update_package "dovecot"
+
+        # update openjdk
+        elif [ "$arg_openjdk" == "Y" ]; then
+            update_package "openjdk"
+
+        # update ant
+        elif [ "$arg_ant" == "Y" ]; then
+            update_package "ant"
+
+        # update maven
+        elif [ "$arg_maven" == "Y" ]; then
+            update_package "maven"
+
+        # update tomcat
+        elif [ "$arg_tomcat" == "Y" ]; then
+            update_package "tomcat"
+
+        # update nodejs
+        elif [ "$arg_nodejs" == "Y" ]; then
+            update_package "nodejs"
+
+        # update ruby
+        elif [ "$arg_ruby" == "Y" ]; then
+            update_package "ruby"
+
+        # update phpmyadmin
+        elif [ "$arg_phpmyadmin" == "Y" ]; then
+            update_package "phpmyadmin"
+
+        # update roundcube
+        elif [ "$arg_roundcube" == "Y" ]; then
+            update_package "roundcube"
+
+        # update enlightenment
+        elif [ "$arg_enlightenment" == "Y" ]; then
+            update_package "enlightenment"
+
+        # update nvidia
+        elif [ "$arg_nvidia" == "Y" ]; then
+            update_package "nvidia"
+
+        # update eclipse
+        elif [ "$arg_eclipse" == "Y" ]; then
+            update_package "eclipse"
+
+        # update shellos
+        elif [ "$arg_shellos" == "Y" ]; then
+            update_package "shellos"
+        fi
+
+        exit 0
+
+    ) 2>&1 | tee $LOG_DIR/$timestamp/update.log
+    result=${PIPESTATUS[0]}
+
+    if [ $(is_chroot) == "no" ]; then
+        if [ $update_build == "Y" ] && [ $update_replace == "N" ]; then
+            # remove duplicated log
+            rm -rf $LOG_DIR/$timestamp
+        fi
+        if [ "$result" != 0 ]; then
+            echo "Error in update script."
+        else
+            # log event
+            log_info "finished update script"
+            echo "Finished update script"
+        fi
+    fi
+
+fi
+
+if [ $(is_chroot) == "no" ]; then
+
+    # change directory back
+    cd $current_dir
+
+    # calculate time
+    time_end=$(date +%s)
+    time=$((time_end-time_start))
+    minutes=$(expr $time / 60)
+
+    if [ "$result" == 0 ]; then
+        # send email notification
+        if [ "$notify" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ] && [ "$DEVICE" == "server" ]; then
+            (   echo -e "$(hostname -f) ($IP_ADDRESS) has been updated at `date +\"%T %Z (%d %b %G)\"`, the whole process took $minutes minutes.\n\nList of installed packages:\n"
+                cat $PACKAGES_FILE | sed 's/=/ /g'
+                echo -e "\n\nList of file hashes:\n"
+                cat $HASH_SUM_FILE
+            ) | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - update script completed" $ADMIN_MAIL
+        fi
+        # log event
+        log_info "update script ($update_action) completed successfully (time: $minutes min)"
+        echo "Update script ($update_action) completed successfully (time: $minutes min)"
+    else
+        # log event
+        log_info "update script ($update_action) stopped due to an error (time: $minutes min)"
+        echo "Update script ($update_action) stopped due to an error (time: $minutes min)"
+    fi
+
+    # system restart
+    if [ "$result" == 0 ] && [ "$reboot" == "Y" ]; then
+        echo "reboot"
+        reboot
+    fi
+
+fi
+
+# switch off debuging
+[ "$debug" == "Y" ] && set +xv
+
+exit $result
+

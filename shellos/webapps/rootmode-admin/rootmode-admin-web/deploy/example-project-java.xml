@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context
+    docBase="/var/shellos/workspace/shellos/webapps/rootmode-admin/rootmode-admin-web/target/rootmode-admin-web/"
+    workDir="/var/shellos/workspace/shellos/webapps/rootmode-admin/rootmode-admin-web/target/rootmode-admin-web/WEB-INF/work/"
+    path="/rootmode-admin"
+    privileged="true"
+    reloadable="true"
+/>
+

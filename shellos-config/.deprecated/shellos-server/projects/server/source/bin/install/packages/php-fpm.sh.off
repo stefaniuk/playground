@@ -1,0 +1,320 @@
+#!/bin/bash
+
+# TODO: revise this script !!!
+
+##
+## variables
+##
+
+PHP_FPM_NAME=
+PHP_FPM_VERSION=
+PHP_FPM_TYPE=
+PHP_FPM_MYSQL_NAME=
+PHP_FPM_SOURCE_FILE_NAME=
+PHP_FPM_CONFIGURE_OPTIONS=
+
+# timezone
+PHP_FPM_TIMEZONE="Europe/London"
+if [ "$LOCATION" == "PL" ]; then
+    PHP_FPM_TIMEZONE="Europe/Warsaw"
+fi
+PHP_FPM_TIMEZONE_ESC=`echo "$PHP_FPM_TIMEZONE" | sed 's/\//\\\\\//g'`
+
+# php 5.3.x configuration options
+PHP_FPM_53_CONFIGURE_OPTIONS=$( cat <<EOF
+    --disable-cgi
+    --without-sqlite
+    --with-sqlite3=shared
+EOF
+)
+
+# php 5.4.x configuration options
+PHP_FPM_54_CONFIGURE_OPTIONS=$( cat <<EOF
+    --disable-cgi
+    --with-sqlite3=shared
+EOF
+)
+
+##
+## install function
+##
+
+# parameters:
+#    $1 php_version
+function download_php_fpm {
+
+    URL="http://de.php.net/get/php-$PHP_FPM_VERSION.tar.gz/from/this/mirror"
+    FILE=php-$PHP_FPM_VERSION.tar.gz
+    RESULT=$(download_file $URL $FILE)
+    if [ "$RESULT" == "error" ]; then
+        echo "Error: Unable to download $FILE file!"
+        exit 1
+    fi
+    PHP_FPM_SOURCE_FILE_NAME="php-$PHP_FPM_VERSION.tar.gz"
+}
+
+# parameters:
+#    $1 php_version
+function download_php_fpm_snapshot {
+
+    # TODO: this function needs to be verified
+
+    for((d=0; d<7; d++))
+    do
+        for((h=22; h>=0; h=h-2))
+        do
+            if [ $d -eq 0 ]; then
+                TIMESTAMP=$(date +%Y%m%d)$(printf "%.2d" "$h")30
+            else
+                TIMESTAMP=$(date --date="-$d day" +%Y%m%d)$(printf "%.2d" "$h")30
+            fi
+            wget http://snaps.php.net/php$1-$TIMESTAMP.tar.gz -O php-fpm-$1-snapshot.tar.gz
+            if [ -s php-fpm-$1-snapshot.tar.gz ]; then
+                break
+            fi
+        done
+        if [ -s php-fpm-$1-snapshot.tar.gz ]; then
+            break
+        fi
+    done
+    if [ ! -s php-fpm-$1-snapshot.tar.gz ]; then
+        echo "Error: Unable to download php-fpm-$1-snapshot.tar.gz file!"
+        exit 1
+    fi
+    PHP_FPM_SOURCE_FILE_NAME="php-fpm-$1-snapshot.tar.gz"
+}
+
+function install_php_fpm {
+
+# variables
+
+PHP_FPM_INSTALL_DIR=$INSTALL_DIR/$PHP_FPM_NAME
+PHP_FPM_INSTALL_DIR_ESC=`echo "$PHP_FPM_INSTALL_DIR" | sed 's/\//\\\\\//g'`
+
+# check dependencies
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: PHP-FPM $PHP_FPM_VERSION requires zlib!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+    echo "Error: PHP-FPM $PHP_FPM_VERSION requires OpenSSL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/$PHP_FPM_MYSQL_NAME/bin/mysqld ]; then
+    echo "Error: PHP-FPM $PHP_FPM_VERSION requires MySQL!"
+    exit 1
+fi
+# optional
+if [ -f $INSTALL_DIR/libiconv/bin/iconv ]; then
+    PHP_FPM_CONFIGURE_OPTIONS="$PHP_FPM_CONFIGURE_OPTIONS --with-iconv=shared,$INSTALL_DIR/libiconv"
+fi
+
+# download
+
+if [ "$PHP_FPM_TYPE" == "production" ]; then
+    download_php_fpm $PHP_FPM_VERSION
+fi
+if [ "$PHP_FPM_TYPE" == "snapshot" ]; then
+    download_php_fpm_snapshot $PHP_FPM_VERSION
+fi
+
+# install
+
+echo "Installing PHP-FPM $PHP_FPM_VERSION":
+[ -d $PHP_FPM_INSTALL_DIR ] && rm -rf $PHP_FPM_INSTALL_DIR
+tar -zxf $PHP_FPM_SOURCE_FILE_NAME
+PHP_FPM_SRC_DIR_NAME=`find -name "php*$PHP_FPM_VERSION*" -type d -exec basename '{}' ';'`
+cd $PHP_FPM_SRC_DIR_NAME
+./configure \
+    --prefix=$PHP_FPM_INSTALL_DIR \
+    --sbindir=$PHP_FPM_INSTALL_DIR/bin \
+    --sysconfdir=$PHP_FPM_INSTALL_DIR/conf \
+    --localstatedir=$PHP_FPM_INSTALL_DIR/log \
+    --with-config-file-path=$PHP_FPM_INSTALL_DIR/conf \
+    --enable-fpm \
+    --enable-bcmath=shared \
+    --enable-calendar=shared \
+    --enable-cli=shared \
+    --enable-ctype=shared \
+    --enable-exif=shared \
+    --enable-ftp=shared \
+    --enable-libxml=shared \
+    --enable-mbstring=shared \
+    --enable-soap=shared \
+    --enable-sockets=shared \
+    --enable-zip=shared \
+    --with-bz2=shared \
+    --with-gd=shared \
+    --with-freetype-dir=/usr/include/freetype2 \
+    --with-jpeg-dir=shared \
+    --with-png-dir=shared \
+    --with-gettext=shared \
+    --with-mcrypt=shared \
+    --with-mhash=shared \
+    --with-pear=shared \
+    --with-pcre-regex \
+    --enable-pdo=shared \
+    --with-pdo-sqlite=shared,/usr \
+    --with-mysql=shared,$INSTALL_DIR/$PHP_FPM_MYSQL_NAME \
+    --with-mysql-sock=$INSTALL_DIR/$PHP_FPM_MYSQL_NAME/log/mysql.sock \
+    --with-mysqli=shared,$INSTALL_DIR/$PHP_FPM_MYSQL_NAME/bin/mysql_config \
+    --with-pdo-mysql=shared,$INSTALL_DIR/$PHP_FPM_MYSQL_NAME \
+    --with-zlib-dir=shared,$INSTALL_DIR/zlib \
+    --with-openssl=shared,$INSTALL_DIR/openssl \
+    --with-curl \
+    $PHP_FPM_CONFIGURE_OPTIONS \
+&& make && make install && echo "PHP-FPM $PHP_FPM_VERSION installed successfully!" \
+&& rm -rfv $PHP_FPM_INSTALL_DIR/{man,log/*,php} \
+&& mkdir $PHP_FPM_INSTALL_DIR//{conf,log}/{accounts,applications} \
+&& cp -v sapi/fpm/init.d.php-fpm $PHP_FPM_INSTALL_DIR/bin/php-fpm.sh \
+&& cp -v $PHP_FPM_INSTALL_DIR/conf/php-fpm.conf.default $PHP_FPM_INSTALL_DIR/conf/php-fpm.conf
+cd ..
+
+# TODO: http://www.hiddentao.com/archives/2011/06/24/ubuntu-10-04-lucid-64-bit-php-5-2-fastcgi-apc-nginx/
+# TODO: http://publications.jbfavre.org/web/php-fpm-apps-server-nginx.en
+# TODO: http://www.hardened-php.net/suhosin/index.html
+
+# check
+if [ ! -f $PHP_FPM_INSTALL_DIR/bin/php-fpm ]; then
+    echo "Error: PHP-FPM $PHP_FPM_VERSION has NOT been installed successfully!"
+    exit 1
+fi
+
+# extensions
+PHP_FPM_EXTENSIONS_DIR_NAME=`ls $PHP_FPM_INSTALL_DIR/lib/php/extensions/`
+rm -v $PHP_FPM_INSTALL_DIR/lib/php/extensions/$PHP_FPM_EXTENSIONS_DIR_NAME/*.a
+
+# configure
+
+echo "Strip symbols:"
+strip_debug_symbols $PHP_FPM_INSTALL_DIR/bin
+strip_debug_symbols $PHP_FPM_INSTALL_DIR/lib/php/extensions/$PHP_FPM_EXTENSIONS_DIR_NAME
+
+echo "Shared library dependencies for $PHP_FPM_INSTALL_DIR/bin/php-fpm:"
+ldd $PHP_FPM_INSTALL_DIR/bin/php-fpm
+
+# create links to the log files
+#touch /var/log/php-fpm.log
+#ln -sfv /var/log/php-fpm.log $PHP_FPM_INSTALL_DIR/log/php-fpm.log
+#rm /var/log/php-fpm.log
+
+# php.ini
+cp -p $PHP_FPM_SRC_DIR_NAME/php.ini-production $PHP_FPM_INSTALL_DIR/conf/php.ini
+cp -p $PHP_FPM_SRC_DIR_NAME/php.ini-production $PHP_FPM_INSTALL_DIR/conf
+cp -p $PHP_FPM_SRC_DIR_NAME/php.ini-development $PHP_FPM_INSTALL_DIR/conf
+
+# TODO: check disable_functions, open_basedir, doc_root, user_dir
+PHP_FPM_DISABLE_FUNCTIONS="apache_get_modules,apache_get_version,apache_getenv,apache_note,apache_setenv,disk_free_space,diskfreespace,dl,exec,passthru,popen,proc_open,set_time_limit,shell_exec,system"
+replace_in_file 'disable_functions =' "disable_functions = $PHP_FPM_DISABLE_FUNCTIONS" $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file 'expose_php = On' 'expose_php = Off' $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file 'max_execution_time = 30' 'max_execution_time = 10' $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file 'max_input_time = 60' 'max_input_time = 20' $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file 'memory_limit = 128M' 'memory_limit = 32M' $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file ';date.timezone =' "date.timezone = \"$PHP_FPM_TIMEZONE_ESC\"" $PHP_FPM_INSTALL_DIR/conf/php.ini
+#replace_in_file ';error_log = php_errors.log' "error_log = \/var\/log\/php-fpm.log" $PHP_FPM_INSTALL_DIR/conf/php.ini
+replace_in_file ';sendmail_path =' "sendmail_path = \"$INSTALL_DIR_ESC\/postfix\/bin\/sendmail -t -i\"" $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "\n; extensions begin" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = bcmath.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = bz2.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = calendar.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = ctype.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = exif.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = ftp.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+# iconv.so has to be loaded before gd.so
+[ -f $INSTALL_DIR/libiconv/bin/iconv ] && echo -e "extension = iconv.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = gd.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = gettext.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = mbstring.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = mcrypt.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = openssl.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = sqlite3.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = mysql.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = mysqli.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = pdo.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = pdo_sqlite.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = pdo_mysql.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = soap.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = sockets.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "extension = zip.so" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+echo -e "; extensions end" >> $PHP_FPM_INSTALL_DIR/conf/php.ini
+
+# amend startup script
+replace_in_file '\/log\/run\/php-fpm.pid' '\/log\/php-fpm.pid' $PHP_FPM_INSTALL_DIR/bin/php-fpm.sh
+
+# php-fpm.conf
+cat <<EOF > $PHP_FPM_INSTALL_DIR/conf/php-fpm.conf
+[global]
+pid = $PHP_FPM_INSTALL_DIR/log/php-fpm.pid
+error_log = $PHP_FPM_INSTALL_DIR/log/php-fpm.log
+log_level = notice
+emergency_restart_threshold = 5
+emergency_restart_interval = 2
+process_control_timeout = 2
+daemonize = yes
+include = $PHP_FPM_INSTALL_DIR/conf/accounts/*.conf
+include = $PHP_FPM_INSTALL_DIR/conf/applications/*.conf
+EOF
+
+# set files permission
+chown -R root:root $PHP_FPM_INSTALL_DIR
+chmod 555 $PHP_FPM_INSTALL_DIR/bin
+chmod 555 $PHP_FPM_INSTALL_DIR/bin/*
+
+##
+## post install
+##
+
+[ -f $PHP_FPM_SOURCE_FILE_NAME ] && rm $PHP_FPM_SOURCE_FILE_NAME
+[ -d $PHP_FPM_SRC_DIR_NAME ] && rm -rf $PHP_FPM_SRC_DIR_NAME
+
+# log event
+logger -p local0.notice -t host4ge "php-fpm $PHP_FPM_VERSION installed successfully"
+
+# save package version
+package_add_version "php-fpm" "$PHP_FPM_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $PHP_FPM_INSTALL_DIR/bin
+hashes_add_dir $PHP_FPM_INSTALL_DIR/lib/php/extensions
+
+# test
+if [ "$CHROOT" == "N" ]; then
+    echo -e "\n\n *** PHP settings ***\n"
+    $PHP_FPM_INSTALL_DIR/bin/php -i
+    echo -e "\n\n"
+fi
+
+}
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --php-fpm)  shift && PHP_FPM_NAME=$1
+                    shift && PHP_FPM_VERSION=$1
+                    shift && PHP_FPM_TYPE=$1
+                    shift && PHP_FPM_MYSQL_NAME=$1
+                    ;;
+    esac
+    shift
+done
+
+##
+## install
+##
+
+# set variables
+if [ "$PHP_FPM_VERSION" == "5.3" ]; then
+    PHP_FPM_CONFIGURE_OPTIONS="$PHP_FPM_CONFIGURE_OPTIONS $PHP_FPM_53_CONFIGURE_OPTIONS"
+    PHP_FPM_VERSION=$PHP_FPM_53_VERSION
+fi
+if [ "$PHP_FPM_VERSION" == "5.4" ]; then
+    PHP_FPM_CONFIGURE_OPTIONS="$PHP_FPM_CONFIGURE_OPTIONS $PHP_FPM_54_CONFIGURE_OPTIONS"
+    PHP_FPM_VERSION=$PHP_FPM_54_VERSION
+fi
+install_php_fpm
+
+exit 0

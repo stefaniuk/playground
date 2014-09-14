@@ -1,0 +1,32 @@
+#!/bin/bash
+
+##
+## set hostname
+##
+
+hostname $SERVER_NAME
+
+# /etc/hostname
+echo "$(hostname)" > /etc/hostname
+
+##
+## set host file
+##
+
+# /etc/hosts
+[ ! -f /etc/hosts.old ] && cp /etc/hosts /etc/hosts.old
+cat << EOF > /etc/hosts
+127.0.0.1 localhost.localdomain localhost
+$IP_ADDRESS $(hostname).$DOMAIN $(hostname)
+
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+EOF
+( cat /etc/hosts; cat $HOST4GE_DIR/conf/hosts ) > /etc/hosts.tmp
+mv /etc/hosts.tmp /etc/hosts
+
+exit 0

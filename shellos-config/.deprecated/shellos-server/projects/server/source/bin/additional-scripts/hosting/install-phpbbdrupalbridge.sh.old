@@ -1,0 +1,130 @@
+#!/bin/bash
+#
+# File: management/install-phpbbdrupalbridge.sh
+#
+# Description: Installs phpbbdrupalbridge.
+#
+# Usage:
+#
+#   install-phpbbdrupalbridge.sh --user system_user --drush-dir drush_installation_dir --drupal-dir drupal_installation_dir --phpbb3-dir phpbb3_installation_dir
+
+
+##
+## includes
+##
+
+source $HOST4GE_DIR/sbin/include.sh
+
+##
+## variables
+##
+
+PHPBBDRUPALBRIDGE_VERSION="3.0.9"
+PHPBBDRUPALBRIDGE_SYSTEM_USER=
+PHPBBDRUPALBRIDGE_DRUSH_INSTALL_DIR=
+PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR=
+PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR=
+PHPBBDRUPALBRIDGE_PHPBB3_DOMAIN=
+PHPBBDRUPALBRIDGE_HTTPD_NAME="httpd"
+ONLINE_DOWNLOAD_URL="http://dl.dropbox.com/u/7395263/host4ge"
+
+CURRENT_DIR=`pwd`
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --user)         shift && PHPBBDRUPALBRIDGE_SYSTEM_USER=$1
+                        ;;
+        --drush-dir)    shift && PHPBBDRUPALBRIDGE_DRUSH_INSTALL_DIR=$1
+                        ;;
+        --drupal-dir)   shift && PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR=$1
+                        ;;
+        --phpbb3-dir)   shift && PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR=$1
+                        ;;
+        --domain)	 	shift && PHPBBDRUPALBRIDGE_PHPBB3_DOMAIN=$1
+						;;
+    esac
+    shift
+done
+
+##
+## check dependencies
+##
+
+if [ ! -d $PHPBBDRUPALBRIDGE_DRUSH_INSTALL_DIR ]; then
+    echo "Error: phpbbdrupalbridge requires $PHPBBDRUPALBRIDGE_DRUSH_INSTALL_DIR directory to exist!"
+    exit 1
+fi
+if [ ! -d $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR ]; then
+    echo "Error: phpbbdrupalbridge requires $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR directory to exist!"
+    exit 1
+fi
+if [ ! -d $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR ]; then
+    echo "Error: phpbbdrupalbridge requires $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR directory to exist!"
+    exit 1
+fi
+
+##
+## download
+##
+
+PHPBBDRUPALBRIDGE_SRC_FILE=$DOWNLOADS_DIR/phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION.zip
+if [ ! -s $PHPBBDRUPALBRIDGE_SRC_FILE ]; then
+    [ -f $PHPBBDRUPALBRIDGE_SRC_FILE ] && rm $PHPBBDRUPALBRIDGE_SRC_FILE
+    wget http://phpbb.drupalbridge.org/files/phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION.zip -O $PHPBBDRUPALBRIDGE_SRC_FILE
+fi
+[ ! -s $PHPBBDRUPALBRIDGE_SRC_FILE ] && wget $ONLINE_DOWNLOAD_URL/phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION.zip -O $PHPBBDRUPALBRIDGE_SRC_FILE
+if [ ! -s $PHPBBDRUPALBRIDGE_SRC_FILE ]; then
+    rm $PHPBBDRUPALBRIDGE_SRC_FILE
+    echo "Error: $PHPBBDRUPALBRIDGE_SRC_FILE file is missing!"
+    exit 1
+fi
+chmod 400 $PHPBBDRUPALBRIDGE_SRC_FILE
+
+##
+## install
+##
+
+cd $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR
+
+$PHPBBDRUPALBRIDGE_DRUSH_INSTALL_DIR/drush -y dl phpbbforum
+[ -d $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR/sites/all/modules/phpbbforum/includes ] && rm -r $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR/sites/all/modules/phpbbforum/includes
+unzip -o $PHPBBDRUPALBRIDGE_SRC_FILE > /dev/null 2>&1
+cp -r phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION/root/includes $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR/sites/all/modules/phpbbforum
+cp phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION/root/phpBB-embed-3.0.9.patch $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR
+cd $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR
+patch -p0 -N < phpBB-embed-$PHPBBDRUPALBRIDGE_VERSION.patch
+rm phpBB-embed-$PHPBBDRUPALBRIDGE_VERSION.patch
+cd $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR
+
+# copy styles modifications
+PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR_ESC=`echo "$PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR" | sed 's/\//\\\\\//g'`
+for line in `cat phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION/install_phpbb.xml | grep '<file from="root\/styles\/' | sed "s/.*from=\".*\" to=\"/$PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR_ESC\//g" | sed 's/"\/>/;/g' | sed 's/\/[a-zA-Z0-9_.]*;//g'`; do
+    [ ! -d $line ] && mkdir -p $line
+done
+echo '#!/bin/bash' > tmp_phpbbdrupalbridge.sh
+IFS="
+"
+cat phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION/install_phpbb.xml | grep '<file from="root\/styles\/' | sed 's/.*from="/cp -f phpbbdrupalbridge-3.0.9\//g' | sed "s/\" to=\"/ $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR_ESC\//g" | sed 's/"\/>/;/g' | sed 's/\/[a-zA-Z0-9_.]*;//g' >> tmp_phpbbdrupalbridge.sh
+chmod +x tmp_phpbbdrupalbridge.sh
+./tmp_phpbbdrupalbridge.sh
+
+# copy images
+cp -r $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR/styles/prosilver/imageset/pl $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR/styles/prosilver-embed/imageset
+
+# clean up
+rm -r phpbbdrupalbridge-$PHPBBDRUPALBRIDGE_VERSION
+rm tmp_phpbbdrupalbridge.sh
+
+# set files permission
+chown -R $PHPBBDRUPALBRIDGE_HTTPD_NAME:$PHPBBDRUPALBRIDGE_HTTPD_NAME $PHPBBDRUPALBRIDGE_DRUPAL_INSTALL_DIR/sites/all/modules/phpbbforum
+chown -R $PHPBBDRUPALBRIDGE_SYSTEM_USER:$PHPBBDRUPALBRIDGE_SYSTEM_USER $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR/includes
+chown -R $PHPBBDRUPALBRIDGE_SYSTEM_USER:$PHPBBDRUPALBRIDGE_SYSTEM_USER $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR/styles
+chown $PHPBBDRUPALBRIDGE_SYSTEM_USER:$PHPBBDRUPALBRIDGE_SYSTEM_USER $PHPBBDRUPALBRIDGE_PHPBB3_INSTALL_DIR/*.php
+
+cd $CURRENT_DIR
+
+exit 0

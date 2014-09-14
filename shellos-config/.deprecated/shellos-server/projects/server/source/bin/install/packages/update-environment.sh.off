@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# $HOST4GE_DIR/install/install-upgrade-environment.sh 2>&1 | tee $HOST4GE_DIR/log/install-upgrade-environment.log
+
+# set chroot directory
+CHROOT_DIR=$INSTALL_DIR/host4ge/var/chroot
+[ ! -d $CHROOT_DIR ] && mkdir $CHROOT_DIR
+chmod 500 $CHROOT_DIR
+UE_DIR=$CHROOT_DIR/upgrade
+
+# get system info
+OS=$(awk '/DISTRIB_ID=/' /etc/*-release | sed 's/DISTRIB_ID=//' | tr '[:upper:]' '[:lower:]')
+VERSION=$(awk '/DISTRIB_RELEASE=/' /etc/*-release | sed 's/DISTRIB_RELEASE=//' | sed 's/[.]0/./')
+NAME=$(awk '/DISTRIB_CODENAME=/' /etc/*-release | sed 's/DISTRIB_CODENAME=//' | tr '[:upper:]' '[:lower:]')
+ARCH=$(dpkg --print-architecture)
+
+# create chroot directory
+if [ -d $UE_DIR ]; then
+    chroot $UE_DIR umount /proc > /dev/null 2>&1
+    chroot $UE_DIR umount /dev/pts > /dev/null 2>&1
+    rm -rf $UE_DIR
+fi
+mkdir $UE_DIR
+
+# setup upgrade environment
+debootstrap --variant=buildd --arch $ARCH $NAME $UE_DIR http://archive.ubuntu.com/ubuntu/
+cp /etc/resolv.conf $UE_DIR/etc/resolv.conf
+cp /etc/apt/sources.list $UE_DIR/etc/apt/sources.list
+
+# create host4ge directory structure
+mkdir -p $UE_DIR/$HOST4GE_DIR/{bin,conf,download,install,lib,log,management,res,sbin,sql,upgrade}
+#cp -rp $HOST4GE_DIR/{bin,download,lib,sbin,upgrade} $UE_DIR/$HOST4GE_DIR
+#rm $UE_DIR/$HOST4GE_DIR/upgrade/install-upgrade-environment.sh
+#chmod 500 $UE_DIR/$HOST4GE_DIR/upgrade/*.sh > /dev/null 2>&1
+#mkdir $UE_DIR/$HOST4GE_DIR/{install,conf,log}
+#chmod 500 $UE_DIR/$HOST4GE_DIR/{install,conf,log}
+#cp -p $HOST4GE_DIR/install/install-*.sh $UE_DIR/$HOST4GE_DIR/install
+#cp -p $HOST4GE_DIR/install/build.sh $UE_DIR/$HOST4GE_DIR/install
+
+# copy perl
+#cp -rp /root/perl5 $UE_DIR/root/
+
+# set root profile
+echo -e "\n# BEGIN: server settings" >> $UE_DIR/root/.profile
+echo -e "export INSTALL_DIR=$INSTALL_DIR" >> $UE_DIR/root/.profile
+echo -e "export HOST4GE_DIR=$HOST4GE_DIR" >> $UE_DIR/root/.profile
+echo -e "export IP_ADDRESS=$IP_ADDRESS" >> $UE_DIR/root/.profile
+echo -e "export DOMAIN=$DOMAIN" >> $UE_DIR/root/.profile
+echo -e "export LOCATION=$LOCATION" >> $UE_DIR/root/.profile
+echo -e "export SERVER_HYPERVISOR=chroot" >> $UE_DIR/root/.profile
+echo -e "export ADMIN_NAME=\"$ADMIN_NAME\"" >> $UE_DIR/root/.profile
+echo -e "export ADMIN_MAIL=$ADMIN_MAIL" >> $UE_DIR/root/.profile
+echo -e "export LOCAL_DOWNLOAD_USER=$LOCAL_DOWNLOAD_USER" >> $UE_DIR/root/.profile
+echo -e "export LOCAL_DOWNLOAD_PASS=$LOCAL_DOWNLOAD_PASS" >> $UE_DIR/root/.profile
+echo -e "export LOCAL_DOWNLOAD_URL=$LOCAL_DOWNLOAD_URL" >> $UE_DIR/root/.profile
+echo -e "export ONLINE_DOWNLOAD_URL=$ONLINE_DOWNLOAD_URL" >> $UE_DIR/root/.profile
+echo -e "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> $UE_DIR/root/.profile
+echo -e "export PERL5LIB=$HOST4GE_DIR/lib" >> $UE_DIR/root/.profile
+echo -e "export EDITOR=vim" >> $UE_DIR/root/.profile
+echo -e "source $HOST4GE_DIR/sbin/include.sh" >> $UE_DIR/root/.profile
+echo -e "source ~/perl5/perlbrew/etc/bashrc" >> $UE_DIR/root/.profile
+echo -e "# END: server settings" >> $UE_DIR/root/.profile
+
+# config schroot
+cat <<EOF > /etc/schroot/schroot.conf
+[host4ge-uec]
+description=$OS $VERSION $NAME $ARCH
+directory=$UE_DIR
+priority=3
+users=root
+groups=root
+root-groups=root
+EOF
+
+# run chrooted build script
+#schroot -c host4ge-uec -p $HOST4GE_DIR/upgrade/build.sh
+#rm $UE_DIR/$HOST4GE_DIR/upgrade/build.sh
+
+# move files
+#echo "no" | mv -i $UE_DIR/$HOST4GE_DIR/install/*.{dat.gz,tar.bz2,tar.gz,tgz,patch} $UE_DIR/$DOWNLOADS_DIR > /dev/null 2>&1
+
+exit 0

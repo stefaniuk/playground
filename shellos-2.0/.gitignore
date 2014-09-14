@@ -1,0 +1,10 @@
+build/current
+build/*.tar*
+database/*.bak
+shellos/*.log
+
+# ignore files provided by shellos-config
+shellos/config/properties/*.properties
+shellos/build.bat
+shellos/build.sh
+

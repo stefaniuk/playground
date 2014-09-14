@@ -1,0 +1,99 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: OpenSSL requires zlib!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="openssl-$OPENSSL_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
+    file=openssl-$OPENSSL_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 4000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile OpenSSL:"
+    [ -d $INSTALL_DIR/openssl ] && rm -rf $INSTALL_DIR/openssl
+    tar -zxf openssl-$OPENSSL_VERSION.tar.gz
+    cd openssl-$OPENSSL_VERSION
+    # http://ubuntuforums.org/showthread.php?t=1905963
+    patch -p1 < $HOST4GE_DIR/pkg/resources/openssl/version-script.patch
+    ./config \
+        --prefix=$INSTALL_DIR/openssl \
+        --openssldir=$INSTALL_DIR/openssl \
+        --with-zlib-lib=$INSTALL_DIR/zlib/lib \
+        --with-zlib-include=$INSTALL_DIR/zlib/include \
+        shared zlib-dynamic enable-camellia \
+    && make depend && make && make install && echo "OpenSSL installed successfully!"
+    rm -rf $INSTALL_DIR/openssl/{private,man}
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/openssl/bin
+    development_strip_symbols $INSTALL_DIR/openssl/lib
+    echo "Create package:"
+    package_create $INSTALL_DIR/openssl $pkg_name
+else
+    echo "Install OpenSSL from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+    echo "Error: OpenSSL has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/openssl/lib
+
+echo "Copy includes:"
+rm -rf /usr/include/openssl
+cp -rfv $INSTALL_DIR/openssl/include/openssl /usr/include/
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/openssl/lib/pkgconfig/* /usr/lib/pkgconfig
+
+echo "Shared library dependencies for $INSTALL_DIR/openssl/bin/openssl:"
+ldd $INSTALL_DIR/openssl/bin/openssl
+
+# set files permission
+chown -R root:root $INSTALL_DIR/openssl
+
+##
+## post install
+##
+
+[ -f openssl-${OPENSSL_VERSION}${PACKAGE_SUFFIX} ] && rm openssl-${OPENSSL_VERSION}${PACKAGE_SUFFIX}
+[ -f openssl-$OPENSSL_VERSION.tar.gz ] && rm openssl-$OPENSSL_VERSION.tar.gz
+[ -d openssl-$OPENSSL_VERSION ] && rm -rf openssl-$OPENSSL_VERSION
+
+# save package version
+package_add_version "openssl" "$OPENSSL_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/openssl/bin
+hashes_add_dir $INSTALL_DIR/openssl/lib
+
+exit 0

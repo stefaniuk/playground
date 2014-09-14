@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# This script builds bootable system installation image.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+script_dir=$(dirname $(readlink -f $0))
+
+##
+## main
+##
+
+# execute device specific script
+if [ -x $script_dir/remaster-${DEVICE} ]; then
+    (. $script_dir/remaster-${DEVICE} $@)
+else
+    echo "Operation not supported."
+fi
+
+exit 0
+

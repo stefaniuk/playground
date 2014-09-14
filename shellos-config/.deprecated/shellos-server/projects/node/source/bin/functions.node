@@ -1,0 +1,163 @@
+#!/bin/bash
+#
+# Global functions specific to the project. These functions may depend on
+# variables and constants.
+
+################################################################################
+## container routines
+##
+
+# https://help.ubuntu.com/12.04/serverguide/lxc.html
+
+function container_list() {
+
+    echo "TODO"
+}
+
+function container_status() {
+
+    echo "TODO"
+}
+
+# Creates container.
+#
+# parameters:
+#   $1 container name
+function container_create() {
+
+    local name=$1
+
+    (
+
+        # http://blog.foaa.de/2010/05/lxc-on-debian-squeeze/
+        # http://j.9souldier.org/trunk/lxc/net/
+        # http://unix.stackexchange.com/questions/18845/lxc-container-network-routing-issues
+        # http://www.shorewall.net/LXC.html
+        # http://wiki.pcprobleemloos.nl/using_lxc_linux_containers_on_debian_squeeze/creating_a_lxc_virtual_machine_template
+        # http://www.jotschi.de/?p=755
+
+        # /sbin/route add -net default gw 192.24.251.1 eth0
+
+        # http://wiki.debian.org/LXC/SimpleBridge
+        # http://glonek.co.uk/tips-tricks/lxc-on-ubuntu-howto-tutorial/
+
+        lxc-create -t ubuntu -n $name
+        cp /srv/lxc/lib/lxc/$name/config /srv/lxc/lib/lxc/$name/config.old
+        cat << EOF > /srv/lxc/lib/lxc/$name/config
+lxc.utsname = $name
+
+lxc.devttydir = lxc
+lxc.tty = 4
+lxc.pts = 1024
+lxc.rootfs = /srv/lxc/lib/lxc/$name/rootfs
+
+# networking
+lxc.network.type = veth
+lxc.network.veth.pair = veth_${name}
+lxc.network.flags = up
+lxc.network.link = $CONTAINER_BRIDGE_NAME
+lxc.network.name = eth0
+lxc.network.hwaddr = 00:FF:10:01:00:02
+lxc.network.ipv4 = 192.24.251.2/$(network_mask2cidr 255.255.255.0)
+#lxc.network.ipv4.gateway = 192.24.251.1
+
+lxc.cgroup.devices.deny = a
+# /dev/null and zero
+lxc.cgroup.devices.allow = c 1:3 rwm
+lxc.cgroup.devices.allow = c 1:5 rwm
+# consoles
+lxc.cgroup.devices.allow = c 5:1 rwm
+lxc.cgroup.devices.allow = c 5:0 rwm
+lxc.cgroup.devices.allow = c 4:0 rwm
+lxc.cgroup.devices.allow = c 4:1 rwm
+# /dev/{,u}random
+lxc.cgroup.devices.allow = c 1:9 rwm
+lxc.cgroup.devices.allow = c 1:8 rwm
+lxc.cgroup.devices.allow = c 136:* rwm
+lxc.cgroup.devices.allow = c 5:2 rwm
+# rtc
+lxc.cgroup.devices.allow = c 254:0 rwm
+EOF
+        #rm -fv /srv/lxc/lib/lxc/$name/rootfs/etc/init/{mountall*,control-alt-delete.conf,hwclock*,network-interface.conf,procps.conf,upstart-udev-bridge.conf}
+
+cat << EOF > /srv/lxc/lib/lxc/$name/rootfs/etc/network/interfaces
+# loopback network interface
+auto lo
+iface lo inet loopback
+    address 127.0.0.1
+    netmask 255.0.0.0
+
+# primary network interface
+auto eth0
+iface eth0 inet static
+    address 192.24.251.2
+    netmask 255.255.255.0
+    network 192.24.251.0
+    broadcast 192.24.251.255
+    gateway 192.24.251.1
+    dns-nameservers 8.8.8.8
+EOF
+
+        echo "chroot /srv/lxc/lib/lxc/$name/rootfs passwd root"
+
+    ) 2>&1 | tee $LOG_DIR/container-create-$name.log
+}
+
+# Removes container.
+#
+# parameters:
+#   $1 container name
+function container_remove() {
+
+    local name=$1
+
+    lxc-stop -n $name
+    lxc-destroy -n $name
+}
+
+# Starts container.
+#
+# parameters:
+#   $1 container name
+function container_start() {
+
+    local name=$1
+
+    lxc-start -n $name -l DEBUG -o $LOG_DIR/container-start-$name.log -d
+}
+
+# Restarts container.
+#
+# parameters:
+#   $1 container name
+function container_restart() {
+
+    local name=$1
+
+    lxc-restart -n $name -l DEBUG -o $LOG_DIR/container-start-$name.log
+}
+
+# Stops container.
+#
+# parameters:
+#   $1 container name
+function container_stop() {
+
+    local name=$1
+
+    lxc-stop -n $name
+}
+
+################################################################################
+## node routines
+##
+
+# Reboots node. This overwritten the original function.
+function server_reboot() {
+
+    # TODO: generate an event
+
+    # TODO: shutdown nodes
+
+    reboot
+}

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ]; then
+
+    cd $WORKSPACE_DIR
+    rm -rf my-terminal
+    $CMD_GIT clone git://github.com/stefaniuk/my-terminal.git
+    cd my-terminal
+    replace_in_file "git:\/\/github.com\/stefaniuk\/my-terminal.git" "git@github.com:stefaniuk\/my-terminal.git" ./.git/config
+    chown -R $OWNER:$OWNER $WORKSPACE_DIR/my-terminal
+
+fi
+
+exit 0
+

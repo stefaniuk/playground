@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# USAGE: This file is executed by the installation script.
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+initialise="N"
+finalise="N"
+args=$*
+result=0
+current_dir=$(pwd)
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --initialise)   initialise="Y"
+                        ;;
+        --finalise)     finalise="Y"
+                        ;;
+    esac
+    shift
+done
+
+##
+## functions
+##
+
+_run_config_scripts() {
+
+    local script=$1
+
+    # run install script
+    chmod u+x $script
+    (. $script $args 2>&1 | tee $LOG_DIR/$timestamp/$script.log)
+    result=${PIPESTATUS[0]}
+
+    # set log file permissions
+    if [ "$OWNER" != "root" ]; then
+        chmod 444 $LOG_DIR/$timestamp/$script.log
+    else
+        chmod 400 $LOG_DIR/$timestamp/$script.log
+    fi
+
+    # log event
+    if [ "$result" == 0 ]; then
+        local name=$(substring "$script" "./config-" "" | cut -c5-)
+        log_info "configured $name"
+        echo "configured $name"
+    else
+        exit $result
+    fi
+}
+
+_initialise() {
+
+    local dir=$1
+
+    cd $dir
+    if [ "$(ls -1 ./config-a* 2> /dev/null | wc -l)" -gt 0 ]; then
+        for script in $(ls -1 ./config-a* | sort); do
+            # check for exclusion
+            local proceed="Y"
+            local name=$(substring "$script" "./config-" "" | cut -c5-)
+            for n in $do_not_run_config_scripts; do
+                if [ "$name" == "$n" ]; then
+                    proceed="N"
+                    break
+                fi
+            done
+            # run script in not excluded
+            if [ "$proceed" == "Y" ]; then
+                cd $dir
+                _run_config_scripts $script
+            fi
+        done
+    fi
+}
+
+_finalise() {
+
+    local dir=$1
+
+    cd $dir
+    if [ "$(ls -1 ./config-z* 2> /dev/null | wc -l)" -gt 0 ]; then
+        for script in $(ls -1 ./config-z* | sort); do
+            # check for exclusion
+            local proceed="Y"
+            local name=$(substring "$script" "./config-" "" | cut -c5-)
+            for n in $do_not_run_config_scripts; do
+                if [ "$name" == "$n" ]; then
+                    proceed="N"
+                    break
+                fi
+            done
+            # run script in not excluded
+            if [ "$proceed" == "Y" ]; then
+                cd $dir
+                _run_config_scripts $script
+            fi
+        done
+    fi
+}
+
+##
+## main
+##
+
+# installation log directory
+[ ! -d $LOG_DIR/$timestamp ] && (
+    mkdir -p $LOG_DIR/$timestamp
+    chmod 700 $LOG_DIR/$timestamp
+    chown $OWNER:$OWNER $LOG_DIR/$timestamp
+)
+
+# initialise
+if [ "$initialise" == "Y" ]; then
+    _initialise $script_dir/config.d
+    _initialise $script_dir/config-${DEVICE}
+fi
+
+# finalise
+if [ "$finalise" == "Y" ]; then
+    _finalise $script_dir/config.d
+    _finalise $script_dir/config-${DEVICE}
+fi
+
+# change directory back
+cd $current_dir
+
+exit $result
+

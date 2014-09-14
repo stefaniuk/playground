@@ -1,0 +1,183 @@
+#!/bin/bash
+
+# USAGE: This file is sourced by the installation script.
+
+echo "Loading arguments parser..."
+
+##
+## variables
+##
+
+debug=
+OWNER="root"
+
+do_not_configure="N"
+do_not_run_config_scripts=""
+
+arg_lzo="N"
+arg_zlib="N"
+arg_openssl="N"
+arg_openssh="N"
+arg_git="N"
+arg_openvpn="N"
+arg_geoip="N"
+arg_mysql="N"
+arg_mongodb="N"
+arg_perl="N"
+arg_python="N"
+arg_postfix="N"
+arg_proftpd="N"
+arg_libiconv="N"
+arg_imagemagick="N"
+arg_httpd="N"
+arg_httpd_mod_geoip="N"
+arg_nginx="N"
+arg_php="N"
+arg_php_fpm="N"
+arg_php_mod_geoip="N"
+arg_php_mod_imagick="N"
+arg_dovecot="N"
+arg_openjdk="N"
+arg_ant="N"
+arg_maven="N"
+arg_tomcat="N"
+arg_nodejs="N"
+arg_ruby="N"
+arg_phpmyadmin="N"
+arg_roundcube="N"
+arg_enlightenment="N"
+arg_nvidia="N"
+arg_eclipse="N"
+
+arg_shellos="N"
+arg_kernel="N"
+
+kernel_force_compilation="N"
+packages_force_compilation="N"
+do_not_use_cached_updates="N"
+
+update_build="N"
+update_replace="N"
+update_action=
+update_curr_ver=
+update_new_ver=
+
+notify="N"
+reboot="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+
+        --debug)                            debug="Y"
+                                            ;;
+        --owner)                            shift; OWNER="$1"
+                                            ;;
+
+        --do-not-configure)                 do_not_configure="Y"
+                                            ;;
+        --do-not-run-config-scripts)        shift; do_not_run_config_scripts="$1"
+                                            ;;
+
+        --lzo)                              arg_lzo="Y"
+                                            ;;
+        --zlib)                             arg_zlib="Y"
+                                            ;;
+        --openssl)                          arg_openssl="Y"
+                                            ;;
+        --openssh)                          arg_openssh="Y"
+                                            ;;
+        --git)                              arg_git="Y"
+                                            ;;
+        --openvpn)                          arg_openvpn="Y"
+                                            ;;
+        --geoip)                            arg_geoip="Y"
+                                            ;;
+        --mysql)                            arg_mysql="Y"
+                                            ;;
+        --mongodb)                          arg_mongodb="Y"
+                                            ;;
+        --perl)                             arg_perl="Y"
+                                            ;;
+        --python)                           arg_python="Y"
+                                            ;;
+        --postfix)                          arg_postfix="Y"
+                                            ;;
+        --proftpd)                          arg_proftpd="Y"
+                                            ;;
+        --libiconv)                         arg_libiconv="Y"
+                                            ;;
+        --imagemagick)                      arg_imagemagick="Y"
+                                            ;;
+        --httpd)                            arg_httpd="Y"
+                                            ;;
+        --httpd-mod-geoip)                  arg_httpd_mod_geoip="Y"
+                                            ;;
+        --nginx)                            arg_nginx="Y"
+                                            ;;
+        --php)                              arg_php="Y"
+                                            ;;
+        --php-fpm)                          arg_php_fpm="Y"
+                                            ;;
+        --php-mod-geoip)                    arg_php_mod_geoip="Y"
+                                            ;;
+        --php-mod-imagick)                  arg_php_mod_imagick="Y"
+                                            ;;
+        --dovecot)                          arg_dovecot="Y"
+                                            ;;
+        --openjdk)                          arg_openjdk="Y"
+                                            ;;
+        --ant)                              arg_ant="Y"
+                                            ;;
+        --maven)                            arg_maven="Y"
+                                            ;;
+        --tomcat)                           arg_tomcat="Y"
+                                            ;;
+        --nodejs)                           arg_nodejs="Y"
+                                            ;;
+        --ruby)                             arg_ruby="Y"
+                                            ;;
+        --phpmyadmin)                       arg_phpmyadmin="Y"
+                                            ;;
+        --roundcube)                        arg_roundcube="Y"
+                                            ;;
+        --enlightenment)                    arg_enlightenment="Y"
+                                            ;;
+        --nvidia)                           arg_nvidia="Y"
+                                            ;;
+        --eclipse)                          arg_eclipse="Y"
+                                            ;;
+
+        --shellos)                          arg_shellos="Y"
+                                            ;;
+        --kernel)                           arg_kernel="Y"
+                                            ;;
+
+        --kernel-force-compilation)         kernel_force_compilation="Y"
+                                            ;;
+        --packages-force-compilation)       packages_force_compilation="Y"
+                                            ;;
+        --do-not-use-cached-updates)        do_not_use_cached_updates="Y"
+                                            ;;
+
+        --build-package)                    update_build="Y"; update_action="build"
+                                            ;;
+        --replace-package)                  update_replace="Y"; update_action="replace"
+                                            ;;
+        --current-version)                  shift; update_curr_ver="$1"
+                                            ;;
+        --new-version)                      shift; update_new_ver="$1"
+                                            ;;
+
+        --notify)                           notify="Y"
+                                            ;;
+        --reboot)                           reboot="Y"
+                                            ;;
+
+    esac
+    shift
+done
+

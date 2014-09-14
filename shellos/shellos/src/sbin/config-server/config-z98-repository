@@ -1,0 +1,134 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ]; then
+
+    cat << EOF > /.gitignore
+/*
+
+!/etc
+/etc/ssl/certs/*
+
+!$INSTALL_DIR
+$INSTALL_DIR/*
+EOF
+
+    cat << EOF > $INSTALL_DIR/.gitignore
+/*
+EOF
+    [ -d $INSTALL_DIR/dovecot/etc ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/dovecot
+/dovecot/*
+!/dovecot/etc
+EOF
+    [ -d $INSTALL_DIR/geoip/etc ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/geoip
+/geoip/*
+!/geoip/etc
+EOF
+    [ -d $INSTALL_DIR/git/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/git
+/git/*
+!/git/conf
+EOF
+    [ -d $INSTALL_DIR/httpd/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/httpd
+/httpd/*
+!/httpd/conf
+EOF
+    [ -d $INSTALL_DIR/lxc/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/lxc
+/lxc/*
+!/lxc/conf
+EOF
+    [ -d $INSTALL_DIR/mysql/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/mysql
+/mysql/*
+!/mysql/conf
+EOF
+    [ -d $INSTALL_DIR/nginx/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/nginx
+/nginx/*
+!/nginx/conf
+EOF
+    [ -d $INSTALL_DIR/openssh/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/openssh
+/openssh/*
+!/openssh/conf
+EOF
+    [ -d $INSTALL_DIR/openvpn/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/openvpn
+/openvpn/*
+!/openvpn/conf
+EOF
+    [ -d $INSTALL_DIR/php/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/php
+/php/*
+!/php/conf
+EOF
+    # TODO: php-fpm/*/conf
+    [ -d $INSTALL_DIR/postfix/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/postfix
+/postfix/*
+!/postfix/conf
+EOF
+    [ -d $INSTALL_DIR/proftpd/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/proftpd
+/proftpd/*
+!/proftpd/conf
+EOF
+    [ -d $INSTALL_DIR/shellos/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/shellos
+/shellos/*
+!/shellos/conf
+!/shellos/etc
+    [ -d $INSTALL_DIR/tomcat/conf ] && cat << EOF >> $INSTALL_DIR/.gitignore
+
+!/tomcat
+/tomcat/*
+!/tomcat/conf
+EOF
+
+    chmod 400 /.gitignore
+    chmod 400 $INSTALL_DIR/.gitignore
+    cd /
+
+    if [ "$script_type" == "install" ]; then
+
+        repositories_add_dir /
+        [ -d .git ] && rm -rf .git
+        $CMD_GIT init && chmod 700 .git
+        $CMD_GIT config user.name "$ADMIN_NAME"
+        $CMD_GIT config user.email "$ADMIN_MAIL"
+        $CMD_GIT config core.autocrlf false
+        $CMD_GIT config core.filemode true
+        $CMD_GIT add .
+        $CMD_GIT commit -m "initial commit"
+
+    else
+
+        if [ "$($CMD_GIT status -s | wc -l)" -gt 0 ]; then
+
+            $CMD_GIT add .
+            $CMD_GIT commit -m "update"
+
+        fi
+
+    fi
+
+fi
+
+exit 0
+

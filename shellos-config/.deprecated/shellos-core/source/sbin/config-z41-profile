@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# set new PATH (same for the profile and crontab)
+NEW_PATH=$SHELLOS_DIR/bin:$SHELLOS_DIR/job
+[ -d $INSTALL_DIR/ant/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/ant/bin
+[ -d $INSTALL_DIR/dovecot/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/dovecot/bin
+[ -d $INSTALL_DIR/eclipse ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/eclipse
+[ -d $INSTALL_DIR/geoip/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/geoip/bin
+[ -d $INSTALL_DIR/git/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/git/bin
+[ -d $INSTALL_DIR/httpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/httpd/bin
+[ -d $INSTALL_DIR/libiconv/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/libiconv/bin
+[ -d $INSTALL_DIR/lxc/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/lxc/bin
+[ -d $INSTALL_DIR/maven/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/maven/bin
+[ -d $INSTALL_DIR/mysql/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mysql/bin
+[ -d $INSTALL_DIR/openjdk/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openjdk/bin
+[ -d $INSTALL_DIR/openssh/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssh/bin
+[ -d $INSTALL_DIR/openssl/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssl/bin
+[ -d $INSTALL_DIR/openvpn/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openvpn/bin
+[ -d $INSTALL_DIR/php/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/php/bin
+[ -d $INSTALL_DIR/postfix/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/postfix/bin
+[ -d $INSTALL_DIR/proftpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/proftpd/bin
+[ -d $INSTALL_DIR/tomcat/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/tomcat/bin
+#NEW_PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$NEW_PATH
+
+##
+## conf/.profile
+##
+
+cat << EOF > $SHELLOS_DIR/conf/.profile
+# paths
+export INSTALL_DIR=/srv
+export SHELLOS_DIR=$INSTALL_DIR/shellos
+export PATH=\$PATH:$NEW_PATH
+
+# settings
+export TERM=xterm
+export SHELL=/bin/bash
+export EDITOR=vim
+export MAILTO="$ADMIN_MAIL"
+
+if [[ \$- == *i* ]]; then
+    # functions
+    source $SHELLOS_DIR/bin/functions
+    # variables
+    source $SHELLOS_DIR/sbin/variables
+    # versions
+    source $SHELLOS_DIR/sbin/versions
+    # constants
+    source $SHELLOS_DIR/bin/constants
+    # aliases
+    source $SHELLOS_DIR/bin/aliases
+fi
+EOF
+_set_ownership $SHELLOS_DIR/conf/.profile
+
+##
+## ~/.profile
+##
+
+[ ! -f ~/.profile.old ] && cp ~/.profile ~/.profile.old
+cat << EOF > ~/.profile
+if [ "\$BASH" ]; then
+  if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+  fi
+fi
+
+mesg n
+
+source $SHELLOS_DIR/conf/.profile
+EOF
+
+##
+## /home/[owner]/.profile
+##
+
+if [ "$owner" != "root" ]; then
+
+    [ ! -f /home/$owner/.profile.old ] && cp /home/$owner/.profile /home/$owner/.profile.old && chown $owner:$owner /home/$owner/.profile.old
+    cat << EOF > /home/$owner/.profile
+if [ -n "\$BASH_VERSION" ]; then
+    if [ -f "\$HOME/.bashrc" ]; then
+        . "\$HOME/.bashrc"
+    fi
+fi
+if [ -d "\$HOME/bin" ]; then
+    PATH="\$HOME/bin:\$PATH"
+fi
+
+source $SHELLOS_DIR/conf/.profile
+EOF
+chown $owner:$owner /home/$owner/.profile
+
+fi
+
+##
+## other files
+##
+
+# do not bash save history
+ln -sf /dev/null ~/.bash_history
+
+exit 0

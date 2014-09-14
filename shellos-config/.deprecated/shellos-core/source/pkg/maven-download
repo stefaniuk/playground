@@ -1,0 +1,12 @@
+#!/bin/bash
+
+url="http://ftp.ps.pl/pub/apache/maven/maven-3/$VER_MAVEN/binaries/apache-maven-$VER_MAVEN-bin.tar.gz"
+file=apache-maven-$VER_MAVEN-bin.tar.gz
+
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 4000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+exit 0

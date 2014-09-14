@@ -1,0 +1,18 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+create_node_snapshot="N"
+
+##
+## arguments
+##
+
+for arg in $args; do
+    case $arg in
+        --create-node-snapshot) create_node_snapshot="Y"
+                                ;;
+    esac
+done

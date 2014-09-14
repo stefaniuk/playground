@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ]; then
+
+    cd $WORKSPACE_DIR
+    rm -rf my-file-manager
+    $CMD_GIT clone git://github.com/stefaniuk/my-file-manager.git
+    cd my-file-manager
+    replace_in_file "git:\/\/github.com\/stefaniuk\/my-file-manager.git" "git@github.com:stefaniuk\/my-file-manager.git" ./.git/config
+    chown -R $OWNER:$OWNER $WORKSPACE_DIR/my-file-manager
+
+fi
+
+exit 0
+

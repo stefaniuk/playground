@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# jail.local
+cat << EOF >> /etc/fail2ban/jail.local
+
+[apache]
+
+enabled = true
+port = http,https
+filter = apache-auth
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-multiport]
+
+enabled = true
+port = http,https
+filter = apache-auth
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-noscript]
+
+enabled = true
+port = http,https
+filter = apache-noscript
+logpath = /var/log/httpd.log
+maxretry = 6
+
+[apache-overflows]
+
+enabled = true
+port = http,https
+filter = apache-overflows
+logpath = /var/log/httpd.log
+maxretry = 2
+
+[proftpd]
+
+enabled = true
+port = ftp,ftp-data
+filter = proftpd
+logpath = /var/log/ftp.log
+maxretry = 6
+EOF
+
+exit 0

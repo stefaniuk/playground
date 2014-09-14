@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="host4ge" default="release" basedir=".">
+
+    <property file="${basedir}/build.properties" />
+    <property file="${basedir}/config/properties/${server.name}.properties" />
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/build/${ant.project.name}-${server.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+        <echo>Building server: ${server.name}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete><fileset dir="${basedir}/build/" includes="*.tar.gz" /></delete>
+        <delete><fileset dir="${basedir}/database/" includes="*.bak" /></delete>
+        <ant antfile="build.xml" dir="${basedir}/projects/${server.role}" target="clean" inheritAll="false" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- ============================================ -->
+    <target name="release" depends="init">
+
+        <!-- backup versions file -->
+        <echo>backup versions file</echo>
+        <copy file="${basedir}/source/sbin/versions" tofile="${basedir}/versions.bak" />
+        <sleep milliseconds="100" />
+        <!-- backup variables file -->
+        <echo>backup variables file</echo>
+        <copy file="${basedir}/source/sbin/variables" tofile="${basedir}/variables.bak" />
+        <sleep milliseconds="100" />
+        <!-- copy hosts file -->
+        <copy file="${basedir}/config/${server.hosts}" tofile="${basedir}/source/conf/hosts" />
+        <sleep milliseconds="100" />
+
+        <antcall target="update-version"></antcall>
+        <antcall target="update-variables"></antcall>
+
+        <!-- build project -->
+        <ant antfile="build.xml" dir="${basedir}/projects/${server.role}" target="release" inheritAll="false" />
+        <sleep milliseconds="100" />
+
+        <!-- remove hosts file -->
+        <delete file="${basedir}/source/conf/hosts" />
+        <sleep milliseconds="100" />
+        <!-- restore variables file -->
+        <echo>restore variables file</echo>
+        <move file="${basedir}/variables.bak" tofile="${basedir}/source/sbin/variables" />
+        <sleep milliseconds="100" />
+        <!-- restore versions file -->
+        <echo>restore versions file</echo>
+        <move file="${basedir}/versions.bak" tofile="${basedir}/source/sbin/versions" />
+        <sleep milliseconds="100" />
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-version                       -->
+    <!-- ============================================ -->
+    <target name="update-version">
+        <echo>project version is updated</echo>
+        <replace
+            file="${basedir}/source/sbin/versions"
+            token="0.0.0dev"
+            value="${project.version.full}"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-variables                     -->
+    <!-- ============================================ -->
+    <target name="update-variables"
+        depends="
+            set-server-commonname,
+            set-server-domain,
+            set-server-adminname,
+            set-server-adminmail,
+            set-server-name,
+            set-server-location,
+            set-server-type,
+            set-server-role,
+            set-server-aspect,
+            set-server-ipaddress,
+            set-server-ipaddress1,
+            set-server-ipaddress2,
+            set-server-ipaddress3,
+            set-server-ipaddress4,
+            set-server-netmask,
+            set-server-network,
+            set-server-broadcast,
+            set-server-gateway,
+            set-server-dnsnameserver1,
+            set-server-dnsnameserver2,
+            set-server-dnsnameserver3,
+            set-server-dnsnameserver4,
+            set-server-dnssearch,
+            set-server-usebridgednetwork,
+            set-server-vpn-serverfqdn,
+            set-server-vpn-serverip,
+            set-server-vpn-network,
+            set-server-vpn-netmask,
+            set-server-vpn-ipaddress
+        ">
+        <echo>all variables are now updated</echo>
+    </target>
+
+    <!-- http://ant.apache.org/manual/Tasks/conditions.html -->
+
+    <!-- set-server-commonname -->
+    <condition property="has.server.commonname">
+        <isset property="server.commonname" />
+    </condition>
+    <target name="set-server-commonname" if="has.server.commonname">
+        <echo>COMMON_NAME=&quot;${server.commonname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^COMMON_NAME=&quot;&quot;"
+            replace="COMMON_NAME=&quot;${server.commonname}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-domain -->
+    <condition property="has.server.domain">
+        <isset property="server.domain" />
+    </condition>
+    <target name="set-server-domain" if="has.server.domain">
+        <echo>DOMAIN=&quot;${server.domain}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DOMAIN=&quot;&quot;"
+            replace="DOMAIN=&quot;${server.domain}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-adminname -->
+    <condition property="has.server.adminname">
+        <isset property="server.adminname" />
+    </condition>
+    <target name="set-server-adminname" if="has.server.adminname">
+        <echo>ADMIN_NAME=&quot;${server.adminname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^ADMIN_NAME=&quot;&quot;"
+            replace="ADMIN_NAME=&quot;${server.adminname}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-adminmail -->
+    <condition property="has.server.adminmail">
+        <isset property="server.adminmail" />
+    </condition>
+    <target name="set-server-adminmail" if="has.server.adminmail">
+        <echo>ADMIN_MAIL=&quot;${server.adminmail}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^ADMIN_MAIL=&quot;&quot;"
+            replace="ADMIN_MAIL=&quot;${server.adminmail}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-name -->
+    <condition property="has.server.name">
+        <isset property="server.name" />
+    </condition>
+    <target name="set-server-name" if="has.server.name">
+        <echo>SERVER_NAME=&quot;${server.name}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^SERVER_NAME=&quot;&quot;"
+            replace="SERVER_NAME=&quot;${server.name}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-location -->
+    <condition property="has.server.location">
+        <isset property="server.location" />
+    </condition>
+    <target name="set-server-location" if="has.server.location">
+        <echo>SERVER_LOCATION=&quot;${server.location}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^SERVER_LOCATION=&quot;&quot;"
+            replace="SERVER_LOCATION=&quot;${server.location}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-type -->
+    <condition property="has.server.type">
+        <isset property="server.type" />
+    </condition>
+    <target name="set-server-type" if="has.server.type">
+        <echo>SERVER_TYPE=&quot;${server.type}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^SERVER_TYPE=&quot;&quot;"
+            replace="SERVER_TYPE=&quot;${server.type}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-role -->
+    <condition property="has.server.role">
+        <isset property="server.role" />
+    </condition>
+    <target name="set-server-role" if="has.server.role">
+        <echo>ROLE_NAME=&quot;${server.role}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^ROLE_NAME=&quot;&quot;"
+            replace="ROLE_NAME=&quot;${server.role}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-aspect -->
+    <condition property="has.server.aspect">
+        <isset property="server.aspect" />
+    </condition>
+    <target name="set-server-aspect" if="has.server.aspect">
+        <echo>ASPECT_NAME=&quot;${server.aspect}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^ASPECT_NAME=&quot;&quot;"
+            replace="ASPECT_NAME=&quot;${server.aspect}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-ipaddress -->
+    <condition property="has.server.ipaddress">
+        <isset property="server.ipaddress" />
+    </condition>
+    <target name="set-server-ipaddress" if="has.server.ipaddress">
+        <echo>IP_ADDRESS=&quot;${server.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^IP_ADDRESS=&quot;&quot;"
+            replace="IP_ADDRESS=&quot;${server.ipaddress}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-ipaddress1 -->
+    <condition property="has.server.ipaddress1">
+        <isset property="server.ipaddress1" />
+    </condition>
+    <target name="set-server-ipaddress1" if="has.server.ipaddress1">
+        <echo>IP_ADDRESS1=&quot;${server.ipaddress1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^IP_ADDRESS1=&quot;&quot;"
+            replace="IP_ADDRESS1=&quot;${server.ipaddress1}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-ipaddress2 -->
+    <condition property="has.server.ipaddress2">
+        <isset property="server.ipaddress2" />
+    </condition>
+    <target name="set-server-ipaddress2" if="has.server.ipaddress2">
+        <echo>IP_ADDRESS2=&quot;${server.ipaddress2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^IP_ADDRESS2=&quot;&quot;"
+            replace="IP_ADDRESS2=&quot;${server.ipaddress2}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-ipaddress3 -->
+    <condition property="has.server.ipaddress3">
+        <isset property="server.ipaddress3" />
+    </condition>
+    <target name="set-server-ipaddress3" if="has.server.ipaddress3">
+        <echo>IP_ADDRESS3=&quot;${server.ipaddress3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^IP_ADDRESS3=&quot;&quot;"
+            replace="IP_ADDRESS3=&quot;${server.ipaddress3}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-ipaddress4 -->
+    <condition property="has.server.ipaddress4">
+        <isset property="server.ipaddress4" />
+    </condition>
+    <target name="set-server-ipaddress4" if="has.server.ipaddress4">
+        <echo>IP_ADDRESS4=&quot;${server.ipaddress4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^IP_ADDRESS4=&quot;&quot;"
+            replace="IP_ADDRESS4=&quot;${server.ipaddress4}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-netmask -->
+    <condition property="has.server.netmask">
+        <isset property="server.netmask" />
+    </condition>
+    <target name="set-server-netmask" if="has.server.netmask">
+        <echo>NETMASK=&quot;${server.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^NETMASK=&quot;&quot;"
+            replace="NETMASK=&quot;${server.netmask}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-network -->
+    <condition property="has.server.network">
+        <isset property="server.network" />
+    </condition>
+    <target name="set-server-network" if="has.server.network">
+        <echo>NETWORK=&quot;${server.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^NETWORK=&quot;&quot;"
+            replace="NETWORK=&quot;${server.network}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-broadcast -->
+    <condition property="has.server.broadcast">
+        <isset property="server.broadcast" />
+    </condition>
+    <target name="set-server-broadcast" if="has.server.broadcast">
+        <echo>BROADCAST=&quot;${server.broadcast}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^BROADCAST=&quot;&quot;"
+            replace="BROADCAST=&quot;${server.broadcast}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-gateway -->
+    <condition property="has.server.gateway">
+        <isset property="server.gateway" />
+    </condition>
+    <target name="set-server-gateway" if="has.server.gateway">
+        <echo>GATEWAY=&quot;${server.gateway}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^GATEWAY=&quot;&quot;"
+            replace="GATEWAY=&quot;${server.gateway}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-dnsnameserver1 -->
+    <condition property="has.server.dnsnameserver1">
+        <isset property="server.dnsnameserver1" />
+    </condition>
+    <target name="set-server-dnsnameserver1" if="has.server.dnsnameserver1">
+        <echo>DNS_NAMESERVER1=&quot;${server.dnsnameserver1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DNS_NAMESERVER1=&quot;&quot;"
+            replace="DNS_NAMESERVER1=&quot;${server.dnsnameserver1}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-dnsnameserver2 -->
+    <condition property="has.server.dnsnameserver2">
+        <isset property="server.dnsnameserver2" />
+    </condition>
+    <target name="set-server-dnsnameserver2" if="has.server.dnsnameserver2">
+        <echo>DNS_NAMESERVER2=&quot;${server.dnsnameserver2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DNS_NAMESERVER2=&quot;&quot;"
+            replace="DNS_NAMESERVER2=&quot;${server.dnsnameserver2}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-dnsnameserver3 -->
+    <condition property="has.server.dnsnameserver3">
+        <isset property="server.dnsnameserver3" />
+    </condition>
+    <target name="set-server-dnsnameserver3" if="has.server.dnsnameserver3">
+        <echo>DNS_NAMESERVER3=&quot;${server.dnsnameserver3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DNS_NAMESERVER3=&quot;&quot;"
+            replace="DNS_NAMESERVER3=&quot;${server.dnsnameserver3}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-dnsnameserver4 -->
+    <condition property="has.server.dnsnameserver4">
+        <isset property="server.dnsnameserver4" />
+    </condition>
+    <target name="set-server-dnsnameserver4" if="has.server.dnsnameserver4">
+        <echo>DNS_NAMESERVER4=&quot;${server.dnsnameserver4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DNS_NAMESERVER4=&quot;&quot;"
+            replace="DNS_NAMESERVER4=&quot;${server.dnsnameserver4}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-dnssearch -->
+    <condition property="has.server.dnssearch">
+        <isset property="server.dnssearch" />
+    </condition>
+    <target name="set-server-dnssearch" if="has.server.dnssearch">
+        <echo>DNS_SEARCH=&quot;${server.dnssearch}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^DNS_SEARCH=&quot;&quot;"
+            replace="DNS_SEARCH=&quot;${server.dnssearch}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-usebridgednetwork -->
+    <condition property="has.server.usebridgednetwork">
+        <isset property="server.usebridgednetwork" />
+    </condition>
+    <target name="set-server-usebridgednetwork" if="has.server.usebridgednetwork">
+        <echo>USE_BRIDGED_NETWORK=&quot;${server.usebridgednetwork}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^USE_BRIDGED_NETWORK=&quot;&quot;"
+            replace="USE_BRIDGED_NETWORK=&quot;${server.usebridgednetwork}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-vpn-serverfqdn -->
+    <condition property="has.server.vpn.serverfqdn">
+        <isset property="server.vpn.serverfqdn" />
+    </condition>
+    <target name="set-server-vpn-serverfqdn" if="has.server.vpn.serverfqdn">
+        <echo>VPN_SERVER_FQDN=&quot;${server.vpn.serverfqdn}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^VPN_SERVER_FQDN=&quot;&quot;"
+            replace="VPN_SERVER_FQDN=&quot;${server.vpn.serverfqdn}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-vpn-serverip -->
+    <condition property="has.server.vpn.serverip">
+        <isset property="server.vpn.serverip" />
+    </condition>
+    <target name="set-server-vpn-serverip" if="has.server.vpn.serverip">
+        <echo>VPN_SERVER_IP=&quot;${server.vpn.serverip}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^VPN_SERVER_IP=&quot;&quot;"
+            replace="VPN_SERVER_IP=&quot;${server.vpn.serverip}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-vpn-network -->
+    <condition property="has.server.vpn.network">
+        <isset property="server.vpn.network" />
+    </condition>
+    <target name="set-server-vpn-network" if="has.server.vpn.network">
+        <echo>VPN_NETWORK=&quot;${server.vpn.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^VPN_NETWORK=&quot;&quot;"
+            replace="VPN_NETWORK=&quot;${server.vpn.network}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-vpn-netmask -->
+    <condition property="has.server.vpn.netmask">
+        <isset property="server.vpn.netmask" />
+    </condition>
+    <target name="set-server-vpn-netmask" if="has.server.vpn.netmask">
+        <echo>VPN_NETMASK=&quot;${server.vpn.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^VPN_NETMASK=&quot;&quot;"
+            replace="VPN_NETMASK=&quot;${server.vpn.netmask}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+    <!-- set-server-vpn-ipaddress -->
+    <condition property="has.server.vpn.ipaddress">
+        <isset property="server.vpn.ipaddress" />
+    </condition>
+    <target name="set-server-vpn-ipaddress" if="has.server.vpn.ipaddress">
+        <echo>VPN_IP_ADDRESS=&quot;${server.vpn.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/source/sbin/variables"
+            match="^VPN_IP_ADDRESS=&quot;&quot;"
+            replace="VPN_IP_ADDRESS=&quot;${server.vpn.ipaddress}&quot;"
+        />
+        <sleep milliseconds="100" />
+    </target>
+
+</project>

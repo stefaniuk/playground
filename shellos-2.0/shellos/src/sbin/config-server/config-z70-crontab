@@ -1,0 +1,27 @@
+#!/bin/bash
+
+##
+## conf/.crontab-jobs
+##
+
+cat << EOF >> $SHELLOS_DIR/conf/.crontab-jobs
+29,59 */1 * * * [ -x $SHELLOS_DIR/job/backup-logs ]      && (. $SHELLOS_DIR/job/backup-logs)
+13 */6 * * *    [ -x $SHELLOS_DIR/job/clean-up ]         && (. $SHELLOS_DIR/job/clean-up)
+17 3 * * *      [ -x $SHELLOS_DIR/job/backup-databases ] && (. $SHELLOS_DIR/job/backup-databases)
+29 3 * * *      [ -x $SHELLOS_DIR/job/system-update ]    && (. $SHELLOS_DIR/job/system-update)
+41 3 * * *      [ -x $SHELLOS_DIR/job/geoip-update ]     && (. $SHELLOS_DIR/job/geoip-update)
+47 3 * * *      [ -x $SHELLOS_DIR/job/check-versions ]   && (. $SHELLOS_DIR/job/check-versions)
+EOF
+
+##
+## set file permissions
+##
+
+if [ "$OWNER" != "root" ]; then
+    chmod 644 $SHELLOS_DIR/conf/.crontab*
+else
+    chmod 600 $SHELLOS_DIR/conf/.crontab*
+fi
+
+exit 0
+

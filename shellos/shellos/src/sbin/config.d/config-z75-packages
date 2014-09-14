@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# install
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    mutt
+
+# clean
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+
+# cache apt archives
+if [ ! -f $CACHE_UPDATES_DIR/$DEVICE_NAME.tar.gz ]; then
+    cd /var/cache/apt/archives
+    tar -zcf $CACHE_UPDATES_DIR/$DEVICE_NAME.tar.gz *.deb
+    if [ "$OWNER" != "root" ]; then
+        chmod 444 $CACHE_UPDATES_DIR/$DEVICE_NAME.tar.gz
+    else
+        chmod 400 $CACHE_UPDATES_DIR/$DEVICE_NAME.tar.gz
+    fi
+    rm -v *.deb
+fi
+
+# remove broken links from the system
+remove_broken_links
+
+exit 0
+

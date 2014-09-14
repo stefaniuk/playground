@@ -1,0 +1,152 @@
+#!/bin/bash
+#
+# This script defines firewall rules.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+iptv4=$CMD_IPTABLES
+iptv6=$CMD_IP6TABLES
+pubif="$(network_get_interface)" # eth0|br0
+
+# TODO: include wlan0 interface
+
+enable_firewall="N"
+disable_firewall="N"
+mode="$(firewall_get_mode)" # online|safe|offline
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -e|--enable)                enable_firewall="Y"
+                                    ;;
+        -d|--disable)               disable_firewall="Y"
+                                    ;;
+        -df2b|--disable-fail2ban)   disable_fail2ban="Y"
+                                    ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+# stop fail2ban
+service fail2ban stop
+
+if [ "$enable_firewall" == "Y" ]; then
+
+##
+## === IPv4 ====================================================================
+##
+
+# flush all rules
+$iptv4 -F
+$iptv4 -X
+
+# drop all by default
+$iptv4 -P INPUT DROP
+$iptv4 -P OUTPUT ACCEPT
+$iptv4 -P FORWARD DROP
+
+# allow traffic on loopback and drop all traffic to 127.0.0.0/8 that does not use lo
+$iptv4 -A INPUT -i lo -j ACCEPT
+$iptv4 -A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
+
+# allow ping
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p icmp --icmp echo-request -j ACCEPT
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p icmp --icmp echo-reply -j ACCEPT
+
+# allow traffic already established to continue
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# load device specific IPv4 firewall rules
+if [ "$DEVICE" == "server" ] || [ "$(role_has virtual)" == "yes" ]; then
+    if [ -x $ETC_DIR/firewall/config ]; then
+        (. $ETC_DIR/firewall/config --ipv4)
+    fi    
+fi
+
+# log dropped packets
+$iptv4 -A INPUT -m limit --limit 6/minute -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# make sure nothing else comes to this box
+$iptv4 -A INPUT -j DROP
+
+##
+## === IPv6 ====================================================================
+##
+
+# flush all rules
+$iptv6 -F
+$iptv6 -X
+
+# drop all by default
+$iptv6 -P INPUT DROP
+$iptv6 -P OUTPUT ACCEPT
+$iptv6 -P FORWARD DROP
+
+# load device specific IPv6 firewall rules
+if [ "$DEVICE" == "server" ] || [ "$(role_has virtual)" == "yes" ]; then
+    if [ -x $ETC_DIR/firewall/config ]; then
+        (. $ETC_DIR/firewall/config --ipv6)
+    fi
+fi
+
+# log dropped packets
+$iptv6 -A INPUT -m limit --limit 6/minute -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# make sure nothing else comes to this box
+$iptv6 -A INPUT -j DROP
+
+##
+## =============================================================================
+##
+
+# log event
+log_info "firewall rules loaded"
+
+##
+## === disable firewall ========================================================
+##
+
+elif [ "$disable_firewall" == "Y" ]; then
+
+    # clear IPv4 rules
+    $iptv4 -F
+    $iptv4 -X
+    $iptv4 -P INPUT ACCEPT
+    $iptv4 -P OUTPUT ACCEPT
+    $iptv4 -P FORWARD ACCEPT
+
+    # clear IPv6 rules
+    $iptv6 -F
+    $iptv6 -X
+    $iptv6 -P INPUT ACCEPT
+    $iptv6 -P OUTPUT ACCEPT
+    $iptv6 -P FORWARD ACCEPT
+
+fi
+
+# start fail2ban
+if [ "$disable_fail2ban" != "Y" ]; then
+    service fail2ban start
+fi
+
+# show detailed view of created rules
+$iptv4 -L -v
+$iptv6 -L -v
+
+exit 0
+

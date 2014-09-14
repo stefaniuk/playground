@@ -1,0 +1,174 @@
+#!/bin/bash
+#
+# File: management/install-phpbb3.sh
+#
+# Description: Installs phpBB3.
+#
+# Usage:
+#
+#   install-phpbb3.sh --user system_user --path install_path --dir-name install_dir_name --db-name db_name --db-user db_user --db-pass db_pass
+
+##
+## includes
+##
+
+source $HOST4GE_DIR/sbin/include.sh
+
+##
+## variables
+##
+
+PHPBB3_VERSION="3.0.9"
+PHPBB3_SYSTEM_USER=
+PHPBB3_INSTALL_PATH=
+PHPBB3_INSTALL_DIR_NAME=
+PHPBB3_DB_NAME=
+PHPBB3_DB_USER=
+PHPBB3_DB_PASS=
+PHPBB3_MYSQL_NAME="mysql"
+PHPBB3_HTTPD_NAME="httpd"
+
+CURRENT_DIR=`pwd`
+
+##
+## parse arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --user)     shift && PHPBB3_SYSTEM_USER=$1
+                    ;;
+        --path)     shift && PHPBB3_INSTALL_PATH=$1
+                    ;;
+        --dir-name) shift && PHPBB3_INSTALL_DIR_NAME=$1
+                    ;;
+        --db-name)  shift && PHPBB3_DB_NAME=$1
+                    ;;
+        --db-user)  shift && PHPBB3_DB_USER=$1
+                    ;;
+        --db-pass)  shift && PHPBB3_DB_PASS=$1
+                    ;;
+    esac
+    shift
+done
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/$PHPBB3_MYSQL_NAME/bin/mysqld ]; then
+    echo "Error: phpBB3 requires MySQL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/$PHPBB3_HTTPD_NAME/bin/httpd ]; then
+    echo "Error: phpBB3 requires Apache HTTPD Server!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/$PHPBB3_HTTPD_NAME/modules/libphp5.so ]; then
+    echo "Error: phpBB3 requires PHP!"
+    exit 1
+fi
+if [ ! -d $PHPBB3_INSTALL_PATH ]; then
+    echo "Error: phpBB3 requires $PHPBB3_INSTALL_PATH directory to exist!"
+    exit 1
+fi
+
+##
+## download
+##
+
+# core
+PHPBB3_SRC_FILE=$DOWNLOADS_DIR/phpBB-$PHPBB3_VERSION.tar.bz2
+if [ ! -s $PHPBB3_SRC_FILE ]; then
+    [ -f $PHPBB3_SRC_FILE ] && rm $PHPBB3_SRC_FILE
+    wget http://www.phpbb.com/files/release/phpBB-$PHPBB3_VERSION.tar.bz2 -O $PHPBB3_SRC_FILE
+fi
+if [ ! -s $PHPBB3_SRC_FILE ]; then
+    rm $PHPBB3_SRC_FILE
+    echo "Error: $PHPBB3_SRC_FILE file is missing!"
+    exit 1
+fi
+chmod 400 $PHPBB3_SRC_FILE
+# translation
+PHPBB3_TRANSLATION_FILE=$DOWNLOADS_DIR/phpBB-$PHPBB3_VERSION-pl_trans.zip
+if [ ! -s $PHPBB3_TRANSLATION_FILE ]; then
+    [ -f $PHPBB3_TRANSLATION_FILE ] && rm $PHPBB3_TRANSLATION_FILE
+    wget http://www.phpbb.com/customise/db/download/id_80557 -O $PHPBB3_TRANSLATION_FILE
+fi
+if [ ! -s $PHPBB3_TRANSLATION_FILE ]; then
+    rm $PHPBB3_TRANSLATION_FILE
+    echo "Error: $PHPBB3_TRANSLATION_FILE file is missing!"
+    exit 1
+fi
+chmod 400 $PHPBB3_TRANSLATION_FILE
+
+##
+## install
+##
+
+cd $PHPBB3_INSTALL_PATH
+
+[ -d $PHPBB3_INSTALL_DIR_NAME ] && rm -r $PHPBB3_INSTALL_DIR_NAME
+tar -jxf $PHPBB3_SRC_FILE
+[ "phpBB3" != "$PHPBB3_INSTALL_DIR_NAME" ] && mv phpBB3 $PHPBB3_INSTALL_DIR_NAME
+rm -r $PHPBB3_INSTALL_DIR_NAME/docs
+unzip $PHPBB3_TRANSLATION_FILE > /dev/null 2>&1
+mv polish_r194/polish_r194/language/pl $PHPBB3_INSTALL_DIR_NAME/language
+rm -r polish_r194
+mkdir $PHPBB3_INSTALL_DIR_NAME/styles/prosilver/imageset/pl
+cp $PHPBB3_INSTALL_DIR_NAME/styles/prosilver/imageset/en/* $PHPBB3_INSTALL_DIR_NAME/styles/prosilver/imageset/pl
+
+#
+# includes/functions.php
+#
+# line 4443, $web_path = (defined('PHPBB_USE_BOARD_URL_PATH') && PHPBB_USE_BOARD_URL_PATH) ? $board_url : $phpbb_root_path;
+sed s/\$web_path[[:blank:]]=[[:blank:]]\(defined\(\'PHPBB_USE_BOARD_URL_PATH\'\)[[:blank:]]\&\&[[:blank:]]PHPBB_USE_BOARD_URL_PATH\)[[:blank:]]?[[:blank:]]\$board_url[[:blank:]]:[[:blank:]]\$phpbb_root_path\;/\$web_path=\'\\/phpBB3\\/\'\;/g $PHPBB3_INSTALL_DIR_NAME/includes/functions.php > $PHPBB3_INSTALL_DIR_NAME/includes/functions.php.tmp
+# line 4564, 'T_STYLESHEET_LINK'		=> (!$user->theme['theme_storedb']) ? "{$web_path}styles/" . $user->theme['theme_path'] . '/theme/stylesheet.css' : append_sid("{$phpbb_root_path}style.$phpEx", 'id=' . $user->theme['style_id'] . '&amp;lang=' . $user->lang_name),
+sed s/append_sid\(\"{\$phpbb_root_path}style\.\$phpEx\"/append_sid\(\"\\/phpBB3\\/style\.\$phpEx\"/g $PHPBB3_INSTALL_DIR_NAME/includes/functions.php.tmp > $PHPBB3_INSTALL_DIR_NAME/includes/functions.php
+#
+# includes/functions_posting.php
+#
+# line 1638, $current_time = time();
+sed s/\$current_time[[:blank:]]=[[:blank:]]time\(\)\;/\$current_time=\$data[\'post_time\']?\$data[\'post_time\']:time\(\)\;/g $PHPBB3_INSTALL_DIR_NAME/includes/functions_posting.php > $PHPBB3_INSTALL_DIR_NAME/includes/functions_posting.php.tmp
+mv $PHPBB3_INSTALL_DIR_NAME/includes/functions_posting.php.tmp $PHPBB3_INSTALL_DIR_NAME/includes/functions_posting.php
+
+# get mysql root password
+MYSQL_ROOT_PASSWORD=`mysql_get_user_password root`
+# database
+cat <<EOF | mysql --user="root" --password="$MYSQL_ROOT_PASSWORD"
+DROP DATABASE IF EXISTS $PHPBB3_DB_NAME;
+CREATE DATABASE $PHPBB3_DB_NAME DEFAULT COLLATE utf8_general_ci;
+GRANT ALL ON $PHPBB3_DB_NAME.* TO '$PHPBB3_DB_USER'@'localhost' IDENTIFIED BY '$PHPBB3_DB_PASS';
+EOF
+#cp $PHPBB3_INSTALL_DIR_NAME/install/schemas/mysql_41_schema.sql $PHPBB3_INSTALL_DIR_NAME/install/schemas/mysql_41_schema.sql.old
+#replace_in_file "phpbb_" "" $PHPBB3_INSTALL_DIR_NAME/install/schemas/mysql_41_schema.sql
+#$INSTALL_DIR/$PHPBB3_MYSQL_NAME/bin/mysql --user="root" --password=$MYSQL_ROOT_PASSWORD $PHPBB3_DB_NAME < $PHPBB3_INSTALL_DIR_NAME/install/schemas/mysql_41_schema.sql
+# clear password variable
+MYSQL_ROOT_PASSWORD=
+
+# config.php
+cat <<EOF > $PHPBB3_INSTALL_DIR_NAME/config.php
+<?php
+
+\$dbms = 'mysql';
+\$dbhost = '';
+\$dbport = '';
+\$dbname = '$PHPBB3_DB_NAME';
+\$dbuser = '$PHPBB3_DB_USER';
+\$dbpasswd = '$PHPBB3_DB_PASS';
+\$table_prefix = '';
+\$acm_type = 'file';
+\$load_extensions = '';
+
+//@define('PHPBB_INSTALLED', true);
+
+?>
+EOF
+
+# set files permission
+chown -R $PHPBB3_SYSTEM_USER:$PHPBB3_SYSTEM_USER $PHPBB3_INSTALL_DIR_NAME
+chown -R $PHPBB3_HTTPD_NAME:$PHPBB3_HTTPD_NAME $PHPBB3_INSTALL_DIR_NAME/{store,cache,files,images/avatars/upload,config.php}
+
+cd $CURRENT_DIR
+
+exit 0

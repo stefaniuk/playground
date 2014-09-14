@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Scheduled job. This script sends a system status report via an e-mail specific
+# to the server role of the system.
+
+# TODO
+
+exit 0

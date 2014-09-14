@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# This script defines server specific firewall rules.
+
+if [ "$1" == "--ipv4" ]; then
+
+    if [ "$mode" == "online" ]; then
+
+        # allow HTTP/HTTPS
+        $iptv4 -A INPUT -i $pubif -p tcp --dport $HTTPD_PORT -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport $HTTPD_PORT_SSL -j ACCEPT
+
+        # allow FTP
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 20 -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 21 -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport $PROFTPD_PORT_MIN:$PROFTPD_PORT_MAX -j ACCEPT
+
+        # allow POP3/IMAP
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 110 -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 143 -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 993 -j ACCEPT
+        $iptv4 -A INPUT -i $pubif -p tcp --dport 995 -j ACCEPT
+
+    fi
+
+fi
+
+exit 0

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+lvcreate -L 1G -n snaps vg00
+lvextend -l +100%FREE /dev/mapper/vg00-snaps
+kpartx -av /dev/mapper/vg00-snaps
+sleep 3
+mkfs.ext4 -F /dev/mapper/vg00-snaps
+sleep 1
+mount /dev/mapper/vg00-snaps $NODE_BACKUP_SNAPSHOTS_DIR
+
+# /etc/fstab
+cat << EOF >> /etc/fstab
+/dev/mapper/vg00-snaps $NODE_BACKUP_SNAPSHOTS_DIR ext4 defaults 0 0
+EOF
+
+echo -e " === Physical Volumes ===\n"
+pvdisplay
+
+echo -e " === Volume Groups ===\n"
+vgdisplay
+
+echo -e " === Logical Volumes ===\n"
+lvdisplay
+
+exit 0

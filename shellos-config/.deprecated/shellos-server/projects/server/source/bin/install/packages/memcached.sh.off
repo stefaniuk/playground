@@ -1,0 +1,70 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/libevent/lib/libevent.so ]; then
+    echo "Error: Memcached requires libevent!"
+    exit 1
+fi
+
+##
+## download
+##
+
+URL="http://memcached.googlecode.com/files/memcached-$MEMCACHED_VERSION.tar.gz"
+FILE=memcached-$MEMCACHED_VERSION.tar.gz
+RESULT=$(download_file $URL $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+##
+## install
+##
+
+echo "Installing Memcached":
+[ -d $INSTALL_DIR/memcached ] && rm -r $INSTALL_DIR/memcached
+tar -zxf memcached-$MEMCACHED_VERSION.tar.gz
+cd memcached-$MEMCACHED_VERSION
+./configure \
+	--prefix=$INSTALL_DIR/memcached \
+	--with-libevent=$INSTALL_DIR/libevent \
+&& make && make install && echo "Memcached installed successfully!"
+cd ..
+rm -r $INSTALL_DIR/memcached/share
+
+# check
+if [ ! -f $INSTALL_DIR/memcached/bin/memcached ]; then
+    echo "Error: Memcached has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# TODO:
+#$INSTALL_DIR/php/bin/pecl install memcache
+#echo -e "extension=memcache.so" >> $INSTALL_DIR/php/etc/php.ini
+#memcached -d -m 1024 -u root -l 127.0.0.1 -p 11211
+
+##
+## post install
+##
+
+[ -f memcached-$MEMCACHED_VERSION.tar.gz ] && rm memcached-$MEMCACHED_VERSION.tar.gz
+[ -d memcached-$MEMCACHED_VERSION ] && rm -rf memcached-$MEMCACHED_VERSION
+
+# log event
+logger -p local0.notice -t host4ge "memcached $MEMCACHED_VERSION installed successfully"
+
+# save package version
+package_add_version "memcached" "$MEMCACHED_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/memcached/bin
+
+exit 0

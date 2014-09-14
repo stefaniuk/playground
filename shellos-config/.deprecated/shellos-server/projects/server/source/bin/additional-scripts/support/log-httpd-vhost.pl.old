@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Host4ge::Common;
+
+use Sys::Syslog qw( :DEFAULT setlogsock );
+use Time::Format qw( %time );
+
+open(my $fifo, '+< /srv/httpd/log/vhost-log.fifo');
+while (<$fifo>) {
+
+    # variables
+    my $log = $_;
+    my $vhost = substr($log, 0, index($log, ' '));
+    my $timestamp = "$time{'yyyy-mm-ddThh:mm:ss.uuuuuu'}";
+
+    # write entry to the system log
+	setlogsock('unix');
+	openlog('httpd', 'ndelay', 'local4');
+	syslog('info', $log);
+	closelog();
+
+    # fix microseconds
+    my $n = 27 - length($timestamp);
+    my $str = '.';
+    for (my $i = $n; $i > 0; $i--) {
+        $str .= '0';
+    }
+    $timestamp =~ s/\.-/$str/g;
+
+    # TODO: we need a translation 'table' from 'vhost' to 'account'
+    # SEE: see also lib/Host4ge/User.pm
+
+    # write entry to the vhost log
+    my $file = HOSTING_DIR . "/domains/$vhost/var/log/httpd.log";
+    if (-f $file) {
+        open(FILE, ">>$file");
+        print FILE "$timestamp $log";
+        close(FILE);
+    }
+
+}
+close($fifo);
+
+exit 0;

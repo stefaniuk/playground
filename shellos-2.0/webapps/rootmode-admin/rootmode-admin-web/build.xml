@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="rootmode-admin-web" basedir=".">
+
+    <!-- ============================================ -->
+    <!-- target: get-webapp-file                      -->
+    <!-- ============================================ -->
+    <target name="get-webapp-file">
+        <script language="javascript">
+            var file = project.getProperty('modified.file');
+            project.setProperty('webbapp.file', file.replace('\\\rootmode-admin-web\\\src\\\main\\\webapp', ''));
+        </script>
+    	<echo message="Modified file name: ${webbapp.file}" />
+    	<echo message="Modified file path: ${basedir}/src/main/webapp/${webbapp.file}" />
+        <available file="${basedir}/src/main/webapp/${webbapp.file}" property="webbapp.file.present" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: copy-webapp-file                     -->
+    <!-- ============================================ -->
+    <target name="copy-webapp-file" depends="get-webapp-file" if="webbapp.file.present">
+        <copy file="${basedir}/src/main/webapp/${webbapp.file}" tofile="${basedir}/target/rootmode-admin-web/${webbapp.file}"
+            preservelastmodified="true"
+            overwrite="true"
+            force="true"
+        />
+    </target>
+
+</project>
+

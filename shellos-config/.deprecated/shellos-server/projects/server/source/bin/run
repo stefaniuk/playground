@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# File: bin/install/install.sh
+#
+# Description: TODO
+#
+# Usage:
+#
+#   TODO
+
+RESULT=0
+SCRIPT=
+
+if [ "$1" == "install" ]; then
+    chmod u+x ./install/install.sh
+    SCRIPT=./install/install.sh
+fi
+
+# run script
+if [ -n "$SCRIPT" ]; then
+    cd $(dirname $(readlink -f $0))
+    shift
+    $SCRIPT $*
+    RESULT=${PIPESTATUS[0]}
+fi
+
+exit $RESULT

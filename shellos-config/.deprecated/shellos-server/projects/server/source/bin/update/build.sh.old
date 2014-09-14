@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# include user profile script
+source ~/.profile
+
+# mount /proc and /dev/pts
+mount proc /proc -t proc
+mount devpts /dev/pts -t devpts
+
+# prerequisites
+apt-get update
+apt-get -y install apt-utils dialog
+
+# set locale
+locale-gen en_GB.UTF-8
+update-locale LANG=en_GB.UTF-8 LC_MESSAGES=POSIX
+
+# set time zone
+dpkg-reconfigure -f noninteractive tzdata
+echo "Europe/London" > /etc/timezone
+dpkg-reconfigure -f noninteractive tzdata
+
+# configure server access
+groupadd -g 9999 ftpjail
+groupadd -g 10000 sshjail
+
+# exclude packages from updates (to remove exclusion use 'echo package install | dpkg --set-selections')
+(   echo bind9 hold
+    #echo openssh-client hold
+    #echo openssh-server hold
+    #echo openssl hold
+    echo postfix hold
+    echo samba hold
+    echo samba-common-bin hold
+    #echo ssl-cert hold
+    echo grub-pc hold
+    echo grub-common hold
+) | dpkg --set-selections
+
+# apt-get update and install (remember also to update main build script)
+#apt-get update && apt-get -y --force-yes upgrade && apt-get -y --force-yes --ignore-missing install \
+#    ... \
+#&& dpkg --configure -a && apt-get clean
+
+# fix libraries (remember also to update main build script)
+ln -sfv /usr/lib/libexpat.so /usr/lib/libexpat.so.0
+ln -sfv /usr/lib/libjpeg.so.62 /usr/lib/libjpeg.so
+
+cd /srv/host4ge/install
+#bash -x ./build.sh \
+#    --chroot \
+#    --ip-address "$IP_ADDRESS" \
+#    --domain "$DOMAIN" \
+#    --location "$LOCATION" \
+#    --server-type "chroot" \
+#    --admin-name "$ADMIN_NAME" \
+#    --admin-mail "$ADMIN_MAIL" \
+#    --local-download-user "$LOCAL_DOWNLOAD_USER" \
+#    --local-download-pass "$LOCAL_DOWNLOAD_PASS" \
+#    --local-download-url "$LOCAL_DOWNLOAD_URL" \
+#    --online-download-url "$ONLINE_DOWNLOAD_URL" \
+#    ... \
+#    --remove-src-dirs
+RETVAL=${PIPESTATUS[0]}
+[ "$RETVAL" == "1" ] && exit 1
+
+exit 0

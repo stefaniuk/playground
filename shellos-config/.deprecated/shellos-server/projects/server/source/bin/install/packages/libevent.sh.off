@@ -1,0 +1,67 @@
+#!/bin/bash
+
+##
+## download
+##
+
+URL="https://github.com/downloads/libevent/libevent/libevent-$LIBEVENT_VERSION.tar.gz"
+FILE=libevent-$LIBEVENT_VERSION.tar.gz
+RESULT=$(download_file $URL $FILE)
+if [ "$RESULT" == "error" ]; then
+	echo "Error: Unable to download $FILE file!"
+	exit 1
+fi
+
+##
+## install
+##
+
+echo "Installing libevent":
+[ -d $INSTALL_DIR/libevent ] && rm -r $INSTALL_DIR/libevent
+tar -zxf libevent-$LIBEVENT_VERSION.tar.gz
+cd libevent-$LIBEVENT_VERSION
+./configure \
+	--prefix=$INSTALL_DIR/libevent \
+&& make && make install && echo "libevent installed successfully!"
+cd ..
+
+# check
+if [ ! -f $INSTALL_DIR/libevent/lib/libevent.so ]; then
+    echo "Error: libevent has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Strip symbols:"
+strip_debug_symbols $INSTALL_DIR/libevent/lib
+
+echo "Fix libraries:"
+fix_libraries $INSTALL_DIR/libevent/lib
+
+echo "Copy includes:"
+cp -rfv $INSTALL_DIR/libevent/include/* /usr/include
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/libevent/lib/pkgconfig/* /usr/lib/pkgconfig
+
+##
+## post install
+##
+
+[ -f libevent-$LIBEVENT_VERSION.tar.gz ] && rm libevent-$LIBEVENT_VERSION.tar.gz
+[ -d libevent-$LIBEVENT_VERSION ] && rm -rf libevent-$LIBEVENT_VERSION
+
+# log event
+logger -p local0.notice -t host4ge "libevent $LIBEVENT_VERSION installed successfully"
+
+# save package version
+package_add_version "libevent" "$LIBEVENT_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/libevent/bin
+hashes_add_dir $INSTALL_DIR/libevent/lib
+
+exit 0

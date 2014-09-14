@@ -1,0 +1,51 @@
+Description: Only enable zlib if OPENSSL_DEFAULT_ZLIB is defined in the
+ environment when initializing the library
+Origin: http://pkgs.fedoraproject.org/cgit/openssl.git/plain/openssl-1.0.1e-env-zlib.patch
+
+
+---
+ doc/ssl/SSL_COMP_add_compression_method.pod |    7 +++++++
+ ssl/ssl_ciph.c                              |    5 ++++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+Index: b/doc/ssl/SSL_COMP_add_compression_method.pod
+===================================================================
+--- a/doc/ssl/SSL_COMP_add_compression_method.pod
++++ b/doc/ssl/SSL_COMP_add_compression_method.pod
+@@ -47,6 +47,13 @@
+ been standardized, the compression API will most likely be changed. Using
+ it in the current state is not recommended.
+ 
++It is also not recommended to use compression if data transfered contain
++untrusted parts that can be manipulated by an attacker as he could then
++get information about the encrypted data. See the CRIME attack. For
++that reason the default loading of the zlib compression method is
++disabled and enabled only if the environment variable B<OPENSSL_DEFAULT_ZLIB>
++is present during the library initialization.
++
+ =head1 RETURN VALUES
+ 
+ SSL_COMP_add_compression_method() may return the following values:
+Index: b/ssl/ssl_ciph.c
+===================================================================
+--- a/ssl/ssl_ciph.c
++++ b/ssl/ssl_ciph.c
+@@ -140,6 +140,9 @@
+  * OTHERWISE.
+  */
+ 
++/* for secure_getenv */
++#define _GNU_SOURCE
++#define secure_getenv __secure_getenv
+ #include <stdio.h>
+ #include <openssl/objects.h>
+ #ifndef OPENSSL_NO_COMP
+@@ -454,7 +457,7 @@
+ 
+ 			MemCheck_off();
+ 			ssl_comp_methods=sk_SSL_COMP_new(sk_comp_cmp);
+-			if (ssl_comp_methods != NULL)
++			if (ssl_comp_methods != NULL && secure_getenv("OPENSSL_DEFAULT_ZLIB") != NULL)
+ 				{
+ 				comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+ 				if (comp != NULL)

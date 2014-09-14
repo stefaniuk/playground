@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Scheduled job. This script backups system logs.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## main
+##
+
+t1=`date +%s`
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ `job_lock_exists $( basename $0 )` == "yes" ]; then
+    # do not log if all jobs are locked
+    [ `job_lock_all_exists` == "no" ] && \
+        logger -p local0.notice -t host4ge "job $( basename $0 ) is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $( basename $0 )
+
+# ---------- BEGIN ----------
+
+# remove log backups older than a year
+find $BACKUP_LOGS_DIR/* -mtime +$JOB_BACKUP_LOGS_REMOVE_DAYS -exec rm {} \;
+
+# rotate logs
+test -x /usr/sbin/logrotate || exit 1
+/usr/sbin/logrotate /etc/logrotate.conf
+
+# backup logs
+cd /var/log
+timestamp=$(date +"%Y%m%d%H%M")
+for log in $LOG_FILES; do
+    count=`ls /var/log/$log.*.gz | wc -l`
+    if [ $count -gt 8 ]; then
+        tar -zcf $log-$timestamp.tar.gz $log.*.gz
+        rm $log.*.gz
+        mv $log-$timestamp.tar.gz $BACKUP_LOGS_DIR
+        chmod 400 $BACKUP_LOGS_DIR/$log-$timestamp.tar.gz
+    fi
+done
+
+# backup logs specific to the server role
+[ -x $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).$ROLE_NAME)
+
+# backup custom logs
+[ -x $HOST4GE_DIR/job/$( basename $0 ).custom ] && \
+    (. $HOST4GE_DIR/job/$( basename $0 ).custom)
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $( basename $0 )
+
+# measure time
+t2=`date +%s`
+time=$((t2-t1))
+
+# log an event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run (time: $time s)"
+else
+    logger -p local0.notice -t host4ge "job $( basename $0 ) run - $msg (time: $time s)"
+fi
+
+exit 0

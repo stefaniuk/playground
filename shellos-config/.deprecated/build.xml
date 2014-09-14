@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="shellos" default="release" basedir=".">
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/utils/ant-contrib-1.0b3.jar" />
+
+    <property file="${basedir}/build.properties" />
+    <property file="${basedir}/config/properties/${system.name}.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: get-revision                         -->
+    <!-- ============================================ -->
+    <target name="get-revision" depends="detect-os">
+        <exec executable="${basedir}/scripts/git.revision.${os.script.ext}" outputproperty="temp" />
+        <propertyregex property="vcs.revision" input="${temp}" select="\1">
+            <regexp pattern="([0-9]*)" />
+        </propertyregex>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="get-revision">
+        <!-- set properties -->
+        <tstamp><format property="build.date" pattern="dd/MM/yyyy hh:mm aa" /></tstamp>
+        <property name="project.version.full" value="${project.version.major}.${project.version.minor}.${vcs.revision}${project.version.flag}" />
+        <property name="release.file.name.short" value="${basedir}/build/${ant.project.name}-${system.name}" />
+        <property name="release.file.name.full" value="${release.file.name.short}-${project.version.full}" />
+        <!-- print out properties -->
+        <echo>Date: ${build.date}</echo>
+        <echo>Project name: ${ant.project.name}</echo>
+        <echo>Project version: ${project.version.full}</echo>
+        <echo>System type: ${system.type}</echo>
+        <echo>System role: ${system.role}</echo>
+        <echo>System name: ${system.name}</echo>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${basedir}/build/current" />
+        <delete><fileset dir="${basedir}/build/" includes="*.tar.gz" /></delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: merge-with-core                      -->
+    <!-- ============================================ -->
+    <target name="merge-with-core" depends="init">
+        <delete dir="${basedir}/build/current" />
+        <!-- copy core source files -->
+        <copy todir="${basedir}/build/current">
+            <fileset dir="${basedir}/shellos-core/source">
+                <exclude name="**/README*" />
+            </fileset>
+        </copy>
+        <!-- copy specific system type source files -->
+        <copy todir="${basedir}/build/current">
+            <fileset dir="${basedir}/shellos-${system.role}/source">
+                <exclude name="**/README*" />
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: release                              -->
+    <!-- ============================================ -->
+    <target name="release" depends="merge-with-core, update-version, update-variables">
+        <tar destfile="${release.file.name.short}.tar" basedir="${basedir}/build/current" />
+        <gzip destfile="${release.file.name.short}.tar.gz" src="${release.file.name.short}.tar" />
+        <delete file="${release.file.name.short}.tar" />
+        <delete dir="${basedir}/build/current" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-version                       -->
+    <!-- ============================================ -->
+    <target name="update-version">
+        <echo>project version has been updated</echo>
+        <replace
+            file="${basedir}/build/current/sbin/versions"
+            token="0.0.0dev"
+            value="${project.version.full}"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: update-variables                     -->
+    <!-- ============================================ -->
+    <target name="update-variables"
+        depends="
+            set-system-commonname,
+            set-system-domain,
+            set-system-adminname,
+            set-system-adminmail,
+            set-system-name,
+            set-system-location,
+            set-system-type,
+            set-system-role,
+            set-system-aspect,
+            set-system-ipaddress,
+            set-system-ipaddress1,
+            set-system-ipaddress2,
+            set-system-ipaddress3,
+            set-system-ipaddress4,
+            set-system-netmask,
+            set-system-network,
+            set-system-broadcast,
+            set-system-gateway,
+            set-system-dnsnameserver1,
+            set-system-dnsnameserver2,
+            set-system-dnsnameserver3,
+            set-system-dnsnameserver4,
+            set-system-dnssearch,
+            set-system-usebridgednetwork,
+            set-system-vpn-serverfqdn,
+            set-system-vpn-serverip,
+            set-system-vpn-network,
+            set-system-vpn-netmask,
+            set-system-vpn-ipaddress
+        ">
+        <echo>all variables have been updated</echo>
+    </target>
+
+    <!-- http://ant.apache.org/manual/Tasks/conditions.html -->
+
+    <!-- set-system-commonname -->
+    <condition property="has.system.commonname">
+        <isset property="system.commonname" />
+    </condition>
+    <target name="set-system-commonname" if="has.system.commonname">
+        <echo>COMMON_NAME=&quot;${system.commonname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^COMMON_NAME=&quot;&quot;"
+            replace="COMMON_NAME=&quot;${system.commonname}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-domain -->
+    <condition property="has.system.domain">
+        <isset property="system.domain" />
+    </condition>
+    <target name="set-system-domain" if="has.system.domain">
+        <echo>DOMAIN=&quot;${system.domain}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DOMAIN=&quot;&quot;"
+            replace="DOMAIN=&quot;${system.domain}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-adminname -->
+    <condition property="has.system.adminname">
+        <isset property="system.adminname" />
+    </condition>
+    <target name="set-system-adminname" if="has.system.adminname">
+        <echo>ADMIN_NAME=&quot;${system.adminname}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^ADMIN_NAME=&quot;&quot;"
+            replace="ADMIN_NAME=&quot;${system.adminname}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-adminmail -->
+    <condition property="has.system.adminmail">
+        <isset property="system.adminmail" />
+    </condition>
+    <target name="set-system-adminmail" if="has.system.adminmail">
+        <echo>ADMIN_MAIL=&quot;${system.adminmail}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^ADMIN_MAIL=&quot;&quot;"
+            replace="ADMIN_MAIL=&quot;${system.adminmail}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-name -->
+    <condition property="has.system.name">
+        <isset property="system.name" />
+    </condition>
+    <target name="set-system-name" if="has.system.name">
+        <echo>SYSTEM_NAME=&quot;${system.name}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^SYSTEM_NAME=&quot;&quot;"
+            replace="SYSTEM_NAME=&quot;${system.name}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-location -->
+    <condition property="has.system.location">
+        <isset property="system.location" />
+    </condition>
+    <target name="set-system-location" if="has.system.location">
+        <echo>SYSTEM_LOCATION=&quot;${system.location}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^SYSTEM_LOCATION=&quot;&quot;"
+            replace="SYSTEM_LOCATION=&quot;${system.location}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-type -->
+    <condition property="has.system.type">
+        <isset property="system.type" />
+    </condition>
+    <target name="set-system-type" if="has.system.type">
+        <echo>SYSTEM_TYPE=&quot;${system.type}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^SYSTEM_TYPE=&quot;&quot;"
+            replace="SYSTEM_TYPE=&quot;${system.type}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-role -->
+    <condition property="has.system.role">
+        <isset property="system.role" />
+    </condition>
+    <target name="set-system-role" if="has.system.role">
+        <echo>ROLE_NAME=&quot;${system.role}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^ROLE_NAME=&quot;&quot;"
+            replace="ROLE_NAME=&quot;${system.role}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-aspect -->
+    <condition property="has.system.aspect">
+        <isset property="system.aspect" />
+    </condition>
+    <target name="set-system-aspect" if="has.system.aspect">
+        <echo>ASPECT_NAME=&quot;${system.aspect}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^ASPECT_NAME=&quot;&quot;"
+            replace="ASPECT_NAME=&quot;${system.aspect}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-ipaddress -->
+    <condition property="has.system.ipaddress">
+        <isset property="system.ipaddress" />
+    </condition>
+    <target name="set-system-ipaddress" if="has.system.ipaddress">
+        <echo>IP_ADDRESS=&quot;${system.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^IP_ADDRESS=&quot;&quot;"
+            replace="IP_ADDRESS=&quot;${system.ipaddress}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-ipaddress1 -->
+    <condition property="has.system.ipaddress1">
+        <isset property="system.ipaddress1" />
+    </condition>
+    <target name="set-system-ipaddress1" if="has.system.ipaddress1">
+        <echo>IP_ADDRESS1=&quot;${system.ipaddress1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^IP_ADDRESS1=&quot;&quot;"
+            replace="IP_ADDRESS1=&quot;${system.ipaddress1}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-ipaddress2 -->
+    <condition property="has.system.ipaddress2">
+        <isset property="system.ipaddress2" />
+    </condition>
+    <target name="set-system-ipaddress2" if="has.system.ipaddress2">
+        <echo>IP_ADDRESS2=&quot;${system.ipaddress2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^IP_ADDRESS2=&quot;&quot;"
+            replace="IP_ADDRESS2=&quot;${system.ipaddress2}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-ipaddress3 -->
+    <condition property="has.system.ipaddress3">
+        <isset property="system.ipaddress3" />
+    </condition>
+    <target name="set-system-ipaddress3" if="has.system.ipaddress3">
+        <echo>IP_ADDRESS3=&quot;${system.ipaddress3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^IP_ADDRESS3=&quot;&quot;"
+            replace="IP_ADDRESS3=&quot;${system.ipaddress3}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-ipaddress4 -->
+    <condition property="has.system.ipaddress4">
+        <isset property="system.ipaddress4" />
+    </condition>
+    <target name="set-system-ipaddress4" if="has.system.ipaddress4">
+        <echo>IP_ADDRESS4=&quot;${system.ipaddress4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^IP_ADDRESS4=&quot;&quot;"
+            replace="IP_ADDRESS4=&quot;${system.ipaddress4}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-netmask -->
+    <condition property="has.system.netmask">
+        <isset property="system.netmask" />
+    </condition>
+    <target name="set-system-netmask" if="has.system.netmask">
+        <echo>NETMASK=&quot;${system.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^NETMASK=&quot;&quot;"
+            replace="NETMASK=&quot;${system.netmask}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-network -->
+    <condition property="has.system.network">
+        <isset property="system.network" />
+    </condition>
+    <target name="set-system-network" if="has.system.network">
+        <echo>NETWORK=&quot;${system.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^NETWORK=&quot;&quot;"
+            replace="NETWORK=&quot;${system.network}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-broadcast -->
+    <condition property="has.system.broadcast">
+        <isset property="system.broadcast" />
+    </condition>
+    <target name="set-system-broadcast" if="has.system.broadcast">
+        <echo>BROADCAST=&quot;${system.broadcast}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^BROADCAST=&quot;&quot;"
+            replace="BROADCAST=&quot;${system.broadcast}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-gateway -->
+    <condition property="has.system.gateway">
+        <isset property="system.gateway" />
+    </condition>
+    <target name="set-system-gateway" if="has.system.gateway">
+        <echo>GATEWAY=&quot;${system.gateway}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^GATEWAY=&quot;&quot;"
+            replace="GATEWAY=&quot;${system.gateway}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-dnsnameserver1 -->
+    <condition property="has.system.dnsnameserver1">
+        <isset property="system.dnsnameserver1" />
+    </condition>
+    <target name="set-system-dnsnameserver1" if="has.system.dnsnameserver1">
+        <echo>DNS_NAMESERVER1=&quot;${system.dnsnameserver1}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DNS_NAMESERVER1=&quot;&quot;"
+            replace="DNS_NAMESERVER1=&quot;${system.dnsnameserver1}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-dnsnameserver2 -->
+    <condition property="has.system.dnsnameserver2">
+        <isset property="system.dnsnameserver2" />
+    </condition>
+    <target name="set-system-dnsnameserver2" if="has.system.dnsnameserver2">
+        <echo>DNS_NAMESERVER2=&quot;${system.dnsnameserver2}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DNS_NAMESERVER2=&quot;&quot;"
+            replace="DNS_NAMESERVER2=&quot;${system.dnsnameserver2}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-dnsnameserver3 -->
+    <condition property="has.system.dnsnameserver3">
+        <isset property="system.dnsnameserver3" />
+    </condition>
+    <target name="set-system-dnsnameserver3" if="has.system.dnsnameserver3">
+        <echo>DNS_NAMESERVER3=&quot;${system.dnsnameserver3}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DNS_NAMESERVER3=&quot;&quot;"
+            replace="DNS_NAMESERVER3=&quot;${system.dnsnameserver3}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-dnsnameserver4 -->
+    <condition property="has.system.dnsnameserver4">
+        <isset property="system.dnsnameserver4" />
+    </condition>
+    <target name="set-system-dnsnameserver4" if="has.system.dnsnameserver4">
+        <echo>DNS_NAMESERVER4=&quot;${system.dnsnameserver4}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DNS_NAMESERVER4=&quot;&quot;"
+            replace="DNS_NAMESERVER4=&quot;${system.dnsnameserver4}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-dnssearch -->
+    <condition property="has.system.dnssearch">
+        <isset property="system.dnssearch" />
+    </condition>
+    <target name="set-system-dnssearch" if="has.system.dnssearch">
+        <echo>DNS_SEARCH=&quot;${system.dnssearch}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^DNS_SEARCH=&quot;&quot;"
+            replace="DNS_SEARCH=&quot;${system.dnssearch}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-usebridgednetwork -->
+    <condition property="has.system.usebridgednetwork">
+        <isset property="system.usebridgednetwork" />
+    </condition>
+    <target name="set-system-usebridgednetwork" if="has.system.usebridgednetwork">
+        <echo>USE_BRIDGED_NETWORK=&quot;${system.usebridgednetwork}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^USE_BRIDGED_NETWORK=&quot;&quot;"
+            replace="USE_BRIDGED_NETWORK=&quot;${system.usebridgednetwork}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-vpn-serverfqdn -->
+    <condition property="has.system.vpn.serverfqdn">
+        <isset property="system.vpn.serverfqdn" />
+    </condition>
+    <target name="set-system-vpn-serverfqdn" if="has.system.vpn.serverfqdn">
+        <echo>VPN_SYSTEM_FQDN=&quot;${system.vpn.serverfqdn}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^VPN_SYSTEM_FQDN=&quot;&quot;"
+            replace="VPN_SYSTEM_FQDN=&quot;${system.vpn.serverfqdn}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-vpn-serverip -->
+    <condition property="has.system.vpn.serverip">
+        <isset property="system.vpn.serverip" />
+    </condition>
+    <target name="set-system-vpn-serverip" if="has.system.vpn.serverip">
+        <echo>VPN_SYSTEM_IP=&quot;${system.vpn.serverip}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^VPN_SYSTEM_IP=&quot;&quot;"
+            replace="VPN_SYSTEM_IP=&quot;${system.vpn.serverip}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-vpn-network -->
+    <condition property="has.system.vpn.network">
+        <isset property="system.vpn.network" />
+    </condition>
+    <target name="set-system-vpn-network" if="has.system.vpn.network">
+        <echo>VPN_NETWORK=&quot;${system.vpn.network}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^VPN_NETWORK=&quot;&quot;"
+            replace="VPN_NETWORK=&quot;${system.vpn.network}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-vpn-netmask -->
+    <condition property="has.system.vpn.netmask">
+        <isset property="system.vpn.netmask" />
+    </condition>
+    <target name="set-system-vpn-netmask" if="has.system.vpn.netmask">
+        <echo>VPN_NETMASK=&quot;${system.vpn.netmask}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^VPN_NETMASK=&quot;&quot;"
+            replace="VPN_NETMASK=&quot;${system.vpn.netmask}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+    <!-- set-system-vpn-ipaddress -->
+    <condition property="has.system.vpn.ipaddress">
+        <isset property="system.vpn.ipaddress" />
+    </condition>
+    <target name="set-system-vpn-ipaddress" if="has.system.vpn.ipaddress">
+        <echo>VPN_IP_ADDRESS=&quot;${system.vpn.ipaddress}&quot;</echo>
+        <replaceregexp flags="g" byline="true"
+            file="${basedir}/build/current/sbin/variables"
+            match="^VPN_IP_ADDRESS=&quot;&quot;"
+            replace="VPN_IP_ADDRESS=&quot;${system.vpn.ipaddress}&quot;"
+        />
+        <sleep milliseconds="10" />
+    </target>
+
+</project>

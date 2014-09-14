@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ $(role_has "virtual") == "no" ]; then
+    apt-get --yes --purge remove xserver-xorg-video-nouveau nvidia-173
+    apt-add-repository --yes ppa:ubuntu-x-swat/x-updates
+    apt-get --yes update
+    apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+        nvidia-current \
+        nvidia-settings
+    apt-get autoremove --yes --force-yes
+    apt-get autoclean --yes --force-yes
+fi
+
+exit 0
+

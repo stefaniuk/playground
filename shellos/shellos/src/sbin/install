@@ -1,0 +1,353 @@
+#!/bin/bash
+#
+# USAGE: chmod u+x /srv/shellos/sbin/install && /srv/shellos/sbin/install [options]
+
+##
+## check
+##
+
+[ "$(id -u)" != 0 ] && echo "You need to become root to run this script!" && exit 1
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$time_start" ] && time_start=$(date +%s)
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+
+args=$*
+result=0
+current_dir=$(pwd)
+
+# variables set only for the installation purpose
+INSTALL_DIR=/srv
+SHELLOS_DIR=$INSTALL_DIR/shellos
+script_type="install"
+
+##
+## includes
+##
+
+# include arguments parser
+source $script_dir/arguments
+
+# include base functionality
+source $script_dir/../lib/base
+
+##
+## functions
+##
+
+# Installs a package.
+#
+#   $1 package name
+function install_package() {
+
+    local package=$1
+    local package_install_script="install"
+
+    # run install script
+    (
+        cd $script_dir/../pkg/$package
+        package_dir=$(pwd)
+        if [ -f ./${package_install_script} ]; then
+            echo "Installing package $package..."
+            chmod u+x ./${package_install_script}
+            (. ./${package_install_script} $args)
+            result=${PIPESTATUS[0]}
+            if [ "$result" != 0 ]; then
+                echo "Error in package installation script ($package)."
+                exit 1
+            fi
+        fi
+    ) 2>&1 | tee $LOG_DIR/$timestamp/$package.log
+    result=${PIPESTATUS[0]}
+
+    # set log file permissions
+    if [ "$OWNER" != "root" ]; then
+        chmod 444 $LOG_DIR/$timestamp/$package.log
+    else
+        chmod 400 $LOG_DIR/$timestamp/$package.log
+    fi
+
+    # log event
+    if [ "$result" != 0 ]; then
+        log_info "$package NOT installed"
+        echo "$package NOT installed"
+        exit $result
+    else
+        log_info "installed $package"
+        echo "Installed $package"
+    fi
+}
+
+##
+## main
+##
+
+# switch on debuging
+if [ "$debug" == "Y" ]; then
+    echo "================================================================================"
+    set
+    echo "================================================================================"
+    set -xv
+fi
+
+echo "    OS: $OS"
+echo "    DIST: $DIST"
+echo "    DIST BASED ON: $DIST_BASED_ON"
+echo "    PSEUDO NAME: $PSEUDO_NAME"
+echo "    VERSION: $VERSION"
+echo "    ARCH: $ARCH"
+echo "    ARCH NAME: $ARCH_NAME"
+echo "    KERNEL: $KERNEL"
+echo "    DEVICE: $DEVICE"
+echo "    IS CHROOT: $(is_chroot)"
+echo "    ID: $(id)"
+
+# log event
+log_info "installation script started"
+echo "Installation script started"
+
+# prerequisites
+mkdir -p $FLAGS_DIR
+mkdir -p $TMP_DIR
+
+# create installation log directory
+[ ! -d $LOG_DIR/$timestamp ] && (
+    mkdir -p $LOG_DIR/$timestamp
+    chown $OWNER:$OWNER $LOG_DIR/$timestamp
+)
+
+# stop all services
+[ -f $SHELLOS_DIR/job/system-start ] && (
+    chmod u+x $SHELLOS_DIR/job/system-start
+    (. $SHELLOS_DIR/job/system-start --force-stop) > /dev/null 2>&1
+)
+
+# call configuration script (initialise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config ]; then
+    chmod u+x ./config
+    . ./config --initialise $args 2>&1 | tee $LOG_DIR/$timestamp/config.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in configuration script (initialise)."
+    else
+        # log event
+        log_info "finished configuration script (initialise)"
+        echo "Finished configuration script (initialise)"
+    fi
+fi
+
+# call installation script
+cd $script_dir
+if [ "$result" == 0 ]; then
+    (
+
+        # install lzo
+        [ "$arg_lzo" == "Y" ] && \
+            install_package "lzo"
+
+        # install zlib
+        [ "$arg_zlib" == "Y" ] && \
+            install_package "zlib"
+
+        # install openssl
+        [ "$arg_openssl" == "Y" ] && \
+            install_package "openssl"
+
+        # install openssh
+        [ "$arg_openssh" == "Y" ] && \
+            install_package "openssh"
+
+        # install git
+        [ "$arg_git" == "Y" ] && \
+            install_package "git"
+
+        # install openvpn
+        [ "$arg_openvpn" == "Y" ] && \
+            install_package "openvpn"
+
+        # install geoip
+        [ "$arg_geoip" == "Y" ] && \
+            install_package "geoip"
+
+        # install mysql
+        [ "$arg_mysql" == "Y" ] && \
+            install_package "mysql"
+
+        # install mongodb
+        [ "$arg_mongodb" == "Y" ] && \
+            install_package "mongodb"
+
+        # install perl
+        [ "$arg_perl" == "Y" ] && \
+            install_package "perl"
+
+        # install python
+        [ "$arg_python" == "Y" ] && \
+            install_package "python"
+
+        # install postfix
+        [ "$arg_postfix" == "Y" ] && \
+            install_package "postfix"
+
+        # install proftpd
+        [ "$arg_proftpd" == "Y" ] && \
+            install_package "proftpd"
+
+        # install libiconv
+        [ "$arg_libiconv" == "Y" ] && \
+            install_package "libiconv"
+
+        # install imagemagick
+        [ "$arg_imagemagick" == "Y" ] && \
+            install_package "imagemagick"
+
+        # install httpd
+        [ "$arg_httpd" == "Y" ] && \
+            install_package "httpd"
+
+        # install httpd mod geoip
+        [ "$arg_httpd_mod_geoip" == "Y" ] && \
+            install_package "httpd-mod-geoip"
+
+        # install nginx
+        [ "$arg_nginx" == "Y" ] && \
+            install_package "nginx"
+
+        # install php
+        [ "$arg_php" == "Y" ] && \
+            install_package "php"
+
+        # install php-fpm
+        [ "$arg_php_fpm" == "Y" ] && \
+            install_package "php-fpm"
+
+        # install php mod geoip
+        [ "$arg_php_mod_geoip" == "Y" ] && \
+            install_package "php-mod-geoip"
+
+        # install php mod imagick
+        [ "$arg_php_mod_imagick" == "Y" ] && \
+            install_package "php-mod-imagick"
+
+        # install dovecot
+        [ "$arg_dovecot" == "Y" ] && \
+            install_package "dovecot"
+
+        # install openjdk
+        [ "$arg_openjdk" == "Y" ] && \
+            install_package "openjdk"
+
+        # install ant
+        [ "$arg_ant" == "Y" ] && \
+            install_package "ant"
+
+        # install maven
+        [ "$arg_maven" == "Y" ] && \
+            install_package "maven"
+
+        # install tomcat
+        [ "$arg_tomcat" == "Y" ] && \
+            install_package "tomcat"
+
+        # install nodejs
+        [ "$arg_nodejs" == "Y" ] && \
+            install_package "nodejs"
+
+        # install ruby
+        [ "$arg_ruby" == "Y" ] && \
+            install_package "ruby"
+
+        # install phpmyadmin
+        [ "$arg_phpmyadmin" == "Y" ] && \
+            install_package "phpmyadmin"
+
+        # install roundcube
+        [ "$arg_roundcube" == "Y" ] && \
+            install_package "roundcube"
+
+        # install enlightenment
+        [ "$arg_enlightenment" == "Y" ] && \
+            install_package "enlightenment"
+
+        # install nvidia
+        [ "$arg_nvidia" == "Y" ] && \
+            install_package "nvidia"
+
+        # install eclipse
+        [ "$arg_eclipse" == "Y" ] && \
+            install_package "eclipse"
+
+        # install shellos
+        [ "$arg_shellos" == "Y" ] && \
+            install_package "shellos"
+
+        exit 0
+
+    ) 2>&1 | tee $LOG_DIR/$timestamp/install.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in installation script."
+    else
+        # log event
+        log_info "finished installation script"
+        echo "Finished installation script"
+    fi
+fi
+
+# call configuration script (finalise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config ]; then
+    chmod u+x ./config
+    . ./config --finalise $args 2>&1 | tee -a $LOG_DIR/$timestamp/config.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in configuration script (finalise)."
+    else
+        # log event
+        log_info "finished configuration script (finalise)"
+        echo "Finished configuration script (finalise)"
+    fi
+fi
+
+# change directory back
+cd $current_dir
+
+# calculate time
+time_end=$(date +%s)
+time=$((time_end-time_start))
+minutes=$(expr $time / 60)
+
+if [ "$result" == 0 ]; then
+    # send email notification
+    if [ "$notify" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ] && [ "$DEVICE" == "server" ]; then
+        (   echo -e "$(hostname -f) ($IP_ADDRESS) has been build at `date +\"%T %Z (%d %b %G)\"`, the whole process took $minutes minutes.\n\nList of installed packages:\n"
+            cat $PACKAGES_FILE | sed 's/=/ /g'
+            echo -e "\n\nList of file hashes:\n"
+            cat $HASH_SUM_FILE
+        ) | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - installation script completed" $ADMIN_MAIL
+    fi
+    # log event
+    log_info "installation script completed successfully (time: $minutes min)"
+    echo "Installation script completed successfully (time: $minutes min)"
+else
+    # log event
+    log_info "installation script stopped due to an error (time: $minutes min)"
+    echo "Installation script stopped due to an error (time: $minutes min)"
+fi
+
+# system restart
+if [ "$result" == 0 ] && [ "$reboot" == "Y" ]; then
+    echo "reboot"
+    reboot
+fi
+
+# switch off debuging
+[ "$debug" == "Y" ] && set +xv
+
+exit $result
+

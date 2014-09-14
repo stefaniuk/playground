@@ -1,0 +1,53 @@
+#!/bin/bash
+
+##
+## manage repositories
+##
+
+# truecrypt
+#apt-add-repository --yes ppa:alex-p/notesalexp-precise
+
+# dropbox
+#apt-key adv --keyserver pgp.mit.edu --recv-keys 5044912E
+#apt-add-repository --yes "deb http://linux.dropbox.com/ubuntu $(lsb_release -sc) main"
+
+# rabbitvcs
+#apt-add-repository --yes ppa:rabbitvcs/ppa
+
+##
+## manage packages
+##
+
+# update
+#apt-get --yes update
+
+# install virtualisation packages
+if [ $(role_has "virtual") == "no" ]; then
+    apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+        kvm qemu ubuntu-vm-builder vde2 \
+        virtualbox virtualbox-dkms virtualbox-ose virtualbox-qt
+    usermod -a -G vboxusers $OWNER
+fi
+
+# install additional packages
+#apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+#    dropbox nautilus-dropbox \
+#    gedit gedit-common gedit-plugins gedit-dev gedit-developer-plugins \
+#    gimp \
+#    nfs-common \
+#    python-gpgme python-vte \
+#    rabbitvcs-core rabbitvcs-cli rabbitvcs-gedit rabbitvcs-nautilus3 \
+#    rpcbind \
+#    truecrypt keepass2 \
+#    vim vim-gnome \
+#    wine \
+#    xclip
+
+# geany geany-common geany-plugin-addons geany-plugins geany-plugins-common geany-plugin-codenav geany-plugin-macro geany-plugin-numberedbookmarks geany-plugin-treebrowser geany-plugin-vc
+
+# clean
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+
+exit 0
+

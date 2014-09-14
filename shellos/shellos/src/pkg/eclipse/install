@@ -1,0 +1,53 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/openjdk/bin/javac ]; then
+    echo "Error: Tomcat requires OpenJDK!"
+    exit 1
+fi
+
+##
+## download
+##
+
+url="http://mirror.switch.ch/eclipse/technology/epp/downloads/release/juno/SR2/eclipse-$VER_ECLIPSE-linux-gtk-x86_64.tar.gz"
+file=eclipse-$VER_ECLIPSE-linux-gtk-x86_64.tar.gz
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 200000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+##
+## install
+##
+
+# extract
+[ -d $PROGRAMS_DIR/eclipse ] && rm -rf $PROGRAMS_DIR/eclipse
+tar -zxf $file
+mv eclipse $PROGRAMS_DIR/eclipse
+
+# check
+if [ ! -x $PROGRAMS_DIR/eclipse/eclipse ]; then
+    echo "Error: Eclipse has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# set files permission
+chown -R $OWNER:$OWNER $PROGRAMS_DIR/eclipse
+
+# remove file
+[ -f $file ] && rm $file
+
+# save package version
+package_add_version "eclipse" "$VER_ECLIPSE"
+
+exit 0
+

@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# This script defines device specific firewall rules.
+# Template file. Edit etc/firewall/config file instead.
+
+##
+## main
+##
+
+if [ "$1" == "--ipv4" ]; then
+
+    # allow SSH
+    $iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p tcp --dport $OPENSSH_PORT -m state --state NEW -m limit --limit 3/min --limit-burst 3 -j ACCEPT
+    $iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p tcp --dport $OPENSSH_PORT -m state --state ESTABLISHED -j ACCEPT
+
+    # allow HTTP/HTTPS
+    $iptv4 -A INPUT -i $pubif -p tcp --dport $HTTPD_PORT -j ACCEPT
+    $iptv4 -A INPUT -i $pubif -p tcp --dport $HTTPD_PORT_SSL -j ACCEPT
+
+fi
+
+#if [ "$1" == "--ipv6" ]; then
+#fi
+
+exit 0
+

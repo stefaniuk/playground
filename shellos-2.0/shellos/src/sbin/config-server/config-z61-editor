@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ]; then
+
+    cd $WORKSPACE_DIR
+    rm -rf vim-config
+    $CMD_GIT clone git://github.com/stefaniuk/vim-config.git
+    cd vim-config
+    $CMD_GIT submodule init
+    $CMD_GIT submodule update
+
+    rm -rf /root/{.vim,.vimrc}
+    ln -s $WORKSPACE_DIR/vim-config/.vim /root/.vim
+    ln -s $WORKSPACE_DIR/vim-config/.vimrc /root/.vimrc
+
+fi
+
+exit 0
+

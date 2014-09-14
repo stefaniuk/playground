@@ -1,0 +1,91 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/imagemagick/lib/libMagickCore.a ]; then
+    echo "Error: imagick PHP extension requires ImageMagick!"
+    exit 1
+fi
+
+##
+## functions
+##
+
+function install_imagick {
+
+    local php_imagick_install_dir=$1
+    local php_imagick_ext_dir=$php_imagick_install_dir/lib/php/extensions/$(ls $php_imagick_install_dir/lib/php/extensions/)
+
+    # download
+    pkg_name="php-imagick-$PHP_MOD_IMAGICK_VERSION"
+    [ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+    if [ "$pkg_result" != "success" ]; then
+        url="http://pecl.php.net/get/imagick-$PHP_MOD_IMAGICK_VERSION.tgz"
+        file=imagick-$PHP_MOD_IMAGICK_VERSION.tgz
+        result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 50000)
+        if [ "$result" == "error" ]; then
+            echo "Error: Unable to download $file file!"
+            exit 1
+        fi
+    fi
+
+    # install
+    if [ "$pkg_result" != "success" ]; then
+        echo "Compile imagick PHP extension"
+        tar -zxf imagick-$PHP_MOD_IMAGICK_VERSION.tgz
+        cd imagick-$PHP_MOD_IMAGICK_VERSION
+        export PKG_CONFIG_PATH=$INSTALL_DIR/imagemagick/lib/pkgconfig
+        $php_imagick_install_dir/bin/phpize
+        ./configure \
+            --with-php-config=$php_imagick_install_dir/bin/php-config \
+            --with-imagick=$INSTALL_DIR/imagemagick \
+        && make && make install && echo "imagick PHP extension installed successfully in $php_imagick_install_dir!"
+        cd ..
+        echo "Strip symbols:"
+        development_strip_symbols $php_imagick_ext_dir/imagick.so
+        echo "Create package:"
+        package_create_files $php_imagick_ext_dir $pkg_name imagick.so
+    else
+        echo "Install imagick PHP extension in $php_imagick_install_dir from package:"
+        package_restore_files $pkg_name $php_imagick_ext_dir
+    fi
+
+    # check
+    if [ ! -f $php_imagick_ext_dir/imagick.so ]; then
+        echo "Error: imagick PHP extension has NOT been installed successfully in $php_imagick_install_dir"
+        exit 1
+    fi
+
+    # configure
+    if [ -f $php_imagick_install_dir/conf/php.ini ]; then
+        replace_in_file "extension = imagick.so\n" "" $php_imagick_install_dir/conf/php.ini
+        replace_in_file "; extensions end" "extension = imagick.so\n; extensions end" $php_imagick_install_dir/conf/php.ini
+    fi
+
+}
+
+##
+## main
+##
+
+for php_imagick_dir_name in $INSTALL_DIR/php*; do
+    if [ -d $php_imagick_dir_name ]; then
+        install_imagick $php_imagick_dir_name
+    fi
+done
+
+##
+## post install
+##
+
+[ -f package.xml ] && rm package.xml
+rm php-imagick-*${PACKAGE_SUFFIX} > /dev/null 2>&1
+[ -f imagick-$PHP_MOD_IMAGICK_VERSION.tgz ] && rm imagick-$PHP_MOD_IMAGICK_VERSION.tgz
+[ -d imagick-$PHP_MOD_IMAGICK_VERSION ] && rm -rf imagick-$PHP_MOD_IMAGICK_VERSION
+
+# save package version
+package_add_version "php-imagick" "$PHP_MOD_IMAGICK_VERSION"
+
+exit 0

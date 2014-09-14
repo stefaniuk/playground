@@ -1,0 +1,122 @@
+#!/bin/bash
+
+exit 0
+
+##
+## download packages
+##
+
+if [ "$do_not_use_cached_updates" == "N" ]; then
+    result=$(file_download --file $CODENAME.$ROLE_NAME.tar.gz --cache-dir-name updates --do-not-cache)
+    if [ "$result" == "success" ]; then
+        mv $CODENAME.$ROLE_NAME.tar.gz /var/cache/apt/archives
+        cd /var/cache/apt/archives
+        tar -zxf $CODENAME.$ROLE_NAME.tar.gz
+        rm $CODENAME.$ROLE_NAME.tar.gz
+    fi
+fi
+
+##
+## install/remove packages
+##
+
+do-release-upgrade -d
+
+# exclude packages from updates (to remove exclusion use 'echo package install | dpkg --set-selections')
+(
+    echo postfix hold
+) | dpkg --set-selections
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes update
+apt-get --yes --force-yes upgrade
+apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+# default packages
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    apparmor \
+    apt-file \
+    apt-utils \
+    autoconf \
+    automake \
+    bc \
+    bison \
+    build-essential \
+    cmake \
+    dialog \
+    dnsutils \
+    expect \
+    fail2ban \
+    fakeroot \
+    gawk \
+    gettext \
+    host \
+    iftop \
+    kernel-package \
+    kpartx \
+    libbz2-dev \
+    libcap-dev \
+    libcap2-bin \
+    libcurl4-openssl-dev \
+    libdb-dev \
+    libexpat1-dev \
+    libfreetype6 \
+    libfreetype6-dev \
+    libjpeg62-dev \
+    liblua5.1-0-dev \
+    liblua50-dev \
+    liblualib50-dev \
+    libmcrypt-dev \
+    libmhash-dev \
+    libncurses5-dev \
+    libpcre3-dev \
+    libpng12-dev \
+    libsqlite0-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libtool \
+    libwrap0-dev \
+    libxml2-dev \
+    lshw \
+    lsof \
+    lzop \
+    nano \
+    nmap \
+    pkg-config \
+    re2c \
+    rsync \
+    schroot \
+    sqlite3 \
+    strace \
+    subversion \
+    sysstat \
+    tcpdump \
+    traceroute \
+    unzip \
+    update-manager-core \
+    vim \
+    whois
+# conditional packages
+[ "$USE_BRIDGED_NETWORK" == "Y" ] && \
+    apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+        bridge-utils
+apt-get autoremove --yes --force-yes
+apt-get autoclean --yes --force-yes
+apt-file update
+
+##
+## fix libraries
+##
+
+# libssl & libcrypto
+ln -sfv /lib/x86_64-linux-gnu/libssl* /lib/
+ln -sfv /lib/x86_64-linux-gnu/libcrypto* /lib/
+ln -sfv /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/
+ln -sfv /usr/lib/x86_64-linux-gnu/libcrypto* /usr/lib/
+# libnsl
+ln -sfv /lib/x86_64-linux-gnu/libnsl* /lib/
+ln -sfv /usr/lib/x86_64-linux-gnu/libnsl* /usr/lib/
+
+# libcap
+ln -sfv /lib/x86_64-linux-gnu/libcap* /lib/
+
+exit 0

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="qemu-kvm-$QEMU_KVM_VERSION"
+#[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://sourceforge.net/projects/kvm/files/qemu-kvm/$QEMU_KVM_VERSION/qemu-kvm-$QEMU_KVM_VERSION.tar.gz/download"
+    file=qemu-kvm-$QEMU_KVM_VERSION.tar.gz
+    #result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 5000000)
+    #if [ "$result" == "error" ]; then
+        #echo "Error: Unable to download $file file!"
+        #exit 1
+    #fi
+fi
+
+##
+## install
+##
+
+# TODO
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    kvm \
+    ubuntu-vm-builder
+
+adduser root kvm
+adduser root libvirtd
+
+##
+## configure
+##
+
+# TODO
+
+##
+## post install
+##
+
+# TODO
+
+exit 0

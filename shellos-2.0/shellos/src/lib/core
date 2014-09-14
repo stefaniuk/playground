@@ -1,0 +1,2971 @@
+#!/bin/bash
+
+echo "Loading core functionality..."
+
+################################################################################
+## core routines
+##
+
+# Checks if function exists.
+#
+# parameters:
+#   $1 function name
+func_exists() {
+
+    local func=$1
+
+    declare -f -F $func > /dev/null
+    if [ "$?" == "0" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Allows to sleep in increments of milliseconds.
+#
+# parameters:
+#   $1 milliseconds
+function usleep() {
+
+    local ms=$1
+    local sec=$(echo "scale=2; $ms / 1000" | bc)
+
+    perl -e "select(undef,undef,undef,$sec)"
+}
+
+# Converts hexadecimal to decimal number.
+#
+# parameters:
+#   $1 hexadecimal number
+function h2d() {
+
+    local hex=$1
+    hex=$(upper $hex)
+    local dec=$(echo "ibase=16; $hex" | bc)
+
+    echo $dec
+}
+
+# Converts decimal to hexadecimal number.
+#
+# parameters:
+#   $1 decimal number
+function d2h() {
+
+    local dec=$1
+    local hex=$(echo "ibase=10; obase=16; $dec" | bc)
+    hex=$(lower $hex)
+
+    echo $hex
+}
+
+# Returns random string (A-Za-z0-9) with the given length.
+#
+# parameters:
+#   $1 length
+function random() {
+
+    local str=
+    str=</dev/urandom tr -dc A-Za-z0-9 | (head -c $ > /dev/null 2>&1 || head -c $1)
+    echo $str
+}
+
+# Makes sure that string meets certain criteria.
+#
+# parameters:
+#   $1 string
+#   $2 character to be used as a replacement
+#   $3 max length
+#   --allowed-characters <characters>
+function sanitise() {
+
+    local str=$1
+    local char=$2
+    local len=255
+    local allowed_characters=""
+
+    # get max length
+    if [ "$3" != "" ] && [ "$3" != "--allowed-characters" ]; then
+        len=$3
+    fi
+    # get allowed characters
+    while [ "$1" != "" ]; do
+        case $1 in
+            --allowed-characters)   shift; allowed_characters=$1
+                                    ;;
+        esac
+        shift
+    done
+
+    local sanitised=${str//+([^A-Za-z0-9$allowed_characters])/$char}
+    if [ -n "$len" ]; then
+        sanitised=`echo $sanitised | cut -c1-$len`
+    fi
+    echo $sanitised | tr '[:upper:]' '[:lower:]'
+}
+
+# Returns substring by removing its prefix and suffix.
+#
+# parameters:
+#   $1 string
+#   $2 prefix as string
+#   $3 suffix as string
+function substring() {
+
+    local str="${1#${1%${2}*}${2}}"
+    echo "${str%${3}*}"
+}
+
+# Checks if string contains another string.
+#
+# parameters:
+#   $1 string
+#   $2 search string
+function contains() {
+
+    local count=$(echo "$1" | grep "$2" | wc -l)
+    if [ $count -gt 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Checks if string begins with another string.
+#
+# parameters:
+#   $1 string
+#   $2 search string
+function str_begins() {
+
+    local count=$(echo "$1" | grep "^$2" | wc -l)
+    if [ $count -gt 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Checks if string ends with another string.
+#
+# parameters:
+#   $1 string
+#   $2 search string
+function str_ends() {
+
+    local count=$(echo "$1" | grep "$2$" | wc -l)
+    if [ $count -gt 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Removes whitespaces from the begining and the end of a string.
+#
+# parameters:
+#   $1 string
+function trim() {
+
+    local str="$1"
+    str=$(sed -e 's/^[[:space:]]*//' <<<"$str")
+    str=$(sed -e 's/[[:space:]]*$//' <<<"$str")
+
+    echo "$str"
+}
+
+# Converts string to lower case.
+#
+# parameters:
+#   $1 string
+function lower() {
+
+    local str="$1"
+    str=$(echo $str | tr '[:upper:]' '[:lower:]')
+
+    echo "$str"
+}
+
+# Converts string to upper case.
+#
+# parameters:
+#   $1 string
+function upper() {
+
+    local str="$1"
+    str=$(echo $str | tr '[:lower:]' '[:upper:]')
+
+    echo "$str"
+}
+
+# Splits string and returns part given by the third argument.
+#
+# parameters:
+#   $1 string
+#   $2 split string
+#   $3 part (index starts from 1)
+function split_part() {
+
+    echo $(echo $1 | awk '{ split($1,a,v1); print a[v2]; }' v1=$2 v2=$3)
+}
+
+################################################################################
+## system routines
+##
+
+# Prints system info.
+#
+function print_system_info() {
+
+    echo "OS: $OS"
+    echo "DIST: $DIST"
+    echo "DIST BASED ON: $DIST_BASED_ON"
+    echo "PSEUDO NAME: $PSEUDO_NAME"
+    echo "VERSION: $VERSION"
+    echo "ARCH: $ARCH"
+    echo "KERNEL: $KERNEL"
+    echo "DEVICE: $DEVICE"
+}
+
+# Creates a new system user.
+#
+# parameters:
+#   $1 user
+#   $2 uid
+#   $3 group
+#   $4 gid
+#   --shell <shell>
+function user_create() {
+
+    local tmp_user=$1
+    local tmp_uid=$2
+    local tmp_group=$3
+    local tmp_gid=$4
+
+    # get shell
+    local tmp_shell=/usr/sbin/nologin
+    while [ "$1" != "" ]; do
+        case $1 in
+            --shell)    shift; tmp_shell=$1
+                        ;;
+        esac
+        shift
+    done
+
+    groupadd -g $tmp_gid $tmp_group
+    useradd -u $tmp_uid -d /dev/null -s $tmp_shell -g $tmp_group $tmp_user
+}
+
+# Checks if user exists.
+#
+# parameters:
+#   $1 user
+function user_exists() {
+
+    if [ `grep "^$1:" /etc/passwd | wc -l` == "1" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Checks if group exists.
+#
+# parameters:
+#   $1 group
+function group_exists() {
+
+    if [ `grep "^$1:" /etc/group | wc -l` == "1" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+################################################################################
+## file routines
+##
+
+# Lists broken symbolic links recursively.
+#
+# parameters:
+#   $1 directory (optional)
+function list_broken_links() {
+
+    local dir=$1
+    [ -z "$dir" ] && dir=.
+
+    local output="$((find $dir -type l ! -exec test -r {} \; -print) 2> /dev/null)"
+    for line in $output; do
+        local str=$(ls -la $line 2> /dev/null | awk '{ print $9, $11}')
+        local link=$(echo $str | awk '{ print $1 }')
+        local file=$(echo $str | awk '{ print $2 }')
+        echo "$link -> $file"
+    done
+}
+
+# Removes string from the given file.
+#
+# parameters:
+#   $1 string to remove
+#   $2 file name
+function remove_from_file() {
+
+    local file=$TMP_DIR/remove_from_file.$$
+    local str='1h;1!H;${;g;s/'
+    sed -n "$str$1//g;p;}" $2 > $file && mv $file $2
+}
+
+# Replaces string by new string in the given file.
+#
+# parameters:
+#   $1 string to search for
+#   $2 new string
+#   $3 file name
+function replace_in_file() {
+
+    local file=$TMP_DIR/replace_in_file.$$
+    sed "s/$1/$2/g" $3 > $file && mv $file $3
+}
+
+# Checks if file contains the given string.
+#
+# parameters:
+#   $1 string to search for (regular expression, multiline)
+#   $2 file name
+function file_contains() {
+
+    local count=$(cat $2 | grep -P "$1" | wc -l)
+    if [ $count -gt 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Searches directory for files that contain the given string.
+#
+# parameters:
+#   $1 string
+#   $2 directory
+function file_find_in() {
+
+    local str=$1
+    local dir=$2
+
+    if [ "$dir" == "" ]; then
+        find . -iname "*" | xargs grep -iR "$str" | \
+            sort | uniq | grep -iR "$str"
+    else
+        find $dir -iname "*" | xargs grep -iR "$str" | \
+            sort | uniq | grep -iR "$str"
+    fi
+}
+
+# Replaces string in files in the given directory.
+#
+# parameters:
+#   $1 old string
+#   $2 new string
+#   $3 directory (optional)
+function file_replace_in() {
+
+    local str1=$1
+    local str2=$2
+    local dir=$3
+    [ "$dir" == "" ] && dir=.
+
+    for file in $(find $dir -type f -name "*"); do
+        replace_in_file $str1 $str2 $dir
+    done
+}
+
+# Downloads file from the given URL address.
+#
+# parameters:
+#   --url <url>                         url address of the file to download
+#   --force                             force to download from the given url
+#                                       address not using a cached file or
+#                                       an alternative location
+#   --file <name>                       name of an output file
+#   --cache-dir-name <name>             cache directory name; file name in that
+#                                       directory must match the file name given
+#                                       as the parameter
+#   --donwload-directory <directory>    destination directory, where the file
+#                                       should be placed after download
+#   --check-file-size <size>            check file size after download
+#   --check-file-hash <hash>            check file hash after download
+#   --hash-algorithm <algorithm>        hash algorithm used to check file
+#   --do-not-cache                      do not cache file locally
+function file_download() {
+
+    # variables
+    local url=
+    local force="N"
+    local file=
+    local cache_dir_name="downloads"
+    local current_download_dir=./
+    local file_size=0
+    local file_hash=
+    local hash_algorithm=$HASH_ALGORITHM
+    local do_not_cache="N"
+    local current_dir=$(pwd)
+
+    # arguments
+    while [ "$1" != "" ]; do
+        case $1 in
+            --url)                  shift; url=$1
+                                    ;;
+            --force)                force="Y"
+                                    ;;
+            --file)                 shift; file=$1
+                                    ;;
+            --cache-dir-name)       shift; cache_dir_name=$1
+                                    ;;
+            --donwload-directory)   shift; current_download_dir=$1
+                                    ;;
+            --check-file-size)      shift; file_size=$1
+                                    ;;
+            --check-file-hash)      shift; file_hash=$1
+                                    ;;
+            --hash-algorithm)       shift; hash_algorithm=$1
+                                    ;;
+            --do-not-cache)         do_not_cache="Y"
+                                    ;;
+        esac
+        shift
+    done
+
+    # file may have already been downloaded
+    if [ $force == "N" ] && [ -s $CACHE_DIR/$cache_dir_name/$file ] && \
+            [ ! -s $current_download_dir/$file ]; then
+
+        cp -f $CACHE_DIR/$cache_dir_name/$file $current_download_dir
+
+    else
+
+        # local network available, so try to download from a local storage
+        if [ ! -s $CACHE_DIR/$cache_dir_name/$file ] && [[ "$IP_ADDRESS" == 192.168.* ]] && [ $force == "N" ] && \
+                [ -n "$LOCAL_DOWNLOAD_URL" ]; then
+            # try to download
+            wget \
+                --tries=1 \
+                --connect-timeout=10 \
+                --user="$LOCAL_DOWNLOAD_USER" \
+                --password="$LOCAL_DOWNLOAD_PASS" \
+                $LOCAL_DOWNLOAD_URL/$cache_dir_name/$file -O $file
+            # cache file
+            [ -s $file ] && mv -f $file $CACHE_DIR/$cache_dir_name
+            # check file size
+            if [ $file_size != 0 ] && [ -f $CACHE_DIR/$cache_dir_name/$file ]; then
+                local size=$(ls -l $CACHE_DIR/$cache_dir_name/$file | awk '{ print $5 }')
+                if [ $file_size -gt $size ]; then
+                    rm $CACHE_DIR/$cache_dir_name/$file
+                fi
+            fi
+        fi
+
+        # try to download from the given url address
+        if ([ -n "$url" ] && ([ ! -s $CACHE_DIR/$cache_dir_name/$file ] || [ $force == "Y" ])); then
+            # try to download
+            wget \
+                --tries=1 \
+                --connect-timeout=10 \
+                $url -O $file
+            # cache file
+            [ -s $file ] && mv -f $file $CACHE_DIR/$cache_dir_name
+            # check file size
+            if [ $file_size != 0 ] && [ -f $CACHE_DIR/$cache_dir_name/$file ]; then
+                local size=$(ls -l $CACHE_DIR/$cache_dir_name/$file | awk '{ print $5 }')
+                if [ $file_size -gt $size ]; then
+                    rm $CACHE_DIR/$cache_dir_name/$file
+                fi
+            fi
+        fi
+
+        # try to download from a custom location
+        if [ ! -s $CACHE_DIR/$cache_dir_name/$file ] && [ $force == "N" ]; then
+            # try to download
+            wget \
+                --tries=1 \
+                --connect-timeout=10 \
+                $ONLINE_DOWNLOAD_URL/$cache_dir_name/$file -O $file
+            # cache file
+            [ -s $file ] && mv -f $file $CACHE_DIR/$cache_dir_name
+            # check file size
+            if [ $file_size != 0 ] && [ -f $CACHE_DIR/$cache_dir_name/$file ]; then
+                local size=$(ls -l $CACHE_DIR/$cache_dir_name/$file | awk '{ print $5 }')
+                if [ $file_size -gt $size ]; then
+                    rm $CACHE_DIR/$cache_dir_name/$file
+                fi
+            fi
+        fi
+
+        # set read only permission
+        if [ -s $CACHE_DIR/$cache_dir_name/$file ]; then
+            local permissions=400
+            if [ "$OWNER" != "root" ]; then
+                permissions=444
+            fi
+            chmod $permissions $CACHE_DIR/$cache_dir_name/$file > /dev/null 2>&1
+        fi
+
+        # copy file to the current download directory
+        if [ -s $CACHE_DIR/$cache_dir_name/$file ] && \
+                [ ! -s $current_download_dir/$file ]; then
+            cp -f $CACHE_DIR/$cache_dir_name/$file $current_download_dir
+        fi
+
+    fi
+
+    # do not cache
+    if [ "$do_not_cache" == "Y" ] && \
+            [ -f $CACHE_DIR/$cache_dir_name/$file ]; then
+        rm $CACHE_DIR/$cache_dir_name/$file
+    fi
+
+    # return value
+    if [ -s $current_download_dir/$file ]; then
+        if [ -n "$file_hash" ]; then
+            # check file hash
+            if [ $(file_is_hash_valid $current_download_dir/$file $file_hash $hash_algorithm) == "yes" ]; then
+                echo "success"
+            else
+                echo "error"
+            fi
+        else
+            echo "success"
+        fi
+    else
+        rm $current_download_dir/$file > /dev/null 2>&1
+        echo "error"
+    fi
+
+    cd $current_dir
+}
+
+# Validates hash sum of a given file.
+#
+# parameters:
+#   $1 file name
+#   $2 hash sum
+#   $3 algorithm (optional)
+function file_is_hash_valid() {
+
+    local file=$1
+    local hash=$(lower $2)
+    local algorithm=$3
+
+    [ -z "$algorithm" ] && algorithm=$HASH_ALGORITHM
+
+    local current_hash=$(${algorithm}sum $file)
+    current_hash=$(lower $current_hash)
+
+    if [ "$hash" == "$current_hash" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Sets configuration option in a file.
+#
+# parameters:
+#   $1 key
+#   $2 value
+#   $3 file
+function file_set_conf_option() {
+
+    local key=$1
+    local value=$2
+    local file=$3
+
+    local line=$(cat $file | grep "^[ \t]*$key[ \t]*=")
+    if [ -n "$line" ]; then
+        replace_in_file "$line" "$key = $value" $file
+    else
+        echo "$key = $value" >> $file
+    fi
+}
+
+# Gets configuration option from file.
+#
+# parameters:
+#   $1 key
+#   $2 file
+function file_get_conf_option() {
+
+    local key=$1
+    local file=$2
+
+    local line=$(cat $file | grep "^[ \t]*$key[ \t]*=")
+    echo $line | sed -rn 's/^[a-zA-Z0-9_]+[ \t]*=[ \t]*(.*)$/\1/p'
+}
+
+# Mounts a directory.
+#
+# parameters:
+#   $1 directory
+#   $2 directory
+#   --read-only
+function directory_mount() {
+
+    local dir1=$1
+    local dir2=$2
+    local readOnly="N"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --read-only|-ro)    readOnly="Y"
+                                ;;
+        esac
+        shift
+    done
+
+    mkdir -p $dir2
+    mount --bind $dir1 $dir2
+    if [ "$readOnly" == "Y" ]; then
+        mount -o remount,ro $dir2
+    fi
+}
+
+# Compares two directories. Outputs file name and a comparison result.
+#
+# parameters:
+#   $1 directory
+#   $2 directory
+#   switches
+function directory_compare() {
+
+    local dir1=$1
+    local dir2=$2
+    local file1=$TMP_DIR/$RANDOM.log
+    local file2=$TMP_DIR/$RANDOM.log
+    local showNotChanged="N"
+    local doNotShowModified="N"
+    local doNotShowNew="N"
+    local doNotShowRemoved="N"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --show-not-changed|-o)      showNotChanged="Y"
+                                        ;;
+            --do-not-show-modified|-m)  doNotShowModified="Y"
+                                        ;;
+            --do-not-show-new|-a)       doNotShowNew="Y"
+                                        ;;
+            --do-not-show-removed|-d)   doNotShowRemoved="Y"
+                                        ;;
+        esac
+        shift
+    done
+
+    function _get_files() {
+        local dir=$1
+        local dir_esc=`echo "$dir" | sed 's/\//\\\\\//g'`
+        local files=$(find $dir -type f -or -type l | sort | xargs ls -l | awk '{print $8}')
+        for file in $files; do
+            local hash=$(${HASH_ALGORITHM}sum $file | awk '{print $1}')
+            file=$(echo $file | sed "s/$dir_esc//")
+            echo $file $hash
+        done
+    }
+    _get_files $dir1 > $file1
+    _get_files $dir2 > $file2
+
+    old_ifs=$IFS
+    IFS=$'\n'
+    for line in $(cat $file2); do
+        file=$(echo $line | awk '{print $1}')
+        hash=$(echo $line | awk '{print $2}')
+        if [ $(cat $file1 | grep "^${file} " | wc -l) -gt 0 ]; then
+            if [ $(cat $file1 | grep "^${file} " | grep " ${hash}$" | wc -l) -gt 0 ]; then
+                [ "$showNotChanged" == "Y" ] && echo "O $file"
+            else
+                [ "$doNotShowModified" == "N" ] && echo "M $file"
+            fi
+        else
+            [ "$doNotShowNew" == "N" ] && echo "A $file"
+        fi
+    done
+    for line in $(cat $file1); do
+        file=$(echo $line | awk '{print $1}')
+        if [ $(cat $file2 | grep "^${file} " | wc -l) -eq 0 ]; then
+            [ "$doNotShowRemoved" == "N" ] && echo "D $file"
+        fi
+    done
+    IFS=$old_ifs
+
+    rm {$file1,$file2} > /dev/null 2&>1
+}
+
+# Updates content of a directory.
+#
+# parameters:
+#   $1 directory
+#   $2 directory
+#   switches
+function directory_update() {
+
+    local dir1=$1
+    local dir2=$2
+    local dryRun="N"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --dry-run|-d)   dryRun="Y"
+                            ;;
+        esac
+        shift
+    done
+
+    IFS=$'\n'
+    for line in $(compare_directories $dir1 $dir2); do
+        local file=$(echo $line | awk '{print $2}')
+        if [ "$(echo $line | grep ^M | wc -l)" -gt 0 ]; then
+            if [ "$dryRun" == "N" ]; then
+                cp -fv ${dir2}${file} $dir1${file}
+            else
+                echo "cp -fv ${dir2}${file} $dir1${file}"
+            fi
+        fi
+        if [ "$(echo $line | grep ^A | wc -l)" -gt 0 ]; then
+            if [ "$dryRun" == "N" ]; then
+                cp -fv ${dir2}${file} $dir1${file}
+            else
+                echo "cp -fv ${dir2}${file} $dir1${file}"
+            fi
+        fi
+        if [ "$(echo $line | grep ^D | wc -l)" -gt 0 ]; then
+            if [ "$dryRun" == "N" ]; then
+                rm -fv ${dir1}${file}
+            else
+                echo "rm -fv ${dir1}${file}"
+            fi
+        fi
+    done
+    IFS=$old_ifs
+}
+
+################################################################################
+## project specific routines
+##
+
+# Puts message in the system log.
+#
+# parameters:
+#   $1 message
+#   --log-to-console
+function log_info() {
+
+    local msg=$1
+    local log_to_console="N"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --log-to-console)   log_to_console="Y";
+                                ;;
+        esac
+        shift
+    done
+
+    logger -p local0.notice -t shellos "$msg"
+    if [ $log_to_console == "Y" ]; then
+        echo "$msg"
+    fi
+}
+
+# Puts error message in the system log.
+#
+# parameters:
+#   $1 message
+#   --log-to-console
+function log_error() {
+
+    local msg=$1
+    local log_to_console="N"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --log-to-console)   log_to_console="Y";
+                                ;;
+        esac
+        shift
+    done
+
+    logger -p local0.err -t shellos "$msg"
+    if [ $log_to_console == "Y" ]; then
+        echo "$msg"
+    fi
+}
+
+# Sets project configuration option.
+#
+# parameters:
+#   $1 key
+#   $2 value
+function shellos_conf_set_option() {
+
+    local key=$1
+    local value=$2
+    local file=$SHELLOS_CONF_FILE
+
+    file_set_conf_option $key $value $file
+
+    chown root:root $file
+    chmod 600 $file
+}
+
+# Gets project configuration option.
+#
+# parameters:
+#   $1 key
+function shellos_conf_get_option() {
+
+    local key=$1
+    local file=$SHELLOS_CONF_FILE
+
+    file_get_conf_option $key $file
+}
+
+# Reloads crontab.
+function reload_crontab() {
+
+    (cat $SHELLOS_DIR/conf/.crontab-variables; cat $SHELLOS_DIR/conf/.crontab-jobs) | crontab
+}
+
+# Checks if a role has been assigned.
+#
+# parameters:
+#   $1 role
+function role_has() {
+
+    local role=$1
+    if [ $(contains "$DEVICE_ROLE" $role) == "yes" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Lists all assigned roles.
+function role_list() {
+
+    (
+        for role in $DEVICE_ROLE; do
+            echo $role
+        done
+    ) | sort | uniq
+}
+
+# Updates project from the local repository.
+#
+# parameters:
+#   --test      test only
+function update_projet_from_repository() {
+
+    local test_only=$1
+    [ "$test_only" == "--test" ] && test_only="Y"
+
+    function _update() {
+
+        local dir1=$1
+        local dir2=$2
+
+        cd $dir1
+        for file1 in $(find . -type f -iname "*"); do
+            [ $(contains $file1 "README") == "yes" ] && continue
+            local file2=$(echo $dir2/$file1 | sed s/\\/.\\//\\//)
+            if [ ! -f $file2 ]; then
+                if [ "$test_only" == "Y" ]; then
+                    echo "A $file1"
+                else
+                    mkdir -p $(dirname $file2)
+                    cp -rfv $file1 $file2
+                fi
+            else
+                if [ "$(md5sum $file1 | awk '{ print $1 }')" != "$(md5sum $file2 | awk '{ print $1 }')" ]; then
+                    if [ "$test_only" == "Y" ]; then
+                        echo "M $file1"
+                    else
+                        cp -rfv $file1 $file2
+                    fi
+                fi
+            fi
+        done
+    }
+
+    (
+        if [ -d $WORKSPACE_DIR/shellos ]; then
+            # bin
+            _update $WORKSPACE_DIR/shellos/shellos/src/bin $BIN_DIR
+            # job
+            _update $WORKSPACE_DIR/shellos/shellos/src/job $JOB_DIR
+            # lib
+            _update $WORKSPACE_DIR/shellos/shellos/src/lib $LIB_DIR
+            # pkg
+            _update $WORKSPACE_DIR/shellos/shellos/src/pkg $PKG_DIR
+            # sbin
+            _update $WORKSPACE_DIR/shellos/shellos/src/sbin $SBIN_DIR
+        fi
+    )
+}
+
+# Updates project from given file.
+#
+# parameters:
+#   $1 file
+function update_projet_from_file() {
+
+    # TODO: exclude files listed in etc/sensitive-data-files
+    directory_update $SHELLOS_DIR $SHELLOS_DIR --dry-run
+}
+
+# Updates project from given URL address.
+#
+# parameters:
+#   $1 URL address
+function update_projet_from_url() {
+
+    # TODO: download file
+    update_projet_from_file
+}
+
+################################################################################
+## package routines
+##
+
+# Downloads package.
+#
+# parameters:
+#   $1 package name
+#   $2 donwload directory
+#   --check-file-size <size>
+function package_download() {
+
+    local file=$(sanitise $1 '-' --allowed-characters '\.')${PACKAGE_SUFFIX}
+    local current_download_dir=$CACHE_PACKAGES_DIR
+    local file_size=0
+    local current_dir=$(pwd)
+
+    # get minimum file size
+    while [ "$1" != "" ]; do
+        case $1 in
+            --donwload-directory)   shift; current_download_dir=$1
+                                    ;;
+            --check-file-size)      shift; file_size=$1
+                                    ;;
+        esac
+        shift
+    done
+
+    file_download --file $file --cache-dir-name "packages" --donwload-director $current_download_dir --check-file-size $file_size
+
+    cd $current_dir
+}
+
+# Creates package from the given directory.
+#
+# parameters:
+#   $1 source directory
+#   $2 package name
+function package_create() {
+
+    local dir=$1
+    local archive=$(sanitise $2 '-' --allowed-characters '\.')${PACKAGE_SUFFIX}
+    local current_dir=$(pwd)
+
+    local permissions=400
+    if [ "$OWNER" != "root" ]; then
+        permissions=444
+    fi
+
+    cd $dir/..
+    tar -zcf $archive $(basename $dir)
+    mv -v $archive $CACHE_PACKAGES_DIR
+    chmod $permissions $CACHE_PACKAGES_DIR/$archive
+
+    cd $current_dir
+}
+
+# Creates package from files in the given directory.
+#
+# parameters:
+#   $1 source directory
+#   $2 package name
+#   $3 files to be included in the package
+function package_create_files() {
+
+    local dir=$1
+    local archive=$(sanitise $2 '-' --allowed-characters '\.')${PACKAGE_SUFFIX}
+    local files=$3
+    local current_dir=$(pwd)
+
+    local permissions=400
+    if [ "$OWNER" != "root" ]; then
+        permissions=444
+    fi
+
+    cd $dir
+    tar -zcf $archive $files
+    mv -v $archive $CACHE_PACKAGES_DIR
+    chmod $permissions $CACHE_PACKAGES_DIR/$archive
+
+    cd $current_dir
+}
+
+# Restores directory of the package.
+#
+# parameters:
+#   $1 package name
+#   --dir destination directory
+function package_restore() {
+
+    local name=$(sanitise $1 '-' --allowed-characters '\.')
+    local archive=${name}${PACKAGE_SUFFIX}
+    local dest_dir=$INSTALL_DIR
+    local current_dir=$(pwd)
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --dir)  shift; dest_dir="$1"
+                    ;;
+        esac
+        shift
+    done
+
+    cd $CACHE_PACKAGES_DIR
+    if [ -f $archive ]; then
+        [ -d $name ] && rm -rf $name
+        mkdir $name
+        cp $archive $name
+        cd $name
+        tar -zxf $archive
+        rm $archive
+        local dir_name=$(ls -1)
+        [ -n "$dir_name" ] && [ -d $dest_dir/$dir_name ] && rm -rf $dest_dir/$dir_name
+        mv -v * $dest_dir
+        cd ..
+        rm -rf $name
+    fi
+
+    cd $current_dir
+}
+
+# Restores files of the package.
+#
+# parameters:
+#   $1 package name
+#   $2 destination directory of the package
+function package_restore_files() {
+
+    local name=$(sanitise $1 '-' --allowed-characters '\.')
+    local archive=${name}${PACKAGE_SUFFIX}
+    local dest_dir=$2
+    local current_dir=$(pwd)
+
+    cd $CACHE_PACKAGES_DIR
+    if [ -f $archive ] && [ -d $dest_dir ]; then
+        cp $archive $dest_dir
+        cd $dest_dir
+        tar -zxvf $archive
+        rm $archive
+    fi
+
+    cd $current_dir
+}
+
+# Adds version of the package.
+#
+# parameters:
+#   $1 package name
+#   $2 version
+#   --uniq-version
+function package_add_version() {
+
+    local file=$PACKAGES_FILE
+    local pkg=$(sanitise $1 '-')
+    local version=$(echo $2 | tr '[:upper:]' '[:lower:]')
+    local uniq_version=
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --uniq-version) shift; uniq_version="$1"
+                            ;;
+        esac
+        shift
+    done
+
+    if [ -f $file ]; then
+        if [ -z $file ]; then
+            cat $file | grep -v "$pkg=" > $file.tmp
+        else
+            cat $file | grep -v "$pkg=$uniq_version" > $file.tmp
+        fi
+        mv $file.tmp $file
+    else
+        touch $file
+    fi
+    echo "$pkg=$version" >> $file
+
+    cat $file | grep -v '# ' | sort | uniq > $file.tmp
+    mv $file.tmp $file
+
+    chown root:root $file
+    if [ "$OWNER" != "root" ]; then
+        chmod 644 $file
+    else
+        chmod 600 $file
+    fi
+}
+
+# Gets version of the package.
+#
+# parameters:
+#   $1 package name
+function package_get_version() {
+
+    local pkg=$(sanitise $1 '-')
+
+    old_ifs=$IFS
+    IFS=$'\n'
+    local len=$(expr length $pkg)
+    local pos=$(expr $len + 1)
+    local lines=$(cat $PACKAGES_FILE | grep "$pkg=")
+    for line in $lines; do
+        local ver=${line:$pos}
+        echo $ver
+    done
+    IFS=$old_ifs
+}
+
+# Checks if the package is installed.
+#
+# parameters:
+#   $1 package name
+function package_is_installed() {
+
+    local pkg=$(sanitise $1 '-')
+
+    if [ -n "$(cat $PACKAGES_FILE | grep ^$pkg=.*)" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Compares to versions of a package.
+#
+# parameters:
+#   $1 version
+#   $2 version
+function package_compare_version() {
+
+    if [[ $1 == $2 ]]; then
+        echo 0
+        return
+    fi
+
+    local ver1a=$(echo $1 | grep -oEi '[0-9\.]*' | head -1)
+    local ver1b=$(substring $1 $ver1a "")
+    local ver2a=$(echo $2 | grep -oEi '[0-9\.]*' | head -1)
+    local ver2b=$(substring $2 $ver2a "")
+
+    local IFS=.
+    local i ver1=($ver1a) ver2=($ver2a)
+
+    # test the 1st part
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)); do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++)); do
+        if [[ -z ${ver2[i]} ]]; then
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]})); then
+            echo 1
+            return
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]})); then
+            echo -1
+            return
+        fi
+    done
+
+    # test the 2nd part
+    if [ "$ver1b" \< "$ver2b" ]; then
+        echo -1
+        return
+    elif  [ "$ver1b" \> "$ver2b" ]; then
+        echo 1
+        return
+    fi
+
+    echo 0
+}
+
+################################################################################
+## file hashes routines
+##
+
+# Adds directory to the list of hash directories.
+#
+# parameters:
+#   $1 directory
+function hashes_add_dir() {
+
+    local file=$HASH_DIRECTORIES_FILE
+
+    [ ! -f $file ] && touch $file
+    echo $1 >> $file
+
+    cat $file | grep -v '# ' | sort | uniq > $file.tmp
+    mv $file.tmp $file
+
+    chown root:root $file
+    if [ "$OWNER" != "root" ]; then
+        chmod 644 $file
+    else
+        chmod 600 $file
+    fi
+}
+
+# Creates list of file hashes.
+function hashes_create_list() {
+
+    local file1=$HASH_DIRECTORIES_FILE
+    local file2=$HASH_FILES_FILE
+    local file3=$HASH_SUM_FILE
+
+    # directories
+    [ ! -f $file1 ] && touch $file1
+
+    # files
+    [ -f $file2 ] && rm $file2
+    if [ -s $file1 ]; then
+        cat $file1 | while read dir; do
+            [ -d $dir ] && find $dir -type f -name "*" | sort >> $file2
+        done
+    fi
+    [ ! -f $file2 ] && touch $file2
+
+    # hash sum
+    if [ -s $file2 ]; then
+        cat $file2 | xargs ${HASH_ALGORITHM}sum >> $file3
+    else
+        touch $file3
+    fi
+
+    chown root:root {$file1,$file2,$file3}
+    if [ "$OWNER" != "root" ]; then
+        chmod 644 $file1
+        chmod 644 $file2
+        chmod 644 $file3
+    else
+        chmod 600 $file1
+        chmod 600 $file2
+        chmod 600 $file3
+    fi
+}
+
+# Counts bad hash files.
+function hashes_count_bad() {
+
+    local file=$HASH_SUM_FILE
+
+    ${HASH_ALGORITHM}sum -c $file | grep -v ': OK$' | wc -l
+}
+
+# Lists bad hash files.
+function hashes_list_bad() {
+
+    local file=$HASH_SUM_FILE
+
+    ${HASH_ALGORITHM}sum -c $file | grep -v ': OK$'
+}
+
+################################################################################
+## version control routines
+##
+
+# Adds directory to the list of version control directories.
+#
+# parameters:
+#   $1 directory
+function repositories_add_dir() {
+
+    local file=$REPOSITORIES_FILE
+
+    [ ! -f $file ] && touch $file
+    echo $1 >> $file
+
+    cat $file | grep -v '# ' | sort | uniq > $file.tmp
+    mv $file.tmp $file
+
+    chown root:root $file
+    if [ "$OWNER" != "root" ]; then
+        chmod 644 $file
+    else
+        chmod 600 $file
+    fi
+}
+
+################################################################################
+## job routines
+##
+
+# Locks a single job.
+#
+# parameters:
+#   $1 job name
+function job_lock_set() {
+
+    local job=$1
+    local file=$JOB_LOCK_DIR/shellos-$job-job.lock
+
+    echo "$job" > $file
+    chown root:root $file > /dev/null 2>&1
+    chmod 600 $file > /dev/null 2>&1
+}
+
+# Unlocks a single job.
+#
+# parameters:
+#   $1 job name
+function job_lock_unset() {
+
+    local job=$1
+    local file=$JOB_LOCK_DIR/shellos-$job-job.lock
+
+    rm $file > /dev/null 2>&1
+}
+
+# Checks if a lock exists on a single job.
+#
+# parameters:
+#   $1 job name
+function job_lock_exists() {
+
+    local job=$1
+    local file=$JOB_LOCK_DIR/shellos-$job-job.lock
+
+    if [ -f $file ] || [ -f $JOB_LOCK_ALL_FILE ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Locks all jobs.
+function job_lock_all() {
+
+    touch $JOB_LOCK_ALL_FILE
+    chown root:root $JOB_LOCK_ALL_FILE > /dev/null 2>&1
+    chmod 600 $JOB_LOCK_ALL_FILE > /dev/null 2>&1
+
+    log_info "all jobs are locked"
+}
+
+# Unlocks all jobs.
+function job_unlock_all() {
+
+    rm $JOB_LOCK_DIR/shellos-*-job.lock > /dev/null 2>&1
+    rm $JOB_LOCK_ALL_FILE > /dev/null 2>&1
+
+    log_info "all jobs are unlocked"
+}
+
+# Checks if all jobs are locked.
+function job_lock_all_exists() {
+
+    if [ -f $JOB_LOCK_ALL_FILE ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Lists all locked jobs.
+#
+# parameters:
+#   $1 job to exclude from list (optional)
+function job_lock_list() {
+
+    if [ -f $JOB_LOCK_ALL_FILE ]; then
+        echo "all jobs are locked"
+    else
+        local files=$(find $JOB_LOCK_DIR -iname "shellos-*-job.lock" | sort)
+        for file in $files; do
+            if [ -z "$1" ]; then
+                cat $file
+            else
+                if [ "$( basename $lock .lock )" != "shellos-$1-job" ]; then
+                    cat $file
+                fi
+            fi
+        done
+    fi
+}
+
+################################################################################
+## firewall routines
+##
+
+# Sets firewall mode (online|safe|offline).
+#
+# parameters:
+#   $1 mode
+function firewall_set_mode() {
+
+    local mode="$1"
+    local file=$FIREWALL_MODE_FILE
+
+    echo "$mode" > $file
+    chown root:root $file > /dev/null 2>&1
+    chmod 600 $file > /dev/null 2>&1
+
+    # log event
+    log_info "firewall mode changed to '$mode'"
+
+    $CMD_FIREWALL_START
+}
+
+# Gets firewall mode.
+function firewall_get_mode() {
+
+    local file=$FIREWALL_MODE_FILE
+
+    if [ -f $file ]; then
+        cat $file
+    else
+        echo "safe"
+    fi
+}
+
+# Switches firewall mode to online.
+function firewall_set_online_mode() {
+
+    firewall_set_mode "online"
+}
+
+# Switches firewall mode to safe.
+function firewall_set_safe_mode() {
+
+    firewall_set_mode "safe"
+}
+
+# Switches firewall mode to offline.
+function firewall_set_offline_mode() {
+
+    firewall_set_mode "offline"
+}
+
+################################################################################
+## service routines
+##
+
+# Starts or stops a service.
+#
+# parameters:
+#   $1 service name
+#   $2 start command
+#   $3 pid search string
+#   $4 action
+#   --not "pid string not to search for"
+#   --use-process-group
+function service_monitor() {
+
+    local name="$1"
+    local cmd_start="$2"
+    local pid_str="$3"
+    local action="$4"
+    local pid_not_str=$(random 8)
+    local use_process_group="N"
+    # log_errors - variable set in the system-start job
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --not)                  shift; pid_not_str=$1
+                                    ;;
+            --use-process-group)    use_process_group="Y";
+                                    ;;
+        esac
+        shift
+    done
+
+    local pid=$(ps ax | grep -v "$pid_not_str" | grep -v -- "--$pid_str" | grep "$pid_str" | grep -v grep | cut -c1-5 | paste -s -)
+    # start
+    if [ -z "$(trim $pid)" ] && [ "$action" == "start" ]; then
+        [ "$log_errors" == "Y" ] && log_error "service $name not running" --log-to-console
+        log_info "start service $name \"$cmd_start\"" --log-to-console
+        ( eval "$cmd_start" ) > /dev/null 2>&1
+        if [ "$log_errors" == "Y" ]; then
+            sleep 3
+            pid=$(ps ax | grep -v "$pid_not_str" | grep "$pid_str" | grep -v grep | cut -c1-5 | paste -s -)
+            if [ ! "$pid" ]; then
+                log_error "service $name NOT started!" --log-to-console
+            fi
+        fi
+    # stop
+    elif [ -n "$(trim $pid)" ] && [ "$action" == "stop" ]; then
+        log_info "stop service $name"
+        if [ "$use_process_group" == "N" ]; then
+            kill -9 ${pid}
+        else
+            kill -TERM -${pid}
+        fi
+    fi
+}
+
+# Checks if a service is running.
+#
+# parameters:
+#   $1 pid search string
+#   --not "pid string not to search for"
+function is_running() {
+
+    local pid_str="$1"
+    local pid_not_str=$(random 8)
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            --not)  shift; pid_not_str=$1
+                    ;;
+        esac
+        shift
+    done
+
+    local pid=$(ps ax | grep -v "$pid_not_str" | grep -v -- "--$pid_str" | grep "$pid_str" | grep -v grep | cut -c1-5 | paste -s -)
+    if [ -n "$(trim $pid)" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# is_running_*()
+
+# Checks if openssh is running.
+function is_running_openssh() {
+
+    is_running "$PID_OPENSSH_PROC_STR"
+}
+
+# Checks if openssh agent is running.
+function is_running_openssh_agent() {
+
+    is_running "$PID_OPENSSH_AGENT_PROC_STR"
+}
+
+# Checks if openvpn is running.
+function is_running_openvpn() {
+
+    is_running "$PID_OPENVPN_PROC_STR"
+}
+
+# Checks if mysql is running.
+function is_running_mysql() {
+
+    is_running "$PID_MYSQL_PROC_STR"
+}
+
+# Checks if postfix is running.
+function is_running_postfix() {
+
+    is_running "$PID_POSTFIX_PROC_STR"
+}
+
+# Checks if proftpd is running.
+function is_running_proftpd() {
+
+    is_running "$PID_PROFTPD_PROC_STR" --not "log-proftpd.pl"
+}
+
+# Checks if httpd is running.
+function is_running_httpd() {
+
+    is_running "$PID_APACHECTL_PROC_STR"
+}
+
+# Checks if nginx is running.
+function is_running_nginx() {
+
+    is_running "$PID_NGINX_PROC_STR"
+}
+
+# Checks if php-fpm 5.3 is running.
+function is_running_phpfpm_53() {
+
+    is_running "$PID_PHPFPM_53_PROC_STR"
+}
+
+# Checks if php-fpm 5.4 is running.
+function is_running_phpfpm_54() {
+
+    is_running "$PID_PHPFPM_54_PROC_STR"
+}
+
+# Checks if php-fpm 5.5 is running.
+function is_running_phpfpm_55() {
+
+    is_running "$PID_PHPFPM_55_PROC_STR"
+}
+
+# Checks if php-fpm is running.
+function is_running_phpfpm() {
+
+    local v53="yes"
+    local v54="yes"
+    local v55="yes"
+
+    if [ $(phpfpm_pool_exists 5.3) == "yes" ]; then
+        v53=$(is_running "$PID_PHPFPM_53_PROC_STR")
+    fi
+    if [ $(phpfpm_pool_exists 5.4) == "yes" ]; then
+        v54=$(is_running "$PID_PHPFPM_54_PROC_STR")
+    fi
+    if [ $(phpfpm_pool_exists 5.5) == "yes" ]; then
+        v55=$(is_running "$PID_PHPFPM_55_PROC_STR")
+    fi
+
+    if [ $v53 == "yes" ] && [ $v54 == "yes" ] && [ $v55 == "yes" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Checks if dovecot is running.
+function is_running_dovecot() {
+
+    is_running "$PID_DOVECOT_PROC_STR"
+}
+
+# Checks if tomcat is running.
+function is_running_tomcat() {
+
+    is_running "$PID_TOMCAT_PROC_STR"
+}
+
+# Shows running services.
+function show_running_services() {
+
+    echo openssh        $(is_running "$PID_OPENSSH_PROC_STR")
+    echo openssh agent  $(is_running "$PID_OPENSSH_AGENT_PROC_STR")
+    echo openvpn        $(is_running "$PID_OPENVPN_PROC_STR")
+    echo mysql          $(is_running "$PID_MYSQL_PROC_STR")
+    echo postfix        $(is_running "$PID_POSTFIX_PROC_STR")
+    echo proftpd        $(is_running "$PID_PROFTPD_PROC_STR" --not "log-proftpd.pl")
+    echo httpd          $(is_running "$PID_APACHECTL_PROC_STR")
+    echo nginx          $(is_running "$PID_NGINX_PROC_STR")
+    echo dovecot        $(is_running "$PID_DOVECOT_PROC_STR")
+    echo tomcat         $(is_running "$PID_TOMCAT_PROC_STR")
+}
+
+# start_*()
+
+# Starts openssh service.
+function start_openssh() {
+
+    service_monitor "OpenSSH" "$CMD_OPENSSH_START" "$PID_OPENSSH_PROC_STR" "start"
+}
+
+# Starts openssh agent service.
+function start_openssh_agent() {
+
+    service_monitor "OpenSSH Agent" "$CMD_OPENSSH_AGENT_START" "$PID_OPENSSH_AGENT_PROC_STR" "start"
+}
+
+# Starts openvpn service.
+function start_openvpn() {
+
+    service_monitor "OpenVPN" "$CMD_OPENVPN_START" "$PID_OPENVPN_PROC_STR" "start"
+}
+
+# Starts mysql service.
+function start_mysql() {
+
+    service_monitor "MySQL" "$CMD_MYSQL_START" "$PID_MYSQL_PROC_STR" "start"
+
+    if [ ! -d ${HOSTING_DIR}${INSTALL_DIR}/mysql/log ]; then
+        mkdir -p ${HOSTING_DIR}${INSTALL_DIR}/mysql/log
+    fi
+    while [ true ]; do
+        if [ -S $INSTALL_DIR/mysql/log/mysql.sock ]; then
+            rm -f ${HOSTING_DIR}${INSTALL_DIR}/mysql/log/mysql.sock
+            ln $INSTALL_DIR/mysql/log/mysql.sock ${HOSTING_DIR}${INSTALL_DIR}/mysql/log/mysql.sock
+            break
+        fi
+        sleep 1
+    done
+}
+
+# Starts postfix service.
+function start_postfix() {
+
+    service_monitor "Postfix" "$CMD_POSTFIX_START" "$PID_POSTFIX_PROC_STR" "start"
+}
+
+# Starts proftpd service.
+function start_proftpd() {
+
+    local pid=`ps ax | grep "log-proftpd.pl" | grep -v grep | cut -c1-5 | paste -s -`
+    if [ ! "$pid" ]; then
+        nohup $SHELLOS_DIR/bin/log-proftpd.pl > /dev/null 2>&1 &
+    fi
+    service_monitor "ProFTPD" "$CMD_PROFTPD_START" "$PID_PROFTPD_PROC_STR" "start" --not "log-proftpd.pl"
+}
+
+# Starts httpd service.
+function start_httpd() {
+
+    local debug="N"
+
+    # arguments
+    while [ "$1" != "" ]; do
+        case $1 in
+            --debug|-d) debug="Y"
+                        ;;
+        esac
+        shift
+    done
+
+    if [ "$debug" == "N" ]; then
+        service_monitor "Apache HTTPD Server" "$CMD_APACHECTL_START" "$PID_APACHECTL_PROC_STR" "start"
+    else
+        service_monitor "Apache HTTPD Server" "$CMD_HTTPD_START_DEBUG" "$PID_APACHECTL_PROC_STR" "start"
+    fi
+}
+
+# Starts nginx service.
+function start_nginx() {
+
+    service_monitor "Nginx" "$CMD_NGINX_START" "$PID_NGINX_PROC_STR" "start" --use-process-group
+}
+
+# Starts php-fpm 5.3 service.
+function start_phpfpm_53() {
+
+    service_monitor "PHP-FPM 5.3" "$CMD_PHPFPM_53_START" "$PID_PHPFPM_53_PROC_STR" "start" --use-process-group
+}
+
+# Starts php-fpm 5.4 service.
+function start_phpfpm_54() {
+
+    service_monitor "PHP-FPM 5.4" "$CMD_PHPFPM_54_START" "$PID_PHPFPM_54_PROC_STR" "start" --use-process-group
+}
+
+# Starts php-fpm 5.5 service.
+function start_phpfpm_55() {
+
+    service_monitor "PHP-FPM 5.5" "$CMD_PHPFPM_55_START" "$PID_PHPFPM_55_PROC_STR" "start" --use-process-group
+}
+
+# Starts php-fpm service.
+function start_phpfpm() {
+
+    if [ -x $CMD_PHPFPM_53 ] && [ $(phpfpm_pool_exists 5.3) == "yes" ]; then
+        start_phpfpm_53
+    fi
+    if [ -x $CMD_PHPFPM_54 ] && [ $(phpfpm_pool_exists 5.4) == "yes" ]; then
+        start_phpfpm_54
+    fi
+    if [ -x $CMD_PHPFPM_55 ] && [ $(phpfpm_pool_exists 5.5) == "yes" ]; then
+        start_phpfpm_55
+    fi
+}
+
+# Starts dovecot service.
+function start_dovecot() {
+
+    service_monitor "Dovecot" "$CMD_DOVECOT_START" "$PID_DOVECOT_PROC_STR" "start"
+}
+
+# Starts tomcat service.
+function start_tomcat() {
+
+    service_monitor "Tomcat" "$CMD_TOMCAT_START" "$PID_TOMCAT_PROC_STR" "start"
+}
+
+# stop_*()
+
+# Stops openssh service.
+function stop_openssh() {
+
+    service_monitor "OpenSSH" "$CMD_OPENSSH_START" "$PID_OPENSSH_PROC_STR" "stop"
+}
+
+# Stops openssh agent service.
+function stop_openssh_agent() {
+
+    service_monitor "OpenSSH Agent" "$CMD_OPENSSH_AGENT_START" "$PID_OPENSSH_AGENT_PROC_STR" "stop"
+}
+
+# Stops openvpn service.
+function stop_openvpn() {
+
+    service_monitor "OpenVPN" "$CMD_OPENVPN_START" "$PID_OPENVPN_PROC_STR" "stop"
+}
+
+# Stops mysql service.
+function stop_mysql() {
+
+    service_monitor "MySQL" "$CMD_MYSQL_START" "$PID_MYSQL_PROC_STR" "stop"
+
+    rm -f ${HOSTING_DIR}${INSTALL_DIR}/mysql/log/mysql.sock
+    rm -f $INSTALL_DIR/mysql/log/mysql.sock
+}
+
+# Stops postfix service.
+function stop_postfix() {
+
+    service_monitor "Postfix" "$CMD_POSTFIX_START" "$PID_POSTFIX_PROC_STR" "stop"
+}
+
+# Stops proftpd service.
+function stop_proftpd() {
+
+    service_monitor "ProFTPD" "$CMD_PROFTPD_START" "$PID_PROFTPD_PROC_STR" "stop"
+}
+
+# Stops httpd service.
+function stop_httpd() {
+
+    service_monitor "Apache HTTPD Server" "$CMD_APACHECTL_START" "$PID_APACHECTL_PROC_STR" "stop"
+}
+
+# Stops nginx service.
+function stop_nginx() {
+
+    service_monitor "Nginx" "$CMD_NGINX_START" "$PID_NGINX_PROC_STR" "stop" --use-process-group
+}
+
+# Stops php-fpm 5.3 service.
+function stop_phpfpm_53() {
+
+    service_monitor "PHP-FPM 5.3" "$CMD_PHPFPM_53_START" "$PID_PHPFPM_53_PROC_STR" "stop" --use-process-group
+}
+
+# Stops php-fpm 5.4 service.
+function stop_phpfpm_54() {
+
+    service_monitor "PHP-FPM 5.4" "$CMD_PHPFPM_54_START" "$PID_PHPFPM_54_PROC_STR" "stop" --use-process-group
+}
+
+# Stops php-fpm 5.5 service.
+function stop_phpfpm_55() {
+
+    service_monitor "PHP-FPM 5.5" "$CMD_PHPFPM_55_START" "$PID_PHPFPM_55_PROC_STR" "stop" --use-process-group
+}
+
+# Stops php-fpm service.
+function stop_phpfpm() {
+
+    if [ -x $CMD_PHPFPM_53 ] && [ $(phpfpm_pool_exists 5.3) == "yes" ]; then
+        stop_phpfpm_53
+    fi
+    if [ -x $CMD_PHPFPM_54 ] && [ $(phpfpm_pool_exists 5.4) == "yes" ]; then
+        stop_phpfpm_54
+    fi
+    if [ -x $CMD_PHPFPM_55 ] && [ $(phpfpm_pool_exists 5.5) == "yes" ]; then
+        stop_phpfpm_55
+    fi
+}
+
+# Stops dovecot service.
+function stop_dovecot() {
+
+    service_monitor "Dovecot" "$CMD_DOVECOT_START" "$PID_DOVECOT_PROC_STR" "stop"
+}
+
+# Stops tomcat service.
+function stop_tomcat() {
+
+    service_monitor "Tomcat" "$CMD_TOMCAT_START" "$PID_TOMCAT_PROC_STR" "stop"
+}
+
+# restart_*()
+
+# Restarts openssh service.
+function restart_openssh() {
+
+    stop_openssh $@
+    sleep 1
+    start_openssh $@
+}
+
+# Restarts openssh agent service.
+function restart_openssh_agent() {
+
+    stop_openssh_agent $@
+    sleep 1
+    start_openssh_agent $@
+}
+
+# Restarts openvpn service.
+function restart_openvpn() {
+
+    stop_openvpn $@
+    sleep 1
+    start_openvpn $@
+}
+
+# Restarts mysql service.
+function restart_mysql() {
+
+    stop_mysql $@
+    sleep 1
+    start_mysql $@
+}
+
+# Restarts postfix service.
+function restart_postfix() {
+
+    stop_postfix $@
+    sleep 1
+    start_postfix $@
+}
+
+# Restarts proftpd service.
+function restart_proftpd() {
+
+    stop_proftpd $@
+    sleep 1
+    start_proftpd $@
+}
+
+# Restarts httpd service.
+function restart_httpd() {
+
+    stop_httpd $@
+    sleep 1
+    start_httpd $@
+}
+
+# Restarts nginx service.
+function restart_nginx() {
+
+    stop_nginx $@
+    sleep 1
+    start_nginx $@
+}
+
+# Restarts php-fpm 5.3 service.
+function restart_phpfpm_53() {
+
+    stop_phpfpm_53 $@
+    sleep 1
+    start_phpfpm_53 $@
+}
+
+# Restarts php-fpm 5.4 service.
+function restart_phpfpm_54() {
+
+    stop_phpfpm_54 $@
+    sleep 1
+    start_phpfpm_54 $@
+}
+
+# Restarts php-fpm 5.5 service.
+function restart_phpfpm_55() {
+
+    stop_phpfpm_55 $@
+    sleep 1
+    start_phpfpm_55 $@
+}
+
+# Restarts php-fpm service.
+function restart_phpfpm() {
+
+    stop_phpfpm $@
+    sleep 1
+    start_phpfpm $@
+}
+
+# Restarts dovecot service.
+function restart_dovecot() {
+
+    stop_dovecot $@
+    sleep 1
+    start_dovecot $@
+}
+
+# Restarts tomcat service.
+function restart_tomcat() {
+
+    stop_tomcat $@
+    sleep 1
+    start_tomcat $@
+}
+
+################################################################################
+## mysql routines
+##
+
+# Adds user and password pair to a flat file.
+#
+# parameters:
+#   $1 user name
+#   $2 password
+function mysql_add_user_password() {
+
+    local file=$DATABASE_USERS_FILE
+    local user=$1
+    local new_pass=$2
+    local old_pass=$(mysql_get_user_password $1)
+
+    if [ -z "$old_pass" ]; then
+        [ ! -f $file ] && touch $file
+        echo "$user=$new_pass" >> $file
+        touch $file.tmp
+        chown root:root $file.tmp
+        chmod 600 $file.tmp
+        cat $file | grep -v '# ' | sort | uniq > $file.tmp
+        mv $file.tmp $file
+    else
+        replace_in_file $old_pass $new_pass $file
+    fi
+
+    chown root:root $file
+    chmod 600 $file
+
+    log_info "mysql database user '$user' password changed"
+}
+
+# Returns user password stored in a flat file.
+#
+# parameters:
+#   $1 user name
+function mysql_get_user_password() {
+
+    local line=$(cat $DATABASE_USERS_FILE | grep "$1=")
+    local len=$(expr length $1)
+    local pos=$(expr $len + 1)
+    local pass=${line:$pos}
+
+    echo $pass
+}
+
+# Backups database to flat SQL files.
+#
+# parameters:
+#   $1 database name
+#   $2 output directory
+function mysql_backup_database_to_files() {
+
+    local db_name=$1
+    local db_pass=$(mysql_get_user_password root)
+
+    local permissions=400
+    if [ "$OWNER" != "root" ]; then
+        permissions=444
+    fi
+
+    local list=$(echo "use $db_name; show tables;" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+    for item in $list; do
+        local collation=$(echo "select ccsa.character_set_name from information_schema.tables t, information_schema.collation_character_set_applicability ccsa where ccsa.collation_name = t.table_collation and t.table_schema = '$db_name' and t.table_name = '$item';" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+        $CMD_MYSQLDUMP --user="root" --password="$db_pass" --default-character-set="$collation" --extended-insert=FALSE --skip-comments "$db_name" "$item" > $2/$item.sql
+        chmod $permissions $2/$item.sql
+    done
+
+    log_info "mysql database '$db_name' backed up to files"
+}
+
+# Restores database from flat SQL files.
+#
+# parameters:
+#   $1 input directory
+#   $2 database name
+function mysql_restore_database_from_files() {
+
+    local db_name=$2
+    local db_pass=$(mysql_get_user_password root)
+
+    local list=$(ls $1/*.sql)
+    for item in $list; do
+        $CMD_MYSQL --user="root" --password="$db_pass" "$db_name" < $item
+    done
+
+    log_info "mysql database '$db_name' restored from files"
+}
+
+# Backups database to an archive (flat SQL files).
+#
+# parameters:
+#   $1 database name
+#   $2 output archive file
+function mysql_backup_database_to_archive() {
+
+    local db_name=$1
+    local db_pass=$(mysql_get_user_password root)
+
+    local permissions=400
+    if [ "$OWNER" != "root" ]; then
+        permissions=444
+    fi
+
+    local list=$(echo "use $db_name; show tables;" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+    for item in $list; do
+        local collation=$(echo "select ccsa.character_set_name from information_schema.tables t, information_schema.collation_character_set_applicability ccsa where ccsa.collation_name = t.table_collation and t.table_schema = '$db_name' and t.table_name = '$item';" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+        $CMD_MYSQLDUMP --user="root" --password="$db_pass" --default-character-set="$collation" --extended-insert=FALSE --skip-comments "$db_name" "$item" > $item.sql
+    done
+    local count=$(ls *.sql | wc -l)
+    if [ $count -gt 0 ]; then
+        [ -f $2 ] && rm $2
+        tar -zcf $2 *.sql
+        chmod $permissions $2
+        rm *.sql
+    fi
+
+    log_info "mysql database '$db_name' backed up to archive"
+}
+
+# Restores database from an archive (flat SQL files).
+#
+# parameters:
+#   $1 input archive file
+#   $2 database name
+function mysql_restore_database_from_archive() {
+
+    local db_name=$2
+    local db_pass=$(mysql_get_user_password root)
+
+    tar -zxf $1
+    local list=$(ls *.sql)
+    for item in $list; do
+        $CMD_MYSQL --user="root" --password="$db_pass" "$db_name" < $item
+    done
+    rm *.sql
+
+    log_info "mysql database '$db_name' restored from archive"
+}
+
+# Restores database from an archive (flat SQL files) with table prefix.
+#
+# parameters:
+#   $1 input archive file
+#   $2 database name
+#   $3 table prefix
+function mysql_restore_database_from_file_prefix() {
+
+    local db_name=$2
+    local prefix=$3
+    local db_pass=$(mysql_get_user_password root)
+
+    tar -zxf $1
+    local list=$(ls *.sql)
+    for item in $list; do
+        local basename=$( basename $item .sql )
+        replace_in_file "\`$basename\`" "\`$3$basename\`" $item
+        $CMD_MYSQL --user="root" --password="$db_pass" "$db_name" < $item
+    done
+    rm *.sql
+
+    log_info "mysql database '$db_name' restored from archive with table prefix '$prefix'"
+}
+
+# Copies tables across databases.
+#
+# parameters:
+#   $1 source database
+#   $2 destination database
+function mysql_copy_tables() {
+
+    [ "$1" == "$2" ] && exit 1
+
+    local db_pass=$(mysql_get_user_password root)
+
+    local list=$(echo "use $1; show tables;" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+    for item in $list; do
+        local collation=$(echo "select ccsa.character_set_name from information_schema.tables t, information_schema.collation_character_set_applicability ccsa where ccsa.collation_name = t.table_collation and t.table_schema = '$1' and t.table_name = '$item';" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+        $CMD_MYSQLDUMP --user="root" --password="$db_pass" --default-character-set="$collation" --extended-insert=FALSE --skip-comments "$1" "$item" | $CMD_MYSQL --user="root" --password="$db_pass" "$2"
+    done
+
+    log_info "mysql database tables copied from '$1' to '$2'"
+}
+
+# Creates database.
+#
+# parameters:
+#   $1 database name
+function mysql_create_database() {
+
+    local db_name=$1
+    local db_pass=$(mysql_get_user_password root)
+
+    cat <<EOF | $CMD_MYSQL --user="root" --password="$db_pass"
+create database $db_name;
+EOF
+
+    log_info "mysql database '$db_name' created"
+}
+
+# Drops database.
+#
+# parameters:
+#   $1 database name
+function mysql_drop_database() {
+
+    local db_name=$1
+    local db_pass=$(mysql_get_user_password root)
+
+    cat <<EOF | $CMD_MYSQL --user="root" --password="$db_pass"
+drop database if exists $db_name;
+EOF
+
+    log_info "mysql database '$db_name' dropped"
+}
+
+# Creates database user.
+#
+# parameters:
+#   $1 databases name
+#   $2 user name
+#   $3 user password
+function mysql_create_user() {
+
+    local db_user=$2
+    local db_pass=$(mysql_get_user_password root)
+
+    for DB in $1; do
+        cat <<EOF | $CMD_MYSQL --user="root" --password="$db_pass"
+grant all on $DB.* to '$db_user'@'localhost' identified by '$3';
+EOF
+    done
+
+    log_info "mysql database user '$db_user' created"
+}
+
+# Drops database user.
+#
+# parameters:
+#   $1 user name
+function mysql_drop_user() {
+
+    local db_user=$1
+    local db_pass=$(mysql_get_user_password root)
+
+    cat <<EOF | $CMD_MYSQL --user="root" --password="$db_pass"
+drop user '$db_user'@'localhost';
+EOF
+
+    log_info "mysql database user '$db_user' dropped"
+}
+
+# Lists all databases.
+function mysql_list_databases() {
+
+    local db_pass=$(mysql_get_user_password root)
+
+    local list=$(echo "show databases;" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1 ) { print } }')
+    for item in $list; do
+        echo $item
+    done
+}
+
+# Lists database tables.
+#
+# parameters:
+#   $1 database name
+function mysql_list_tables() {
+
+    local db_pass=$(mysql_get_user_password root)
+
+    local list=$(echo "use $1; show tables;" | $CMD_MYSQL --user=root --password=$db_pass | awk '{ if ( NR > 1  ) { print } }')
+    for item in $list; do
+        echo $item
+    done
+}
+
+# Checks if database exists.
+#
+# parameters:
+#   $1 database name
+function mysql_database_exists() {
+
+    local count=$(mysql_list_databases | grep "^$1$" | wc -l)
+    if [ "$count" == "0" ]; then
+        echo "no"
+    else
+        echo "yes"
+    fi
+}
+
+# Optimizes database tables.
+#
+# parameters:
+#   $1 database name
+function mysql_optimize_tables() {
+
+    local db_pass=$(mysql_get_user_password root)
+
+    local list=$(mysql_list_tables $1)
+    for item in $list; do
+        echo "use $1; optimize table $item;" | $CMD_MYSQL --user=root --password=$db_pass
+    done
+}
+
+# Runs SQL query and returns single value.
+#
+# parameters:
+#   $1 sql query
+function mysql_query_value() {
+
+    local sql=$1
+
+    echo "$1" | $CMD_MYSQL --user=root --password=$(mysql_get_user_password root) | awk '{ if ( NR > 1  ) { print } }'
+}
+
+################################################################################
+## httpd routines
+##
+
+# Creates httpd vhost.
+#
+# parameters:
+#   $1 account type (account|application|domain)
+#   $2 user name
+#   $3 ip address
+#   $4 domain name
+#   $5 document root
+function httpd_vhost_create() {
+
+    local vhost_account_type=$1
+    local vhost_user_name=$2
+    local vhost_ip_address=$4
+    local vhost_domain_name=$4
+    local vhost_document_root=$5
+
+    local vhost=$(cat <<END_HEREDOC
+    ServerAlias www.$vhost_domain_name
+    DocumentRoot $vhost_document_root
+    <Directory $vhost_document_root>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+END_HEREDOC
+)
+    $SHELLOS_DIR/bin/httpd_vhost_remove.pl -s "httpd" -t "$vhost_account_type" -n "$vhost_user_name" \
+        -i "$vhost_ip_address" -d "$vhost_domain_name" -p 80
+    $SHELLOS_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "$vhost_account_type" -n "$vhost_user_name" \
+        -i "$vhost_ip_address" -d "$vhost_domain_name" -p 80 -c "$vhost"
+
+    local vhost=$(cat <<END_HEREDOC
+    DocumentRoot $vhost_document_root
+    <Directory $vhost_document_root>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+    SSLEngine on
+    SSLCertificateFile $SHELLOS_DIR/var/certificates/$vhost_domain_name.pem
+    SSLCertificateKeyFile $SHELLOS_DIR/var/certificates/$vhost_domain_name.key
+END_HEREDOC
+)
+    $SHELLOS_DIR/bin/httpd_vhost_remove.pl -s "httpd" -t "$vhost_account_type" -n "$vhost_user_name" \
+        -i "$vhost_ip_address" -d "$vhost_domain_name" -p 443
+    $SHELLOS_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "$vhost_account_type" -n "$vhost_user_name" \
+        -i "$vhost_ip_address" -d "$vhost_domain_name" -p 443 -c "$vhost"
+
+    generate_certificate $vhost_domain_name
+}
+
+################################################################################
+## php-fpm routines
+##
+
+# Checks if any pool exists for a given php-fpm version
+#
+# parameters:
+#   $1  php-fpm version
+function phpfpm_pool_exists() {
+
+    local ver=$1
+    local dir=$INSTALL_DIR/php-fpm/$(package_get_version php-fpm | grep $ver | sort -r | sed -n 1p)
+
+    if [ $(ls $dir/conf/$PHPFPM_ACCOUNTS_DIR_NAME/*.conf 2> /dev/null | wc -l) -gt 0 ] || \
+            [ $(ls $dir/conf/$PHPFPM_APPLICATIONS_DIR_NAME/*.conf 2> /dev/null | wc -l) -gt 0 ] || \
+            [ $(ls $dir/conf/$PHPFPM_DOMAINS_DIR_NAME/*.conf 2> /dev/null | wc -l) -gt 0 ] ; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+################################################################################
+## network routines
+##
+
+# Gets deafult network interface.
+function network_get_interface() {
+
+    # FIXME: error fetching interface information: Device not found
+    # TODO: include wlan
+
+    local line=$(ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+    if [ -z "$line" ]; then
+        line=$(ifconfig br0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+        if [ -z "$line" ]; then
+            echo "unknown"
+        else
+            echo "br0"
+        fi
+    else
+        echo "eth0"
+    fi
+}
+
+# Checks if network interface is present.
+#
+# parameters:
+#   $1 network interface
+function network_interface_exists() {
+
+    local iface=$1
+
+    local count=$(ifconfig | grep 'Link encap' | grep $iface | wc -l)
+    if [ "$count" -gt 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Checks if eth0 network interface is present.
+function network_eth_exists() {
+
+    network_interface_exists "eth0"
+}
+
+# Checks if wlan0 network interface is present.
+function network_wlan_exists() {
+
+    network_interface_exists "wlan0"
+}
+
+# Checks if br0 network interface is present.
+function network_br_exists() {
+
+    network_interface_exists "br0"
+}
+
+# Prints IP address assigned to the given interface.
+#
+# parameters:
+#   $1 network interface (default are eth0 or br0)
+function network_get_ip() {
+
+    # FIXME: error fetching interface information: Device not found
+    # TODO: include wlan
+
+    local iface=""
+    local ip=""
+
+    [ -n "$1" ] && iface=$1
+
+    if [ -z "$iface" ]; then
+        ip=$(ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+        if [ -z "$ip" ]; then
+            ip=$(ifconfig br0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+        fi
+    else
+        ip=$(ifconfig $iface | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+    fi
+    echo $ip
+}
+
+# Prints MAC address assigned to the given interface.
+#
+# parameters:
+#   $1 network interface (default is eth0)
+function network_get_mac() {
+
+    local iface="eth0"
+
+    [ -n "$1" ] && iface=$1
+
+    local mac=$(ifconfig $iface | grep $iface | awk '{print $5}')
+
+    echo $(lower $mac)
+}
+
+# Checks if network responds to ping.
+#
+# parameters:
+#   $1 ip address
+function network_is_responding() {
+
+    local ip=$1
+
+    if [ $(ping -c 1 $ip | grep "100% packet loss" | wc -l) -eq 0 ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Converts network mask to CIRD notation.
+#
+# parameters:
+#   $1 netmask xxx.xxx.xxx.xxx
+function network_mask2cidr() {
+
+    local nbits=0
+    local old_ifs=$IFS
+
+    IFS=.
+    for dec in $1 ; do
+        case $dec in
+            255) let nbits+=8;;
+            254) let nbits+=7;;
+            252) let nbits+=6;;
+            248) let nbits+=5;;
+            240) let nbits+=4;;
+            224) let nbits+=3;;
+            192) let nbits+=2;;
+            128) let nbits+=1;;
+            0);;
+        esac
+    done
+    IFS=$old_ifs
+
+    echo $nbits
+}
+
+# Converts network mask from CIRD notation.
+#
+# parameters:
+#   $1 netmask yy
+function network_cidr2mask() {
+
+    local i mask=""
+    local full_octets=$(($1/8))
+    local partial_octet=$(($1%8))
+
+    for ((i=0;i<4;i+=1)); do
+        if [ $i -lt $full_octets ]; then
+            mask+=255
+        elif [ $i -eq $full_octets ]; then
+            mask+=$((256 - 2**(8-$partial_octet)))
+        else
+            mask+=0
+        fi
+        test $i -lt 3 && mask+=.
+    done
+
+    echo $mask
+}
+
+# Adds host entry to /etc/hosts file.
+#
+# parameters:
+#   $1 IP address
+#   $2 domain name
+function network_add_host() {
+
+    local ip_address=$1
+    local domain=$2
+
+    echo "$ip_address $domain" >> $HOSTS_FILE
+}
+
+# Removes host entry from /etc/hosts file.
+#
+# parameters:
+#   $1 IP address
+#   $2 domain name
+function network_remove_host() {
+
+    local ip_address=$1
+    local domain=$2
+
+    remove_from_file "\n${ip_address} ${domain}" $HOSTS_FILE
+}
+
+################################################################################
+## hardware routines
+##
+
+# Returns number of cpus.
+function cpu_count() {
+
+    local count=$(cat /proc/cpuinfo | grep "physical id" | sort -u | wc -l)
+
+    echo $count
+}
+
+# Returns number of cores.
+function cpu_core_count() {
+
+    local count=$(cat /proc/cpuinfo | grep "core id" | sort -u | wc -l)
+
+    echo $count
+}
+
+# Returns memory size. Size unit is included at the end.
+function memory_get_size() {
+
+    local size=$(cat /proc/meminfo | grep "MemTotal:" | awk '{ print $2 }')
+    size=$(expr $size / 1000)
+
+    echo ${size}MB
+}
+
+# Returns size of given drive or /dev/sda or /dev/xvda. Size unit is included at the end.
+#
+# parameters:
+#   $1 drive path (optional)
+function drive_get_size() {
+
+    local device=
+    if [ -n "$1" ]; then
+        device=$1
+    else
+        [ $(ls -l /dev/sda 2> /dev/null | wc -l) -gt 0 ] && device=/dev/sda
+        [ $(ls -l /dev/xvda 2> /dev/null | wc -l) -gt 0 ] && device=/dev/xvda
+    fi
+
+    local size=$(fdisk -l 2> /dev/null | grep "Disk $device:" | awk '{ print $3 }')
+    size=${size/.*}
+
+    echo ${size}GB
+}
+
+# Returns size of partition.
+#
+# parameters:
+#   $1 partition path
+function partition_get_size() {
+
+    local partition=$1
+
+    local size=$(df -H | grep $partition | awk '{ print $2 }')
+    size=$(echo $size | sed s/.$//)
+    size=${size/.*}
+
+    echo ${size}GB
+}
+
+# Returns size number.
+#
+# parameters:
+#   $1 string
+function size_get_number() {
+
+    local size=$1
+
+    echo $size | sed -rn 's/^([0-9]+)[a-zA-Z]+/\1/p'
+}
+
+# Returns size unit.
+#
+# parameters:
+#   $1 string
+function size_get_unit() {
+
+    local size=$1
+
+    echo $size | sed -rn 's/^[0-9]+([a-zA-Z]+)/\1/p'
+}
+
+# List hard drives.
+function hard_drive_list() {
+
+    find /dev/disk/by-id/ -type l -iname \*ata\* -print0 | xargs -0 -iD readlink -f D | sort | uniq | grep -vP "\d$"
+}
+
+# Returns number of hard drives.
+function hard_drive_count() {
+
+    local count=$(hard_drive_list | wc -l)
+
+    echo $count
+}
+
+# List usb drives.
+function usb_drive_list() {
+
+    find /dev/disk/by-path/ -type l -iname \*usb\*scsi\* -print0 | xargs -0 -iD readlink -f D
+}
+
+# Returns number of usb drives.
+function usb_drive_count() {
+
+    local count=$(usb_drive_list | wc -l)
+
+    echo $count
+}
+
+# Reboots device. This function should be overwritten.
+function device_reboot() {
+
+    # TODO: generate an event
+
+    reboot
+}
+
+################################################################################
+## security routines
+##
+
+# Generates X.509 certificate.
+#
+# parameters:
+#   $1 certificate name
+#   $2 size of the certificate (default is 4096)
+#   $3 for how many days the certificate remains valid (default is 3650)
+function generate_certificate() {
+
+    # size
+    local size=4096
+    [ -n "$2" ] && size=$2
+
+    # days
+    local days=3650
+    [ -n "$3" ] && days=$3
+
+    $CMD_OPENSSL req \
+        -new -x509 -nodes -sha1 -newkey rsa:$size -days $days -subj "/O=unknown/OU=unknown/CN=$1" \
+        -keyout $CERTIFICATES_DIR/$1.key \
+        -out $CERTIFICATES_DIR/$1.crt
+    cat $CERTIFICATES_DIR/$1.crt $CERTIFICATES_DIR/$1.key > $CERTIFICATES_DIR/$1.pem
+    chmod 400 $CERTIFICATES_DIR/$1.{crt,key,pem}
+}
+
+################################################################################
+## development and support routines
+##
+
+# Strips debugging symbols from binary files.
+#
+# parameters:
+#   $1 directory or file
+function development_strip_symbols() {
+
+    if [ -d $1 ]; then
+        du -ch $1/* | grep total
+        strip --strip-debug $1/*
+        du -ch $1/* | grep total
+    elif [ -f $1 ]; then
+        strip --strip-debug $1
+    fi
+}
+
+# Creates links to *.so and *.a files in propriate system library directories.
+#
+# parameters:
+#   $1 directory
+#   --symbolic
+function development_link_libraries() {
+
+    local dir=$1
+    local count_so=$(ls -la $dir/*.so* 2> /dev/null | wc -l)
+    local count_a=$(ls -la $dir/*.a 2> /dev/null | wc -l)
+    local symbolic=""
+
+    # arguments
+    while [ "$1" != "" ]; do
+        case $1 in
+            --symbolic) symbolic="s"
+                        ;;
+        esac
+        shift
+    done
+
+    # /lib
+    [ "$count_so" -gt 0 ] && ln -${symbolic}fv $dir/*.so* /lib/
+    if [ -d /lib/x86_64-linux-gnu ]; then
+        [ "$count_so" -gt 0 ] && ln -${symbolic}fv $dir/*.so* /lib/x86_64-linux-gnu/
+    fi
+
+    # /usr/lib
+    [ "$count_so" -gt 0 ] && ln -${symbolic}fv $dir/*.so* /usr/lib/
+    [ "$count_a" -gt 0 ] && ln -${symbolic}fv $dir/*.a /usr/lib/
+    if [ -d /usr/lib/x86_64-linux-gnu ]; then
+        [ "$count_so" -gt 0 ] && ln -${symbolic}fv $dir/*.so* /usr/lib/x86_64-linux-gnu/
+        [ "$count_a" -gt 0 ] && ln -${symbolic}fv $dir/*.a /usr/lib/x86_64-linux-gnu/
+    fi
+}
+
+# Lists executable file dependencies.
+#
+# parameters:
+#   $1 executable file
+function chroot_dependencies_list() {
+
+    local bin=$1
+
+    local output=$(ldd $bin)
+    for line in $output; do
+        echo $line | grep "^/"
+    done
+}
+
+# Lists executable file dependencies (recursively).
+#
+# parameters:
+#   $1 executable file
+function chroot_dependencies_list_all() {
+
+    local bin=$1
+
+    (
+        local output=$(chroot_dependencies_list $bin)
+        for file in $output; do
+            echo "$file"
+            chroot_dependencies_list_all $file
+        done
+    ) 2> /dev/null | grep "^/" | sort | uniq
+}
+
+# Copies executable file dependencies (recursively) to chroot directory.
+#
+# parameters:
+#   $1 executable file
+#   $2 chroot directory
+function chroot_dependencies_copy() {
+
+    local bin=$1
+    local dir=$2
+
+    local output=$(chroot_dependencies_list_all $bin)
+    for file in $output; do
+        echo "$file"
+        mkdir -p $dir/$(dirname $file)
+        cp $file $dir/$(dirname $file)
+    done
+}
+
+# Mounts a single chroot resource.
+function chroot_mount_resource() {
+
+    local dir=$1
+    local chdir=$2
+    local read_only="no"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --read-only)    read_only="yes"
+                            ;;
+        esac
+        shift
+    done
+
+    if [ -d $dir ] && [ "$(mount -l | grep $chdir | wc -l)" -eq 0 ]; then
+        mkdir -p $chdir
+        mount --bind $dir $chdir
+        if [ $read_only == "yes" ]; then
+            mount -o remount,ro $chdir
+        fi
+    fi
+}
+
+# Sets up chroot resources.
+function chroot_setup_resources() {
+
+    mkdir -p $HOSTING_DIR/{$HOSTING_PUBLIC_RELATIVE_DIR,bin,lib,sbin,usr/bin,usr/lib,usr/sbin,dev,etc,var/log,tmp}
+    chmod 1777 $HOSTING_DIR/tmp
+
+    rm -f $HOSTING_DIR/dev/null
+    mknod -m 666 $HOSTING_DIR/dev/null c 1 3
+    rm -f $HOSTING_DIR/dev/zero
+    mknod -m 666 $HOSTING_DIR/dev/zero c 1 5
+    rm -f $HOSTING_DIR/dev/random
+    mknod -m 444 $HOSTING_DIR/dev/random c 1 8
+    rm -f $HOSTING_DIR/dev/urandom
+    mknod -m 444 $HOSTING_DIR/dev/urandom c 1 9
+
+    # /bin
+    chroot_mount_resource /bin $HOSTING_DIR/bin --read-only
+    # /lib
+    chroot_mount_resource /lib $HOSTING_DIR/lib --read-only
+    # /lib64
+    chroot_mount_resource /lib64 $HOSTING_DIR/lib64 --read-only
+    # /sbin
+    chroot_mount_resource /sbin $HOSTING_DIR/sbin --read-only
+    # /usr/bin
+    chroot_mount_resource /usr/bin $HOSTING_DIR/usr/bin --read-only
+    # /usr/lib
+    chroot_mount_resource /usr/lib $HOSTING_DIR/usr/lib --read-only
+    # /usr/sbin
+    chroot_mount_resource /usr/sbin $HOSTING_DIR/usr/sbin --read-only
+
+    # /etc/localtime
+    cp -fv /etc/localtime $HOSTING_DIR/etc/localtime
+    # /etc/nsswitch.conf
+    cp -fv /etc/nsswitch.conf $HOSTING_DIR/etc/nsswitch.conf
+    # /etc/protocols
+    cp -fv /etc/protocols $HOSTING_DIR/etc/protocols
+    # /etc/services
+    cp -fv /etc/services $HOSTING_DIR/etc/services
+    # /etc/networks
+    cp -fv /etc/networks $HOSTING_DIR/etc/networks
+    # /etc/resolv.conf
+    cp -fv /etc/resolv.conf $HOSTING_DIR/etc/resolv.conf
+    # /etc/host.conf
+    cp -fv /etc/host.conf $HOSTING_DIR/etc/host.conf
+    # /etc/hostname
+    cp -fv /etc/hostname $HOSTING_DIR/etc/hostname
+    # /etc/hosts
+    cp -fv /etc/hosts $HOSTING_DIR/etc/hosts
+    # /etc/group
+    cat /etc/group | grep -v root > $HOSTING_DIR/etc/group
+    # /etc/passwd
+    cat /etc/passwd | grep -v root > $HOSTING_DIR/etc/passwd
+
+    # postfix
+    chroot_mount_resource $INSTALL_DIR/postfix/bin ${HOSTING_DIR}${INSTALL_DIR}/postfix/bin --read-only
+    chroot_mount_resource $INSTALL_DIR/postfix/conf ${HOSTING_DIR}${INSTALL_DIR}/postfix/conf --read-only
+    chroot_mount_resource $INSTALL_DIR/postfix/data ${HOSTING_DIR}${INSTALL_DIR}/postfix/data --read-only
+    chroot_mount_resource $INSTALL_DIR/postfix/log ${HOSTING_DIR}${INSTALL_DIR}/postfix/log --read-only
+    chroot_mount_resource $INSTALL_DIR/postfix/queue ${HOSTING_DIR}${INSTALL_DIR}/postfix/queue
+
+    # geoip
+    if [ -f $INSTALL_DIR/geoip/share/GeoIP/GeoIPCity.dat ] && [ ! -f ${HOSTING_DIR}${INSTALL_DIR}/geoip/share/GeoIP/GeoIPCity.dat ]; then
+        mkdir -p ${HOSTING_DIR}${INSTALL_DIR}/geoip/share/GeoIP
+        ln $INSTALL_DIR/geoip/share/GeoIP/GeoIPCity.dat ${HOSTING_DIR}${INSTALL_DIR}/geoip/share/GeoIP/GeoIPCity.dat
+    fi
+}
+
+function fix_common_libraries() {
+
+    # libssl
+    ln -sfv /lib/x86_64-linux-gnu/libssl* /lib/
+    ln -sfv /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/
+
+    # libcrypto
+    ln -sfv /lib/x86_64-linux-gnu/libcrypto* /lib/
+    ln -sfv /usr/lib/x86_64-linux-gnu/libcrypto* /usr/lib/
+
+    # libnsl
+    ln -sfv /lib/x86_64-linux-gnu/libnsl* /lib/
+    ln -sfv /usr/lib/x86_64-linux-gnu/libnsl* /usr/lib/
+
+    # libcap
+    ln -sfv /lib/x86_64-linux-gnu/libcap* /lib/
+
+    # libnss dns
+    ln -sfv /lib/x86_64-linux-gnu/libnss_dns* /lib/
+    ln -sfv /usr/lib/x86_64-linux-gnu/libnss_dns* /usr/lib/
+}
+
+function remove_broken_links() {
+
+    local links=$(list_broken_links / | grep -v "^/proc/" | grep -v "^/run/" | grep -v "^$HOSTING_DIR" | awk '{ print $1 }')
+    for link in $links; do
+        rm -rfv $link
+    done
+}
+
+################################################################################
+## update constants
+##
+
+export PID_PHPFPM_53_PROC_STR="$INSTALL_DIR/php-fpm/$(package_get_version php-fpm | grep 5.3 | sort -r | sed -n 1p)"
+export PID_PHPFPM_54_PROC_STR="$INSTALL_DIR/php-fpm/$(package_get_version php-fpm | grep 5.4 | sort -r | sed -n 1p)"
+export PID_PHPFPM_55_PROC_STR="$INSTALL_DIR/php-fpm/$(package_get_version php-fpm | grep 5.5 | sort -r | sed -n 1p)"
+
+################################################################################
+## includes
+##
+
+_include_file $SHELLOS_DIR/lib/core-${DEVICE}
+

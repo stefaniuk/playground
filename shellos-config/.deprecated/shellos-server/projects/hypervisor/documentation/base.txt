@@ -1,0 +1,5 @@
+SEE:
+
+http://publib.boulder.ibm.com/infocenter/lnxinfo/v3r0m0/topic/liaat/liaatbestpractices_pdf.pdf
+http://publib.boulder.ibm.com/infocenter/lnxinfo/v3r0m0/topic/liaat/liaatsecurity_pdf.pdf
+http://wiki.kartbuilding.net/index.php/KVM_Setup_on_Debian_Squeeze

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+url="http://www.java.net/download/jdk${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}/archive/${VER_OPENJDK_BUILD}/binaries/jdk-${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-ea-bin-${VER_OPENJDK_BUILD}-linux-x64-${VER_OPENJDK_DATE}.tar.gz"
+file=jdk-${VER_OPENJDK_NUMBER}u${VER_OPENJDK_UPDATE}-ea-bin-${VER_OPENJDK_BUILD}-linux-x64-${VER_OPENJDK_DATE}.tar.gz
+
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 50000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+exit 0

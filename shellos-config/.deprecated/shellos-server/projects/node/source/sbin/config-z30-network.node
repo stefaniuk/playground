@@ -1,0 +1,67 @@
+#!/bin/bash
+
+##
+## configure network interfaces
+##
+
+if [ "$USE_BRIDGED_NETWORK" == "Y" ]; then
+
+# /etc/network/interfaces (primary network interface)
+cat << EOF >> /etc/network/interfaces
+
+# primary network interface
+auto eth0
+iface eth0 inet manual
+EOF
+
+# /etc/network/interfaces (primary bridge)
+cat << EOF >> /etc/network/interfaces
+
+# primary bridge
+auto br0
+iface br0 inet static
+    address $IP_ADDRESS1
+    netmask $NETMASK
+    network $NETWORK
+    broadcast $BROADCAST
+    gateway $GATEWAY
+EOF
+[ -n "$(trim "$DNS_NAMESERVERS")" ] && cat << EOF >> /etc/network/interfaces
+    dns-nameservers $(trim "$DNS_NAMESERVERS")
+EOF
+[ -n "$DNS_SEARCH" ] && cat << EOF >> /etc/network/interfaces
+    dns-search $DNS_SEARCH
+EOF
+cat << EOF >> /etc/network/interfaces
+    bridge_ports eth0
+    bridge_stp off
+    bridge_fd 9
+    bridge_hello 2
+    bridge_maxage 12
+    bridge_maxwait 0
+EOF
+
+# /etc/network/interfaces (containers bridge)
+cat << EOF >> /etc/network/interfaces
+
+# containers bridge
+auto $CONTAINER_BRIDGE_NAME
+iface $CONTAINER_BRIDGE_NAME inet static
+    pre-up modprobe dummy
+    address $CONTAINER_BRIDGE_IPADDRESS
+    netmask $CONTAINER_BRIDGE_NETMASK
+    network $CONTAINER_BRIDGE_NETWORK
+    broadcast $CONTAINER_BRIDGE_BROADCAST
+    bridge_fd 0
+    bridge_ports dummy_lxc
+    pre-up /sbin/iptables -t nat -A POSTROUTING -o br0 -j MASQUERADE
+    post-up echo "1" > /proc/sys/net/ipv4/ip_forward
+    post-down /sbin/iptables -t nat -D POSTROUTING -o br0 -j MASQUERADE
+EOF
+
+fi
+
+# remove default libvirt bridge network
+rm /etc/libvirt/qemu/networks/autostart/default.xml
+
+exit 0

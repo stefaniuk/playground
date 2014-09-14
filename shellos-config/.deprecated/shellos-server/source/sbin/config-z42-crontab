@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# set new PATH (same for the profile and crontab)
+NEW_PATH=$HOST4GE_DIR/bin:$HOST4GE_DIR/job
+[ -d $INSTALL_DIR/dovecot/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/dovecot/bin
+[ -d $INSTALL_DIR/geoip/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/geoip/bin
+[ -d $INSTALL_DIR/git/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/git/bin
+[ -d $INSTALL_DIR/httpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/httpd/bin
+[ -d $INSTALL_DIR/libiconv/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/libiconv/bin
+[ -d $INSTALL_DIR/lxc/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/lxc/bin
+[ -d $INSTALL_DIR/mysql/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mysql/bin
+[ -d $INSTALL_DIR/openjdk/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openjdk/bin
+[ -d $INSTALL_DIR/openssh/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssh/bin
+[ -d $INSTALL_DIR/openssl/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssl/bin
+[ -d $INSTALL_DIR/openvpn/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openvpn/bin
+[ -d $INSTALL_DIR/php/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/php/bin
+[ -d $INSTALL_DIR/postfix/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/postfix/bin
+[ -d $INSTALL_DIR/proftpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/proftpd/bin
+[ -d $INSTALL_DIR/tomcat/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/tomcat/bin
+NEW_PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$NEW_PATH
+
+# conf/.crontab-variables
+cat << EOF > $HOST4GE_DIR/conf/.crontab-variables
+# operating system codename
+CODENAME="$CODENAME"
+
+# organisation details
+COMMON_NAME="$COMMON_NAME"
+DOMAIN="$DOMAIN"
+
+# admin details
+ADMIN_NAME="$ADMIN_NAME"
+ADMIN_MAIL="$ADMIN_MAIL"
+
+# server details
+SERVER_NAME="$SERVER_NAME"
+SERVER_LOCATION="$SERVER_LOCATION"
+SERVER_TYPE="$SERVER_TYPE"
+ROLE_NAME="$ROLE_NAME"
+ROLE_ID=$(role_name_to_id $ROLE_NAME)
+ASPECT_NAME="$ASPECT_NAME"
+ASPECT_ID=$(aspect_name_to_id $ASPECT_NAME)
+
+# paths
+INSTALL_DIR=/srv
+HOST4GE_DIR=$INSTALL_DIR/host4ge
+PATH=$NEW_PATH
+
+# settings
+TERM=xterm
+SHELL=/bin/bash
+EDITOR=vim
+MAILTO="$ADMIN_MAIL"
+EOF
+
+# conf/.crontab-jobs
+cat << EOF > $HOST4GE_DIR/conf/.crontab-jobs
+
+# cronjob definition
+@reboot         [ -x $HOST4GE_DIR/job/system-services ]     && $HOST4GE_DIR/job/system-services --on-reboot > $HOST4GE_DIR/log/onreboot.log 2>&1
+*/1 * * * *     [ -x $HOST4GE_DIR/job/system-services ]     && $HOST4GE_DIR/job/system-services --log-errors
+*/1 * * * *     [ -x $HOST4GE_DIR/job/system-usage ]        && $HOST4GE_DIR/job/system-usage
+29,59 */1 * * * [ -x $HOST4GE_DIR/job/backup-logs ]         && $HOST4GE_DIR/job/backup-logs
+1 */3 * * *     [ -x $HOST4GE_DIR/job/system-status ]       && $HOST4GE_DIR/job/system-status
+17 3 * * *      [ -x $HOST4GE_DIR/job/backup-databases ]    && $HOST4GE_DIR/job/backup-databases
+29 3 * * *      [ -x $HOST4GE_DIR/job/system-update ]       && $HOST4GE_DIR/job/system-update
+41 3 * * *      [ -x $HOST4GE_DIR/job/geoip-update ]        && $HOST4GE_DIR/job/geoip-update
+EOF
+
+chmod 600 $HOST4GE_DIR/conf/.crontab*
+
+# reload crontab now
+[ "$SERVER_STATUS" != "installation" ] && \
+    reload_crontab
+
+exit 0

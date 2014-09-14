@@ -1,0 +1,13 @@
+# BEGIN: custom hosts
+
+195.162.24.216  earth.host4ge.com
+195.162.24.248  mars.host4ge.com
+195.162.24.249  jupiter.host4ge.com
+195.162.24.250  saturn.host4ge.com
+195.162.24.251  uranus.host4ge.com tomcat.uranus.host4ge.com
+195.162.24.217  neptune.host4ge.com phpmyadmin.neptune.host4ge.com roundcube.neptune.host4ge.com tomcat.neptune.host4ge.com
+
+#195.162.24.252  ?.host4ge.com
+#195.162.24.253  ?.host4ge.com
+
+# END: custom hosts

@@ -1,0 +1,72 @@
+#!/bin/bash
+
+##
+## include
+##
+
+. $package_dir/common
+
+##
+## prepare
+##
+
+# set version
+php_fpm_ver=$update_new_ver
+# set variables
+php_fpm_set_version_dependent_variables
+# change directory with read/write access
+cd /tmp
+# download package
+php_fpm_download_package
+
+##
+## update (build)
+##
+
+if [ $update_build == "Y" ] && [ $update_replace == "N" ] && [ -n "$update_new_ver" ] && [ $(is_chroot) == "yes" ]; then
+    if [ "$pkg_result" != "success" ]; then
+        echo "Build $package $update_new_ver:"
+        . $package_dir/build
+        echo "Create package:"
+        package_create $php_fpm_install_dir "$pkg_name"
+    fi
+fi
+
+##
+## update (replace)
+##
+
+if [ $update_build == "N" ] && [ $update_replace == "Y" ] && [ -n "$update_curr_ver" ] && [ -n "$update_new_ver" ] && [ $(is_chroot) == "no" ]; then
+    if [ "$pkg_result" == "success" ]; then
+
+        echo "Replace $package $update_curr_ver by $update_new_ver"
+
+        # stop service
+        php_fpm_stop_service
+        # create package backup
+        package_create_backup $INSTALL_DIR/php-fpm/$update_curr_ver "${package}-${update_curr_ver}" --remove
+
+        # install new package
+        package_restore "$pkg_name" --dir $INSTALL_DIR/$package
+        # check installtion
+        if [ ! -f $php_fpm_install_dir/bin/php-fpm ]; then
+            echo "Error: $package $php_fpm_ver has NOT been installed successfully!"
+            exit 1
+        fi
+
+        # restore old configuration files
+        php_fpm_restore_configurtaion
+        # set file permissions
+        php_fpm_set_file_permissions
+        # post install
+        php_fpm_post_install
+        # print info
+        php_fpm_print_info
+        # start service
+        php_fpm_start_service
+
+    fi
+fi
+
+exit 0
+

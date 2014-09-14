@@ -1,0 +1,70 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: ShellOS requires MySQL!"
+    exit 1
+fi
+
+##
+## install
+##
+
+# create user and group
+user_create "$SHELLOS_USER" $SHELLOS_UID "$SHELLOS_GROUP" $SHELLOS_GID
+
+# database user
+shellos_db_name="shellos"
+shellos_db_user="shellos"
+shellos_db_pass=$(random 32)
+
+# get mysql root password
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+[ $(mysql_database_exists $shellos_db_name) == "yes" ] && mysql_drop_database $shellos_db_name
+cat << EOF | $INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass"
+CREATE DATABASE $shellos_db_name;
+GRANT ALL PRIVILEGES ON $shellos_db_name.* TO $shellos_db_user@localhost IDENTIFIED BY '$shellos_db_pass';
+EOF
+$INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass" $shellos_db_name < $SHELLOS_DIR/pkg/shellos/shellos.sql
+sleep 1
+$SHELLOS_DIR/bin/mail_account_create.pl -m "admin@$(hostname).$DOMAIN" -p "$(random 32)"
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user="root" --password="$db_pass" shutdown
+sleep 1
+db_pass=
+
+##
+## configure
+##
+
+# database access
+mysql_add_user_password "$shellos_db_user" "$shellos_db_pass"
+shellos_conf_set_option "db_name" "$shellos_db_name"
+shellos_conf_set_option "db_user" "$shellos_db_user"
+shellos_conf_set_option "db_pass" "$shellos_db_pass"
+
+# create links to the log files
+ln -sfv /var/log/shellos.log $LOG_DIR/shellos.log
+ln -sfv /var/log/shellos.err $LOG_DIR/shellos.err
+
+##
+## post install
+##
+
+# save package version
+package_add_version "shellos" "$VER_SHELLOS"
+
+# add directories to create hashes
+hashes_add_dir $SHELLOS_DIR/bin
+hashes_add_dir $SHELLOS_DIR/job
+hashes_add_dir $SHELLOS_DIR/lib
+hashes_add_dir $SHELLOS_DIR/pkg
+hashes_add_dir $SHELLOS_DIR/sbin
+
+exit 0
+

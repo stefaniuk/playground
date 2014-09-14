@@ -1,0 +1,153 @@
+#!/bin/bash
+
+# set new PATH (same for the profile and crontab)
+NEW_PATH=$HOST4GE_DIR/bin:$HOST4GE_DIR/job
+[ -d $INSTALL_DIR/dovecot/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/dovecot/bin
+[ -d $INSTALL_DIR/geoip/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/geoip/bin
+[ -d $INSTALL_DIR/git/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/git/bin
+[ -d $INSTALL_DIR/httpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/httpd/bin
+[ -d $INSTALL_DIR/libiconv/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/libiconv/bin
+[ -d $INSTALL_DIR/lxc/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/lxc/bin
+[ -d $INSTALL_DIR/mysql/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mysql/bin
+[ -d $INSTALL_DIR/openjdk/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openjdk/bin
+[ -d $INSTALL_DIR/openssh/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssh/bin
+[ -d $INSTALL_DIR/openssl/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssl/bin
+[ -d $INSTALL_DIR/openvpn/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openvpn/bin
+[ -d $INSTALL_DIR/php/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/php/bin
+[ -d $INSTALL_DIR/postfix/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/postfix/bin
+[ -d $INSTALL_DIR/proftpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/proftpd/bin
+[ -d $INSTALL_DIR/tomcat/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/tomcat/bin
+NEW_PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$NEW_PATH
+
+# conf/.profile
+cat << EOF > $HOST4GE_DIR/conf/.profile
+# paths
+export INSTALL_DIR=/srv
+export HOST4GE_DIR=$INSTALL_DIR/host4ge
+export PATH=$NEW_PATH
+
+# settings
+export TERM=xterm
+export SHELL=/bin/bash
+export EDITOR=vim
+export MAILTO="$ADMIN_MAIL"
+
+# operating system codename
+export CODENAME="$CODENAME"
+
+# organisation details
+export COMMON_NAME="$COMMON_NAME"
+export DOMAIN="$DOMAIN"
+
+# admin details
+export ADMIN_NAME="$ADMIN_NAME"
+export ADMIN_MAIL="$ADMIN_MAIL"
+
+# server details
+export SERVER_NAME="$SERVER_NAME"
+export SERVER_LOCATION="$SERVER_LOCATION"
+export SERVER_TYPE="$SERVER_TYPE"
+export ROLE_NAME="$ROLE_NAME"
+export ROLE_ID=$(role_name_to_id $ROLE_NAME)
+export ASPECT_NAME="$ASPECT_NAME"
+export ASPECT_ID=$(aspect_name_to_id $ASPECT_NAME)
+
+if [[ \$- == *i* ]]; then
+    # variables
+    source $HOST4GE_DIR/conf/variables
+    # versions
+    source $HOST4GE_DIR/conf/versions
+    # constants
+    source $HOST4GE_DIR/bin/constants
+    # functions
+    source $HOST4GE_DIR/bin/functions
+    # aliases
+    source $HOST4GE_DIR/bin/aliases
+fi
+EOF
+chmod 600 $HOST4GE_DIR/conf/.profile
+
+# ~/.profile
+[ ! -f ~/.profile.old ] && cp ~/.profile ~/.profile.old
+cat << EOF > ~/.profile
+if [ "$BASH" ]; then
+  if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+  fi
+fi
+
+mesg n
+
+source $HOST4GE_DIR/conf/.profile
+EOF
+
+# do not bash save history
+ln -sf /dev/null ~/.bash_history
+
+# conf/variables
+cat << EOF > $HOST4GE_DIR/conf/variables
+#!/bin/bash
+
+# operating system codename
+export CODENAME="$CODENAME"
+
+# organisation details
+export COMMON_NAME="$COMMON_NAME"
+export DOMAIN="$DOMAIN"
+
+# admin details
+export ADMIN_NAME="$ADMIN_NAME"
+export ADMIN_MAIL="$ADMIN_MAIL"
+
+# server details
+export SERVER_NAME="$SERVER_NAME"
+export SERVER_LOCATION="$SERVER_LOCATION"
+export SERVER_TYPE="$SERVER_TYPE"
+export ROLE_NAME="$ROLE_NAME"
+export ROLE_ID=$(role_name_to_id $ROLE_NAME)
+export ASPECT_NAME="$ASPECT_NAME"
+export ASPECT_ID=$(aspect_name_to_id $ASPECT_NAME)
+
+# regular network settings
+export IP_ADDRESS="$IP_ADDRESS"
+export IP_ADDRESS1="$IP_ADDRESS1"
+export IP_ADDRESS2="$IP_ADDRESS2"
+export IP_ADDRESS3="$IP_ADDRESS3"
+export IP_ADDRESS4="$IP_ADDRESS4"
+export NETMASK="$NETMASK"
+export NETWORK="$NETWORK"
+export BROADCAST="$BROADCAST"
+export GATEWAY="$GATEWAY"
+export DNS_NAMESERVER1="$DNS_NAMESERVER1"
+export DNS_NAMESERVER2="$DNS_NAMESERVER2"
+export DNS_NAMESERVER3="$DNS_NAMESERVER3"
+export DNS_NAMESERVER4="$DNS_NAMESERVER4"
+export DNS_NAMESERVERS="$(trim "$DNS_NAMESERVERS")"
+export DNS_SEARCH="$DNS_SEARCH"
+export USE_BRIDGED_NETWORK="$USE_BRIDGED_NETWORK"
+
+# vpn network settings
+export VPN_SERVER_FQDN="$VPN_SERVER_FQDN"
+export VPN_SERVER_IP="$VPN_SERVER_IP"
+export VPN_NETWORK="$VPN_NETWORK"
+export VPN_NETMASK="$VPN_NETMASK"
+export VPN_IP_ADDRESS="$VPN_IP_ADDRESS"
+
+# local download alternative
+export LOCAL_DOWNLOAD_USER="$LOCAL_DOWNLOAD_USER"
+export LOCAL_DOWNLOAD_PASS="$LOCAL_DOWNLOAD_PASS"
+export LOCAL_DOWNLOAD_URL="$LOCAL_DOWNLOAD_URL"
+
+# online download alternative
+export ONLINE_DOWNLOAD_USER="$ONLINE_DOWNLOAD_USER"
+export ONLINE_DOWNLOAD_PASS="$ONLINE_DOWNLOAD_PASS"
+export ONLINE_DOWNLOAD_URL="$ONLINE_DOWNLOAD_URL"
+EOF
+chmod 600 $HOST4GE_DIR/conf/variables
+
+# conf/versions
+cp -fv $HOST4GE_DIR/sbin/versions* $HOST4GE_DIR/conf
+replace_in_file "HOST4GE_DIR\/bin\/versions" "HOST4GE_DIR\/conf\/versions" $HOST4GE_DIR/conf/versions
+chmod 600 $HOST4GE_DIR/conf/versions*
+
+exit 0

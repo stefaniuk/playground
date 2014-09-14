@@ -1,0 +1,80 @@
+#!/bin/bash
+
+echo "Loading base..."
+
+##
+## functions
+##
+
+function _detect_system() {
+
+    [ -n "$OS" ] && return
+
+    function _lowercase() {
+
+        echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
+    }
+
+    # set defalut values
+    OS=$(uname)
+    DIST="unknown"
+    DIST_BASED_ON="unknown"
+    PSEUDO_NAME="unknown"
+    VERSION="unknown"
+    ARCH=$(uname -m)
+    KERNEL=$(uname -r)
+
+    if [ -f /etc/debian_version ]; then
+        DIST=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')
+        DIST_BASED_ON='Debian'
+        PSEUDO_NAME=$(cat /etc/lsb-release | grep '^DISTRIB_CODENAME' | awk -F=  '{ print $2 }')
+        VERSION=$(cat /etc/lsb-release | grep '^DISTRIB_RELEASE' | awk -F=  '{ print $2 }')
+    elif [ -f /etc/redhat-release ]; then
+        DIST=$(cat /etc/redhat-release | sed s/\ release.*//)
+        DIST_BASED_ON='RedHat'
+        PSEUDO_NAME=$(cat /etc/redhat-release | sed s/.*\(// | sed s/\)//)
+        VERSION=$(cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//)
+    fi
+
+    # convert to lower case
+    OS=$(_lowercase $OS)
+    DIST=$(_lowercase $DIST)
+    DIST_BASED_ON=$(_lowercase $DIST_BASED_ON)
+    PSEUDO_NAME=$(_lowercase $PSEUDO_NAME)
+    VERSION=$(_lowercase $VERSION)
+    ARCH=$(_lowercase $ARCH)
+    KERNEL=$(_lowercase $KERNEL)
+
+    # fix variables
+    [ "$DIST" == "red" ] && DIST="redhat"
+}
+
+function _include_file() {
+
+    local file=$1
+
+    [ -f $file ] && source $file
+}
+
+##
+## main
+##
+
+_detect_system
+
+##
+## includes
+##
+
+_include_file $SHELLOS_DIR/pkg/versions
+_include_file $SHELLOS_DIR/conf/variables
+_include_file $SHELLOS_DIR/lib/constants
+_include_file $SHELLOS_DIR/lib/core
+
+##
+## finish
+##
+
+# get IP address if not set
+[ -z "$IP_ADDRESS" ] && IP_ADDRESS=$(network_get_ip)
+

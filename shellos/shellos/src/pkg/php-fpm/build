@@ -1,0 +1,72 @@
+#!/bin/bash
+
+[ -d $php_fpm_install_dir ] && rm -rf $php_fpm_install_dir
+tar -zxf php-$php_fpm_ver.tar.gz
+src_dir_name=$(find -name "php*$php_fpm_ver*" -type d -exec basename '{}' ';')
+cd $src_dir_name
+src_dir=$(pwd)
+./configure \
+    --prefix=$php_fpm_install_dir \
+    --sbindir=$php_fpm_install_dir/bin \
+    --sysconfdir=$php_fpm_install_dir/conf \
+    --localstatedir=$php_fpm_install_dir/log \
+    --with-config-file-path=$php_fpm_install_dir/conf \
+    --disable-cgi \
+    --enable-fpm \
+    --enable-bcmath=shared \
+    --enable-calendar=shared \
+    --enable-cli=shared \
+    --enable-ctype=shared \
+    --enable-exif=shared \
+    --enable-ftp=shared \
+    --enable-libxml=shared \
+    --enable-mbstring=shared \
+    --enable-soap=shared \
+    --enable-sockets=shared \
+    --enable-zip=shared \
+    --with-bz2=shared \
+    --with-gd=shared \
+    --with-freetype-dir=/usr/include/freetype2 \
+    --with-jpeg-dir=shared \
+    --with-png-dir=shared \
+    --with-gettext=shared \
+    --with-mcrypt=shared \
+    --with-mhash=shared \
+    --with-pear=shared \
+    --with-pcre-regex \
+    --enable-pdo=shared \
+    --with-sqlite3=shared \
+    --with-pdo-sqlite=shared,/usr \
+    --with-mysql=shared,$INSTALL_DIR/mysql \
+    --with-mysql-sock=$INSTALL_DIR/mysql/log/mysql.sock \
+    --with-mysqli=shared,$INSTALL_DIR/mysql/bin/mysql_config \
+    --with-pdo-mysql=shared,$INSTALL_DIR/mysql \
+    --with-zlib-dir=shared,$INSTALL_DIR/zlib \
+    --with-openssl=shared,$INSTALL_DIR/openssl \
+    --with-curl \
+    $php_fpm_configure_options \
+&& make && make install && cd .. && echo "$package $php_fpm_ver installed successfully!" \
+&& echo " === strip symbols ===" \
+&& development_strip_symbols $php_fpm_install_dir/bin \
+&& development_strip_symbols $php_fpm_install_dir/lib/php/extensions/$(ls $php_fpm_install_dir/lib/php/extensions/) \
+&& echo " === adjust package ===" \
+&& rm -rfv $php_fpm_install_dir/log/* \
+&& ( \
+    ([ -f $php_fpm_install_dir/share/php/fpm/status.html ] && cp -v $php_fpm_install_dir/share/php/fpm/status.html $php_fpm_install_dir/log) \
+    || \
+    ([ -f $php_fpm_install_dir/php/fpm/status.html ] && cp -v $php_fpm_install_dir/php/fpm/status.html $php_fpm_install_dir/log) \
+    || true \
+) \
+&& rm -rfv $php_fpm_install_dir/{man,php,share} \
+&& rm -v $php_fpm_install_dir/lib/php/extensions/$(ls $php_fpm_install_dir/lib/php/extensions/)/*.a \
+&& mkdir $php_fpm_install_dir/{conf,log}/{accounts,applications,domains} \
+&& cp -v $src_dir/sapi/fpm/init.d.php-fpm $php_fpm_install_dir/bin/php-fpm.sh \
+&& replace_in_file '\/log\/run\/php-fpm.pid' '\/log\/php-fpm.pid' $php_fpm_install_dir/bin/php-fpm.sh \
+&& cp -v $php_fpm_install_dir/conf/php-fpm.conf.default $php_fpm_install_dir/conf/php-fpm.conf \
+&& cp -p $src_dir/php.ini-production $php_fpm_install_dir/conf/php.ini \
+&& cp -p $src_dir/php.ini-production $php_fpm_install_dir/conf \
+&& cp -p $src_dir/php.ini-development $php_fpm_install_dir/conf \
+&& echo "$php_fpm_ver" > $php_fpm_install_dir/conf/version \
+&& echo " === clean up ===" \
+&& rm -f $src_dir/../php-$php_fpm_ver.tar.gz && rm -rf $src_dir/../$src_dir_name
+

@@ -1,0 +1,288 @@
+#!/bin/bash
+#
+# Global constants common for all projects. These are variables not likely to be
+# changed.
+
+################################################################################
+## includes
+##
+
+# ssh
+[ -f /root/.ssh/environment ] && \
+    source /root/.ssh/environment
+
+################################################################################
+## options
+##
+
+shopt -s extglob
+
+################################################################################
+## directories
+##
+
+# services directory
+export INSTALL_DIR=/srv
+export INSTALL_DIR_ESC=`echo "$INSTALL_DIR" | sed 's/\//\\\\\//g'`
+
+# project directory
+export SHELLOS_DIR=$INSTALL_DIR/shellos
+export SHELLOS_DIR_ESC=`echo "$SHELLOS_DIR" | sed 's/\//\\\\\//g'`
+
+# project's 2nd level directories
+export BIN_DIR=$SHELLOS_DIR/bin
+export CONF_DIR=$SHELLOS_DIR/conf
+export ETC_DIR=$SHELLOS_DIR/etc
+export JOB_DIR=$SHELLOS_DIR/job
+export LIB_DIR=$SHELLOS_DIR/lib
+export LOG_DIR=$SHELLOS_DIR/log
+export PKG_DIR=$SHELLOS_DIR/pkg
+export SBIN_DIR=$SHELLOS_DIR/sbin
+
+# variable data directories - most of these directories have to be created
+# during the installation process
+
+export VAR_DIR=/var/shellos
+
+export BACKUP_DIR=$VAR_DIR/backup
+export BACKUP_DATABASES_DIR=$BACKUP_DIR/databases
+export BACKUP_LOGS_DIR=$BACKUP_DIR/logs
+
+export CACHE_DIR=$VAR_DIR/cache
+export CACHE_DOWNLOADS_DIR=$CACHE_DIR/downloads
+export CACHE_IMAGES_DIR=$CACHE_DIR/images
+export CACHE_KERNELS_DIR=$CACHE_DIR/kernels
+export CACHE_PACKAGES_DIR=$CACHE_DIR/packages
+export CACHE_UPDATES_DIR=$CACHE_DIR/updates
+
+export HOSTING_DIR=$VAR_DIR/hosting
+export HOSTING_DATA_DIR_NAME="data"
+export HOSTING_ACCOUNTS_DIR=$HOSTING_DIR/$HOSTING_DATA_DIR_NAME/accounts
+export HOSTING_APPLICATIONS_DIR=$HOSTING_DIR/$HOSTING_DATA_DIR_NAME/applications
+
+export CERTIFICATES_DIR=$VAR_DIR/certificates
+export FLAGS_DIR=$VAR_DIR/flags
+export MAIL_DIR=$VAR_DIR/mail
+export TMP_DIR=$VAR_DIR/tmp
+export WORKSPACE_DIR=$VAR_DIR/workspace
+
+################################################################################
+## system variables
+##
+
+export SSH_ENV=/root/.ssh/environment
+export PERL5LIB=$SHELLOS_DIR/lib/perl
+export JAVA_HOME=$INSTALL_DIR/openjdk
+
+################################################################################
+## configuration files
+##
+
+export CRONTAB_JOBS_FILE=$SHELLOS_DIR/conf/.crontab-jobs
+export CRONTAB_VARIABLES_FILE=$SHELLOS_DIR/conf/.crontab-variables
+export DATABASE_USERS_FILE=$SHELLOS_DIR/conf/.database-users
+export HASH_DIRECTORIES_FILE=$SHELLOS_DIR/conf/.hash-directories
+export HASH_FILES_FILE=$SHELLOS_DIR/conf/.hash-files
+export PACKAGES_FILE=$SHELLOS_DIR/conf/.packages
+export PROFILE_FILE=$SHELLOS_DIR/conf/.profile
+export REPOSITORIES_FILE=$SHELLOS_DIR/conf/.repositories
+export SHELLOS_CONF_FILE=$SHELLOS_DIR/conf/shellos.conf
+export FIREWALL_MODE_FILE=$FLAGS_DIR/shellos-firewall-mode
+
+################################################################################
+## settings
+##
+
+# logs
+export LOG_FILES="auth.log sys.log cron.log daemon.log kern.log user.log shellos.log shellos.err openvpn.log openvpn.err mysql.log mysql.err httpd.log httpd.err ftp.log mail.log mail.err"
+
+# job
+export JOB_LOG_EVENT_TIME=60 # 60 seconds
+export JOB_LOCK_DIR=$FLAGS_DIR
+export JOB_LOCK_ALL_FILE=$JOB_LOCK_DIR/shellos-job-lock-all.lock
+export JOB_BACKUP_DATABASES_REMOVE_DAYS=92 # 3 months
+export JOB_BACKUP_LOGS_REMOVE_DAYS=1095 # 3 years
+
+# system user
+export USER_MIN_ID=10001
+export USER_MAX_ID=19999
+export GROUP_MIN_ID=10001
+export GROUP_MAX_ID=19999
+
+# openssh
+export OPENSSH_JAIL_GROUP="sshjail"
+export OPENSSH_JAIL_GID=502
+export OPENSSH_PORT=22
+
+# openvpn
+export OPENVPN_USER="vpn"
+export OPENVPN_UID=503
+export OPENVPN_GROUP="vpn"
+export OPENVPN_GID=503
+export OPENVPN_KEY_SIZE=4096
+export OPENVPN_PORT=8443
+export OPENVPN_PROTOCOL="tcp"
+
+# mysql
+export MYSQL_USER="mysql"
+export MYSQL_UID=510
+export MYSQL_GROUP="mysql"
+export MYSQL_GID=510
+export MYSQL_PORT=3306
+export MYSQL_DEFAULT_CHARSET="utf8"
+export MYSQL_DEFAULT_COLLATION="utf8_general_ci"
+
+# postfix
+export POSTFIX_USER="postfix"
+export POSTFIX_UID=540
+export POSTFIX_GROUP="postfix"
+export POSTFIX_GID=540
+export POSTFIX_POSTDROP_GROUP="postdrop"
+export POSTFIX_POSTDROP_GID=541
+export POSTFIX_VMAIL_USER="vmail"
+export POSTFIX_VMAIL_UID=999
+export POSTFIX_VMAIL_GROUP="vmail"
+export POSTFIX_VMAIL_GID=999
+
+# httpd
+export HTTPD_USER="httpd"
+export HTTPD_UID=520
+export HTTPD_GROUP="httpd"
+export HTTPD_GID=520
+export HTTPD_PORT=80
+export HTTPD_PORT_SSL=443
+export HTTPD_SUEXEC_UID_MIN=10001
+export HTTPD_SUEXEC_GID_MIN=10001
+export HTTPD_CHROOT_DIR=$HOSTING_DIR
+export HTTPD_HTDOCS_DIR_NAME=$HOSTING_DATA_DIR_NAME
+export HTTPD_HTDOCS_DIR=$HOSTING_DIR/$HTTPD_HTDOCS_DIR_NAME
+
+# proftpd
+export PROFTPD_USER="proftpd"
+export PROFTPD_UID=530
+export PROFTPD_GROUP="proftpd"
+export PROFTPD_GID=530
+export PROFTPD_JAIL_GROUP="ftpjail"
+export PROFTPD_JAIL_GID=9999
+export PROFTPD_PORT_MIN=1900
+export PROFTPD_PORT_MAX=1999
+
+# dovecot
+export DOVECOT_USER="dovecot"
+export DOVECOT_UID=550
+export DOVECOT_GROUP="dovecot"
+export DOVECOT_GID=550
+export DOVECOT_NULL_USER="dovenull"
+export DOVECOT_NULL_UID=551
+export DOVECOT_NULL_GROUP="dovenull"
+export DOVECOT_NULL_GID=551
+
+# tomcat
+export TOMCAT_USER="tomcat"
+export TOMCAT_UID=525
+export TOMCAT_GROUP="tomcat"
+export TOMCAT_GID=525
+export TOMCAT_PORT=9080
+export TOMCAT_PORT_SSL=9443
+
+# shellos
+export SHELLOS_USER="shellos"
+export SHELLOS_UID=500
+export SHELLOS_GROUP="shellos"
+export SHELLOS_GID=500
+
+# update
+export UPDATE_LOG_FILE=/var/log/update.log
+
+################################################################################
+## commands
+##
+
+export CMD_APACHECTL=$INSTALL_DIR/httpd/bin/apachectl
+export CMD_DOVECOT=$INSTALL_DIR/dovecot/bin/dovecot
+export CMD_FIREWALL=$SHELLOS_DIR/bin/firewall
+export CMD_GIT=$INSTALL_DIR/git/bin/git
+export CMD_HTTPD=$INSTALL_DIR/httpd/bin/httpd
+export CMD_MYSQL=$INSTALL_DIR/mysql/bin/mysql
+export CMD_MYSQLD=$INSTALL_DIR/mysql/bin/mysqld
+export CMD_MYSQLDUMP=$INSTALL_DIR/mysql/bin/mysqldump
+export CMD_MYSQL_CONTROL_SCRIPT=$INSTALL_DIR/mysql/bin/mysql.server
+export CMD_OPENSSH=$INSTALL_DIR/openssh/bin/sshd
+export CMD_OPENSSH_AGENT=$INSTALL_DIR/openssh/bin/ssh-agent
+export CMD_OPENSSL=/usr/bin/openssl
+export CMD_OPENVPN=$INSTALL_DIR/openvpn/bin/openvpn
+export CMD_POSTFIX=$INSTALL_DIR/postfix/bin/postfix
+export CMD_PROFTPD=$INSTALL_DIR/proftpd/bin/proftpd
+export CMD_TOMCAT=$INSTALL_DIR/tomcat/bin/tomcat.sh
+
+# service start commands
+export CMD_APACHECTL_START="env - $CMD_APACHECTL -k start"
+export CMD_DOVECOT_START="env - $CMD_DOVECOT"
+export CMD_FIREWALL_START="$CMD_FIREWALL --enable"
+export CMD_MYSQL_START="env - $CMD_MYSQL_CONTROL_SCRIPT start"
+export CMD_OPENSSH_AGENT_START="$INSTALL_DIR/openssh/bin/ssh-agent-start"
+export CMD_OPENSSH_START="$CMD_OPENSSH -f $INSTALL_DIR/openssh/conf/sshd_config"
+export CMD_OPENVPN_START="$CMD_OPENVPN --config $INSTALL_DIR/openvpn/conf/openvpn.conf"
+export CMD_POSTFIX_START="env - $CMD_POSTFIX start"
+export CMD_PROFTPD_START="env - $CMD_PROFTPD"
+export CMD_TOMCAT_START="env - $CMD_TOMCAT --java-home $JAVA_HOME start"
+
+################################################################################
+## process lookup strings
+##
+
+export PID_APACHECTL_PROC_STR="$CMD_HTTPD"
+export PID_DOVECOT_PROC_STR="$CMD_DOVECOT"
+export PID_MYSQL_PROC_STR="$CMD_MYSQLD"
+export PID_OPENSSH_AGENT_PROC_STR="$CMD_OPENSSH_AGENT"
+export PID_OPENSSH_PROC_STR="$CMD_OPENSSH_START"
+export PID_OPENVPN_PROC_STR="$CMD_OPENVPN_START"
+export PID_POSTFIX_PROC_STR="$INSTALL_DIR/postfix/bin/master"
+export PID_PROFTPD_PROC_STR="proftpd"
+export PID_TOMCAT_PROC_STR="jsvc"
+
+################################################################################
+## server types & roles & aspects
+##
+
+export SYSTEM_TYPE_NONE_ID=0
+export SYSTEM_TYPE_DEDICATED_ID=1
+export SYSTEM_TYPE_KVM_ID=2
+export SYSTEM_TYPE_LXC_ID=4
+
+export ROLE_NONE_ID=0
+export ROLE_HYPERVISOR_ID=8
+export ROLE_NODE_ID=16
+export ROLE_HYPERNODE_ID=32
+export ROLE_CONTAINER_ID=64
+export ROLE_PERSONAL_ID=128
+export ROLE_MOBILE_ID=256
+export ROLE_CONTROL_DEVICE_ID=512
+
+export ASPECT_NONE_ID=0
+export ASPECT_SYSTEM_UPDATE_ID=1024
+export ASPECT_SYSTEM_MANAGEMENT_ID=2048
+export ASPECT_WWW_PRESENTATION_ID=4096
+export ASPECT_WWW_SERVICE_ID=8192
+export ASPECT_WWW_HOSTING_ID=16384
+export ASPECT_SECURITY_JAIL_ID=32768
+
+################################################################################
+## other constants
+##
+
+export PACKAGE_SUFFIX="-pkg.tar.gz"
+
+################################################################################
+## include role specific constants
+##
+
+[ -f $SHELLOS_DIR/bin/constants.$ROLE_NAME ] && \
+    source $SHELLOS_DIR/bin/constants.$ROLE_NAME
+
+################################################################################
+## include custom constants
+##
+
+[ -f $SHELLOS_DIR/bin/constants.custom ] && \
+    source $SHELLOS_DIR/bin/constants.custom

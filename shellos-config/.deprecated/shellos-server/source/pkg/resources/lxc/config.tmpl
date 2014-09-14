@@ -1,0 +1,9 @@
+lxc.utsname = {CONTAINER_NAME}
+lxc.network.type = veth
+lxc.network.flags = up
+lxc.network.link = br0.100
+lxc.network.hwaddr = {a1:b2:c3:d4:e5:f6}
+lxc.network.name = eth0
+lxc.network.ipv4 = 192.168.{NETWORK1}.{NETWORK2}/24
+lxc.mount = {/path/to/fstab/for/CONTAINER_NAME}
+lxc.rootfs = {/path/to/rootfs/of/CONTAINER_NAME}

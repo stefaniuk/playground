@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Scheduled job. This script checks if all the services specific to the server
+# role are running.
+
+# remove all locks on initial reboot
+if [ "$on_initial_reboot" == "Y" ]; then
+    rm $NODE_STOP_DIR/host4ge-node-*.stop
+fi
+
+# start all nodes
+for name in $(node_list); do
+    # start node if not forced to stop
+    file=$NODE_STOP_DIR/host4ge-node-$name.stop
+    if [ ! -f $file ] && [ ! -f $NODE_STOP_ALL_FILE ]; then
+        node_monitor $name "start"
+    fi
+done
+
+exit 0

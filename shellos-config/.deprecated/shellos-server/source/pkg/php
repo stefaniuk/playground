@@ -1,0 +1,238 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+php_install_dir=$INSTALL_DIR/php
+php_install_dir_esc=`echo "$php_install_dir" | sed 's/\//\\\\\//g'`
+php_timezone="Europe/London"
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    php_timezone="Europe/Warsaw"
+fi
+php_timezone_esc=`echo "$php_timezone" | sed 's/\//\\\\\//g'`
+php_configure_options=
+[ -f $INSTALL_DIR/libiconv/bin/iconv ] && php_configure_options="--with-iconv=shared,$INSTALL_DIR/libiconv"
+[[ $PHP_VERSION == 5.3.* ]] && php_configure_options="$php_configure_options --without-sqlite"
+
+##
+## functions
+##
+
+# parameters:
+#    $1 url
+function run_apache_performance_test {
+
+    pkill httpd
+    sleep 1
+    $INSTALL_DIR/httpd/bin/apachectl -k start
+    sleep 3
+    echo -e "\n\n *** Apache Benchmark ***\n"
+    $INSTALL_DIR/httpd/bin/ab -n 10000 -c 10 -k -r $1
+    echo -e "\n\n"
+    sleep 5
+    $INSTALL_DIR/httpd/bin/apachectl -k stop
+}
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: PHP requires MySQL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/httpd/bin/httpd ]; then
+    echo "Error: PHP requires Apache HTTPD Server!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="php-$PHP_VERSION"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://de.php.net/get/php-$PHP_VERSION.tar.gz/from/this/mirror"
+    file=php-$PHP_VERSION.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 10000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+if [ "$pkg_result" != "success" ]; then
+    echo "Compile PHP":
+    [ -d $php_install_dir ] && rm -rf $php_install_dir
+    tar -zxf php-$PHP_VERSION.tar.gz
+    cd php-$PHP_VERSION
+    # http://tech.barwick.de/linux/crypto-set-id-callback-error-compiling-php-with-curl.html
+    ./configure \
+        --prefix=$php_install_dir \
+        --sysconfdir=$php_install_dir/conf \
+        --with-config-file-path=$php_install_dir/conf \
+        --with-apxs2=$INSTALL_DIR/httpd/bin/apxs \
+        --disable-cgi \
+        --enable-bcmath=shared \
+        --enable-calendar=shared \
+        --enable-cli=shared \
+        --enable-ctype=shared \
+        --enable-exif=shared \
+        --enable-ftp=shared \
+        --enable-libxml=shared \
+        --enable-mbstring=shared \
+        --enable-soap=shared \
+        --enable-sockets=shared \
+        --enable-zip=shared \
+        --with-bz2=shared \
+        --with-gd=shared \
+        --with-freetype-dir=/usr/include/freetype2 \
+        --with-jpeg-dir=shared \
+        --with-png-dir=shared \
+        --with-gettext=shared \
+        --with-mcrypt=shared \
+        --with-mhash=shared \
+        --with-pear=shared \
+        --with-pcre-regex \
+        --enable-pdo=shared \
+        --with-sqlite3=shared \
+        --with-pdo-sqlite=shared,/usr \
+        --with-mysql=shared,$INSTALL_DIR/mysql \
+        --with-mysql-sock=$INSTALL_DIR/mysql/log/mysql.sock \
+        --with-mysqli=shared,$INSTALL_DIR/mysql/bin/mysql_config \
+        --with-pdo-mysql=shared,$INSTALL_DIR/mysql \
+        --with-zlib-dir=shared,/srv/zlib \
+        --with-openssl=shared,/srv/openssl \
+        --with-curl \
+        $php_configure_options \
+    && replace_in_file ' -lxml2 -lxml2 -lxml2 -lcrypt' ' -lxml2 -lxml2 -lxml2 -lcrypto' ./Makefile \
+    && make && make install && echo "PHP installed successfully!" \
+    && rm -rfv $php_install_dir/man \
+    && mkdir $php_install_dir/log \
+    && cp -p php.ini-production $php_install_dir/conf/php.ini \
+    && cp -p php.ini-production $php_install_dir/conf \
+    && cp -p php.ini-development $php_install_dir/conf
+    cd ..
+    echo "Strip symbols:"
+    development_strip_symbols $php_install_dir/bin
+    development_strip_symbols $php_install_dir/lib/php/extensions/$(ls $php_install_dir/lib/php/extensions/)
+    development_strip_symbols $INSTALL_DIR/httpd/modules/libphp5.so
+    echo "Create package:"
+    cp -v $INSTALL_DIR/httpd/modules/libphp5.so $INSTALL_DIR/php
+    package_create $INSTALL_DIR/php $pkg_name
+    rm -v $INSTALL_DIR/php/libphp5.so
+else
+    echo "Install PHP from package:"
+    package_restore $pkg_name
+    mv -v $INSTALL_DIR/php/libphp5.so $INSTALL_DIR/httpd/modules
+fi
+
+# TODO: http://www.hardened-php.net/suhosin/index.html
+
+# check
+if [ ! -f $INSTALL_DIR/httpd/modules/libphp5.so ]; then
+    echo "Error: PHP has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/httpd/modules/libphp5.so:"
+ldd $INSTALL_DIR/httpd/modules/libphp5.so
+
+# TODO: check disable_functions, open_basedir, doc_root, user_dir
+php_disable_functions="apache_get_modules,apache_get_version,apache_getenv,apache_setenv,disk_free_space,diskfreespace,dl,exec,passthru,popen,proc_open,set_time_limit,shell_exec,system"
+replace_in_file 'disable_functions =' "disable_functions = $php_disable_functions" $php_install_dir/conf/php.ini
+replace_in_file 'expose_php = On' 'expose_php = Off' $php_install_dir/conf/php.ini
+replace_in_file 'max_execution_time = 30' 'max_execution_time = 1200' $php_install_dir/conf/php.ini
+replace_in_file 'max_input_time = 60' 'max_input_time = 20' $php_install_dir/conf/php.ini
+replace_in_file 'memory_limit = 128M' 'memory_limit = 256M' $php_install_dir/conf/php.ini
+replace_in_file ';date.timezone =' "date.timezone = \"$php_timezone_esc\"" $php_install_dir/conf/php.ini
+#replace_in_file ';error_log = php_errors.log' "error_log = \/var\/log\/php.log" $php_install_dir/conf/php.ini
+replace_in_file ';sendmail_path =' "sendmail_path = \"$INSTALL_DIR_ESC\/postfix\/bin\/sendmail -t -i\"" $php_install_dir/conf/php.ini
+echo -e "\n; extensions begin" >> $php_install_dir/conf/php.ini
+echo -e "extension = bcmath.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = bz2.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = calendar.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = ctype.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = exif.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = ftp.so" >> $php_install_dir/conf/php.ini
+# iconv.so has to be loaded before gd.so
+[ -f $INSTALL_DIR/libiconv/bin/iconv ] && echo -e "extension = iconv.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = gd.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = gettext.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = mbstring.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = mcrypt.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = openssl.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = sqlite3.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = mysql.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = mysqli.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = pdo.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = pdo_sqlite.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = pdo_mysql.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = soap.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = sockets.so" >> $php_install_dir/conf/php.ini
+echo -e "extension = zip.so" >> $php_install_dir/conf/php.ini
+echo -e "; extensions end" >> $php_install_dir/conf/php.ini
+
+# httpd.conf
+[ -f $INSTALL_DIR/httpd/conf/httpd.conf.bak ] && rm $INSTALL_DIR/httpd/conf/httpd.conf.bak
+replace_in_file 'DirectoryIndex index.html' 'DirectoryIndex index.html index.php' $INSTALL_DIR/httpd/conf/httpd.conf
+if [ "$pkg_result" == "success" ]; then
+    replace_in_file '# end of modules' 'LoadModule php5_module modules\/libphp5.so\n# end of modules' $INSTALL_DIR/httpd/conf/httpd.conf
+else
+    replace_in_file 'LoadModule php5_module[ \t]*modules\/libphp5.so' 'LoadModule php5_module modules\/libphp5.so' $INSTALL_DIR/httpd/conf/httpd.conf
+fi
+echo -e "\n<FilesMatch \.php$>\n\tSetHandler application/x-httpd-php\n</FilesMatch>" >> $INSTALL_DIR/httpd/conf/httpd.conf
+
+# set files permission
+chown -R root:root $php_install_dir
+chmod 755 $php_install_dir/bin
+chmod 500 $php_install_dir/bin/*
+chmod 555 $php_install_dir/bin/php
+mkdir -p ${HTTPD_CHROOT_DIR}${INSTALL_DIR}/mysql/log
+ln $INSTALL_DIR/mysql/log/mysql.sock ${HTTPD_CHROOT_DIR}${INSTALL_DIR}/mysql/log/mysql.sock
+
+##
+## post install
+##
+
+[ -f php-${PHP_VERSION}${PACKAGE_SUFFIX} ] && rm php-${PHP_VERSION}${PACKAGE_SUFFIX}
+[ -f php-$PHP_VERSION.tar.gz ] && rm php-$PHP_VERSION.tar.gz
+[ -d php-$PHP_VERSION ] && rm -rf php-$PHP_VERSION
+
+# save package version
+package_add_version "php" "$PHP_VERSION"
+
+# add directories to create hashes
+hashes_add_dir $php_install_dir/bin
+hashes_add_dir $php_install_dir/lib/php/extensions
+
+# test
+echo -e "\n\n *** PHP settings ***\n"
+$php_install_dir/bin/php -i
+echo -e "\n\n"
+echo -e "<?php phpinfo(); ?>" > $HTTPD_HTDOCS_DIR/info.php
+echo -e "\n\n *** Apache HTTPD - $(hostname).$DOMAIN request test ***\n"
+run_apache_performance_test "http://$(hostname).$DOMAIN:$HTTPD_PORT/info.php"
+echo -e "<?php //phpinfo(); ?>" > $HTTPD_HTDOCS_DIR/info.php
+cat <<EOF > $HTTPD_HTDOCS_DIR/files.php
+<?php
+\$files = scandir('/');
+foreach(\$files as \$file){
+    //if(\$file != '.' && \$file != '..') {
+        //echo \$file . '<br />';
+    //}
+}
+?>
+EOF
+
+exit 0

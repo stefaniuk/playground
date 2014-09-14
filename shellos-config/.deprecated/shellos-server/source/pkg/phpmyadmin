@@ -1,0 +1,188 @@
+#!/bin/bash
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: phpMyAdmin requires MySQL!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/httpd/bin/httpd ]; then
+    echo "Error: phpMyAdmin requires Apache HTTPD Server!"
+    exit 1
+fi
+if [ ! -f $INSTALL_DIR/httpd/modules/libphp5.so ]; then
+    echo "Error: phpMyAdmin requires PHP!"
+    exit 1
+fi
+
+##
+## download
+##
+
+url="http://downloads.sourceforge.net/project/phpmyadmin/phpMyAdmin/$PHPMYADMIN_VERSION/phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz"
+file=phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz
+result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 5000000)
+if [ "$result" == "error" ]; then
+    echo "Error: Unable to download $file file!"
+    exit 1
+fi
+
+##
+## install
+##
+
+echo "Installing phpMyAdmin:"
+[ -d $HOSTING_APPLICATIONS_DIR/phpmyadmin ] && rm -rf $HOSTING_APPLICATIONS_DIR/phpmyadmin
+mkdir -p $HOSTING_APPLICATIONS_DIR/phpmyadmin
+tar -zxf phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz -C $HOSTING_APPLICATIONS_DIR/phpmyadmin
+mv $HOSTING_APPLICATIONS_DIR/phpmyadmin/phpMyAdmin-$PHPMYADMIN_VERSION-all-languages/* $HOSTING_APPLICATIONS_DIR/phpmyadmin && rm -rf $HOSTING_APPLICATIONS_DIR/phpmyadmin/phpMyAdmin-$PHPMYADMIN_VERSION-all-languages
+rm -rfv $HOSTING_APPLICATIONS_DIR/phpmyadmin/setup
+
+# check
+if [ ! -s $HOSTING_APPLICATIONS_DIR/phpmyadmin/index.php ]; then
+    echo "Error: phpMyAdmin has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+# database user
+phpmyadmin_db_name="phpmyadmin"
+phpmyadmin_db_user="phpmyadmin"
+phpmyadmin_db_pass=$(random 32)
+mysql_add_user_password "$phpmyadmin_db_user" "$phpmyadmin_db_pass"
+
+# generate server certificate
+generate_certificate "phpmyadmin.$(hostname).$DOMAIN"
+
+# default language
+phpmyadmin_default_language="en"
+if [ "$SERVER_LOCATION" == "PL" ]; then
+    phpmyadmin_default_language="pl"
+fi
+
+# config.inc.php
+phpmyadmin_blowfish_secret=$(random 32)
+cat << EOF > $HOSTING_APPLICATIONS_DIR/phpmyadmin/config.inc.php
+<?php
+\$cfg['blowfish_secret'] = '$phpmyadmin_blowfish_secret';
+\$cfg['Lang'] = '$phpmyadmin_default_language';
+//\$cfg['ServerDefault'] = 0;
+\$i = 0;
+
+\$i++;
+\$cfg['Servers'][\$i]['auth_type'] = 'cookie';
+//\$cfg['Servers'][\$i]['host'] = '127.0.0.1';
+\$cfg['Servers'][\$i]['socket'] = '$INSTALL_DIR/mysql/log/mysql.sock';
+\$cfg['Servers'][\$i]['connect_type'] = 'socket';
+\$cfg['Servers'][\$i]['compress'] = true;
+\$cfg['Servers'][\$i]['extension'] = 'mysql';
+\$cfg['Servers'][\$i]['AllowNoPassword'] = false;
+\$cfg['Servers'][\$i]['AllowRoot'] = true;
+\$cfg['Servers'][\$i]['controluser'] = '$phpmyadmin_db_user';
+\$cfg['Servers'][\$i]['controlpass'] = '$phpmyadmin_db_pass';
+\$cfg['Servers'][\$i]['pmadb'] = '$phpmyadmin_db_name';
+\$cfg['Servers'][\$i]['bookmarktable'] = 'pma_bookmark';
+\$cfg['Servers'][\$i]['column_info'] = 'pma_column_info';
+\$cfg['Servers'][\$i]['designer_coords'] = 'pma_designer_coords';
+\$cfg['Servers'][\$i]['history'] = 'pma_history';
+\$cfg['Servers'][\$i]['pdf_pages'] = 'pma_pdf_pages';
+\$cfg['Servers'][\$i]['recent'] = 'pma_recent';
+\$cfg['Servers'][\$i]['relation'] = 'pma_relation';
+\$cfg['Servers'][\$i]['table_coords'] = 'pma_table_coords';
+\$cfg['Servers'][\$i]['table_info'] = 'pma_table_info';
+\$cfg['Servers'][\$i]['table_uiprefs'] = 'pma_table_uiprefs';
+\$cfg['Servers'][\$i]['tracking'] = 'pma_tracking';
+\$cfg['Servers'][\$i]['userconfig'] = 'pma_userconfig';
+?>
+EOF
+
+# TODO: multilanguage -> http://www.phpmyadmin.net/localized_docs/en_GB/Documentation.html
+# TODO: multiserver -> http://wiki.phpmyadmin.net/pma/Multiserver
+
+# config vhost 80
+str=$(cat <<HEREDOC
+\tRedirect permanent / https://phpmyadmin.$(hostname).$DOMAIN/
+HEREDOC
+)
+$HOST4GE_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "application" -n "phpmyadmin" -i $IP_ADDRESS -d "phpmyadmin.$(hostname).$DOMAIN" -p 80 -c "$str"
+# config vhost 443
+str=$(cat <<HEREDOC
+\tDocumentRoot /$HTTPD_HTDOCS_DIR_NAME/applications/phpmyadmin
+\t<Directory /$HTTPD_HTDOCS_DIR_NAME/applications/phpmyadmin>
+\t\tOptions Indexes FollowSymLinks
+\t\tAllowOverride All
+\t\tOrder allow,deny
+\t\tAllow from all
+\t\tRequire ip 192.168.1.0/255.255.255.0
+\t\tRequire ip $VPN_NETWORK/$VPN_NETMASK
+\t\tRequire ip 82.32.197.0/255.255.255.0
+\t\tRequire ip 194.176.105.0/255.255.255.0
+\t</Directory>
+\tSSLEngine on
+\tSSLCertificateFile $CERTIFICATES_DIR/phpmyadmin.$(hostname).$DOMAIN.pem
+\tSSLCertificateKeyFile $CERTIFICATES_DIR/phpmyadmin.$(hostname).$DOMAIN.key
+HEREDOC
+)
+$HOST4GE_DIR/bin/httpd_vhost_create.pl -s "httpd" -t "application" -n "phpmyadmin" -i $IP_ADDRESS -d "phpmyadmin.$(hostname).$DOMAIN" -p 443 -c "$str"
+
+# get mysql root password
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+[ $(mysql_database_exists $phpmyadmin_db_name) == "yes" ] && mysql_drop_database $phpmyadmin_db_name
+replace_in_file 'phpmyadmin' "$phpmyadmin_db_name" $HOSTING_APPLICATIONS_DIR/phpmyadmin/examples/create_tables.sql
+$INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass" < $HOSTING_APPLICATIONS_DIR/phpmyadmin/examples/create_tables.sql
+cat << EOF | $INSTALL_DIR/mysql/bin/mysql --user="root" --password="$db_pass"
+GRANT USAGE ON mysql.* TO '$phpmyadmin_db_user'@'localhost' IDENTIFIED BY '$phpmyadmin_db_pass';
+GRANT SELECT (
+    Host, User, Select_priv, Insert_priv, Update_priv, Delete_priv,
+    Create_priv, Drop_priv, Reload_priv, Shutdown_priv, Process_priv,
+    File_priv, Grant_priv, References_priv, Index_priv, Alter_priv,
+    Show_db_priv, Super_priv, Create_tmp_table_priv, Lock_tables_priv,
+    Execute_priv, Repl_slave_priv, Repl_client_priv
+) ON mysql.user TO '$phpmyadmin_db_user'@'localhost';
+GRANT SELECT ON mysql.db TO '$phpmyadmin_db_user'@'localhost';
+GRANT SELECT ON mysql.host TO '$phpmyadmin_db_user'@'localhost';
+GRANT SELECT (Host, Db, User, Table_name, Table_priv, Column_priv) ON mysql.tables_priv TO '$phpmyadmin_db_user'@'localhost';
+GRANT USAGE ON $phpmyadmin_db_name.* TO '$phpmyadmin_db_user'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON $phpmyadmin_db_name.* TO '$phpmyadmin_db_user'@'localhost';
+EOF
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user="root" --password="$db_pass" shutdown
+sleep 1
+db_pass=
+
+# clean up
+rm -rfv $HOSTING_APPLICATIONS_DIR/phpmyadmin/examples
+
+# set files permission
+chown -R root:root $HOSTING_APPLICATIONS_DIR/phpmyadmin
+chown httpd:httpd $HOSTING_APPLICATIONS_DIR/phpmyadmin/config.inc.php
+chmod 400 $HOSTING_APPLICATIONS_DIR/phpmyadmin/config.inc.php
+
+##
+## post install
+##
+
+[ -f phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz ] && rm phpMyAdmin-$PHPMYADMIN_VERSION-all-languages.tar.gz
+
+# save package version
+package_add_version "phpmyadmin" "$PHPMYADMIN_VERSION"
+
+# version control
+cd $HOSTING_APPLICATIONS_DIR/phpmyadmin
+$CMD_GIT init && chmod 700 .git
+$CMD_GIT config user.name "$ADMIN_NAME"
+$CMD_GIT config user.email "$ADMIN_MAIL"
+$CMD_GIT config core.autocrlf false
+$CMD_GIT config core.filemode true
+$CMD_GIT add .
+$CMD_GIT commit -m "initial commit"
+repositories_add_dir $PWD
+
+exit 0

@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# set new PATH (same for the profile and crontab)
+NEW_PATH=$SHELLOS_DIR/bin:$SHELLOS_DIR/job
+[ -d $INSTALL_DIR/openssl/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssl/bin
+[ -d $INSTALL_DIR/openssh/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openssh/bin
+[ -d $INSTALL_DIR/git/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/git/bin
+[ -d $INSTALL_DIR/openvpn/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openvpn/bin
+[ -d $INSTALL_DIR/geoip/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/geoip/bin
+[ -d $INSTALL_DIR/mysql/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mysql/bin
+[ -d $INSTALL_DIR/mongodb/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/mongodb/bin
+[ -d $INSTALL_DIR/python/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/python/bin
+[ -d $INSTALL_DIR/postfix/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/postfix/bin
+[ -d $INSTALL_DIR/proftpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/proftpd/bin
+[ -d $INSTALL_DIR/httpd/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/httpd/bin
+[ -d $INSTALL_DIR/nginx/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/nginx/bin
+[ -d $INSTALL_DIR/php/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/php/bin
+[ -d $INSTALL_DIR/dovecot/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/dovecot/bin
+[ -d $INSTALL_DIR/openjdk/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/openjdk/bin
+[ -d $INSTALL_DIR/ant/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/ant/bin
+[ -d $INSTALL_DIR/maven/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/maven/bin
+[ -d $INSTALL_DIR/tomcat/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/tomcat/bin
+[ -d $INSTALL_DIR/nodejs/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/nodejs/bin
+[ -d $INSTALL_DIR/ruby/bin ] && NEW_PATH=$NEW_PATH:$INSTALL_DIR/ruby/bin
+NEW_PATH=$NEW_PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+##
+## conf/.crontab-variables
+##
+
+cat << EOF > $SHELLOS_DIR/conf/.crontab-variables
+# paths
+INSTALL_DIR=$INSTALL_DIR
+SHELLOS_DIR=$SHELLOS_DIR
+PATH=$NEW_PATH
+
+# settings
+TERM=xterm
+SHELL=/bin/bash
+EDITOR=vim
+MAILTO="$ADMIN_MAIL"
+
+# shellos
+OWNER="$OWNER"
+EOF
+
+##
+## conf/.crontab-jobs
+##
+
+cat << EOF > $SHELLOS_DIR/conf/.crontab-jobs
+
+# cronjob definition
+@reboot         [ -x $SHELLOS_DIR/job/system-start ]     && (. $SHELLOS_DIR/job/system-start --on-reboot > $SHELLOS_DIR/log/onreboot.log 2>&1)
+*/1 * * * *     [ -x $SHELLOS_DIR/job/system-start ]     && (. $SHELLOS_DIR/job/system-start --log-errors)
+EOF
+
+##
+## set file permissions
+##
+
+if [ "$OWNER" != "root" ]; then
+    chmod 644 $SHELLOS_DIR/conf/.crontab*
+else
+    chmod 600 $SHELLOS_DIR/conf/.crontab*
+fi
+
+exit 0
+

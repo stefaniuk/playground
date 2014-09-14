@@ -1,0 +1,296 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+mailx_version="12.4"
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/mysql/bin/mysqld ]; then
+    echo "Error: Postfix requires MySQL!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="postfix-$VER_POSTFIX"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://mirror.tje.me.uk/pub/mirrors/postfix-release/official/postfix-$VER_POSTFIX.tar.gz"
+    file=postfix-$VER_POSTFIX.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 3000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    url="http://downloads.sourceforge.net/project/heirloom/heirloom-mailx/$mailx_version/mailx-$mailx_version.tar.bz2"
+    file=mailx-$mailx_version.tar.bz2
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 200000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    url="http://www.linuxfromscratch.org/patches/blfs/svn/mailx-$mailx_version-openssl_1.0.0_build_fix-1.patch"
+    file=mailx-$mailx_version-openssl_1.0.0_build_fix-1.patch
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 4000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill master
+
+# create user and group
+user_create "$POSTFIX_USER" $POSTFIX_UID "$POSTFIX_GROUP" $POSTFIX_GID
+groupadd -g $POSTFIX_POSTDROP_GID "$POSTFIX_POSTDROP_GROUP"
+user_create "$POSTFIX_VMAIL_USER" $POSTFIX_VMAIL_UID "$POSTFIX_VMAIL_GROUP" $POSTFIX_VMAIL_GID
+
+if [ "$pkg_result" != "success" ]; then
+
+    echo "Compile Postfix:"
+    [ -d $INSTALL_DIR/postfix ] && rm -rf $INSTALL_DIR/postfix
+    tar -zxf postfix-$VER_POSTFIX.tar.gz
+    cd postfix-$VER_POSTFIX
+    make makefiles \
+    CCARGS='-DDEF_COMMAND_DIR=\"/srv/postfix/bin\" \
+        -DDEF_CONFIG_DIR=\"/srv/postfix/conf\" \
+        -DDEF_DAEMON_DIR=\"/srv/postfix/bin\" \
+        -DDEF_DATA_DIR=\"/srv/postfix/data\" \
+        -DDEF_HTML_DIR=\"/srv/postfix/doc/html\" \
+        -DDEF_MANPAGE_DIR=\"/srv/postfix/man\" \
+        -DDEF_QUEUE_DIR=\"/srv/postfix/queue\" \
+        -DDEF_README_DIR=\"/srv/postfix/doc/README\" \
+        -DDEF_MAILQ_PATH=\"/srv/postfix/bin/mailq\" \
+        -DDEF_SENDMAIL_PATH=\"/srv/postfix/bin/sendmail\" \
+        -DUSE_TLS -I/usr/include/openssl \
+        -DHAS_MYSQL -I/srv/mysql/include' \
+        AUXLIBS='-L/usr/lib -lresolv -lssl -lcrypto -lmysqlclient -lz -lm' \
+    && make && chmod u+x ./postfix-install && sh ./postfix-install -non-interactive && echo "Postfix installed successfully!" \
+    && mkdir $INSTALL_DIR/postfix/log \
+    && rm -rf $INSTALL_DIR/postfix/{doc,man} \
+    && cat $INSTALL_DIR/postfix/bin/postfix-files | grep -vP "html_directory|manpage_directory|readme_directory|sample_directory" > $INSTALL_DIR/postfix/bin/postfix-files.new \
+    && mv $INSTALL_DIR/postfix/bin/postfix-files.new $INSTALL_DIR/postfix/bin/postfix-files
+    cd ..
+
+    echo "Compile Mailx:"
+    tar -jxf mailx-$mailx_version.tar.bz2
+    cd mailx-$mailx_version
+    patch -Np1 -i ../mailx-$mailx_version-openssl_1.0.0_build_fix-1.patch && \
+        replace_in_file 'SSLv2_client_method' 'SSLv3_client_method' ./openssl.c && \
+        make SENDMAIL=$INSTALL_DIR/postfix/bin/sendmail && \
+        make PREFIX=$INSTALL_DIR/postfix MAILSPOOL=$MAIL_DIR UCBINSTALL=/usr/bin/install install && \
+        ln -sfv $INSTALL_DIR/postfix/bin/mailx $INSTALL_DIR/postfix/bin/mail && \
+        ln -sfv $INSTALL_DIR/postfix/bin/mailx $INSTALL_DIR/postfix/bin/nail && \
+    echo "Mailx installed successfully!" && \
+    rm -rf $INSTALL_DIR/postfix/share
+    cd ..
+
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/postfix/bin
+    echo "Create package:"
+    package_create $INSTALL_DIR/postfix $pkg_name
+
+else
+    echo "Install Postfix from package:"
+    package_restore $pkg_name
+fi
+
+# check
+if [ ! -f $INSTALL_DIR/postfix/bin/postfix ] || [ ! -f $INSTALL_DIR/postfix/bin/mailx ]; then
+    echo "Error: Postfix has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/postfix/bin/postfix:"
+ldd $INSTALL_DIR/postfix/bin/postfix
+echo "Shared library dependencies for $INSTALL_DIR/postfix/bin/mailx:"
+ldd $INSTALL_DIR/postfix/bin/mailx
+
+# create links to the log files
+ln -sfv /var/log/mail.log $INSTALL_DIR/postfix/log/mail.log
+ln -sfv /var/log/mail.err $INSTALL_DIR/postfix/log/mail.err
+
+# create link for the default MTA
+ln -sfv $INSTALL_DIR/postfix/bin/mailx /bin/mail
+ln -sfv $INSTALL_DIR/postfix/bin/sendmail /usr/sbin/sendmail
+
+# database access
+mail_db_name="mail"
+mail_db_user="mail"
+mail_db_pass=$(random 32)
+mysql_add_user_password "$mail_db_user" "$mail_db_pass"
+shellos_conf_set_option "mail_db_host" "localhost"
+shellos_conf_set_option "mail_db_port" "$MYSQL_PORT"
+shellos_conf_set_option "mail_db_type" "mysql"
+shellos_conf_set_option "mail_db_name" "$mail_db_name"
+shellos_conf_set_option "mail_db_user" "$mail_db_user"
+shellos_conf_set_option "mail_db_pass" "$mail_db_pass"
+
+# generate certificate
+generate_certificate "mta"
+
+# virtual-mailbox-domains.cf
+cat << EOF > $INSTALL_DIR/postfix/conf/virtual-mailbox-domains.cf
+user = $mail_db_user
+password = $mail_db_pass
+hosts = unix:$INSTALL_DIR/mysql/log/mysql.sock
+dbname = $mail_db_name
+query = SELECT 1 FROM domains WHERE name='%s'
+EOF
+# virtual-mailbox-users.cf
+cat << EOF > $INSTALL_DIR/postfix/conf/virtual-mailbox-maps.cf
+user = $mail_db_user
+password = $mail_db_pass
+hosts = unix:$INSTALL_DIR/mysql/log/mysql.sock
+dbname = $mail_db_name
+query = SELECT 1 FROM users WHERE email='%s'
+EOF
+# virtual-alias-maps.cf
+cat << EOF > $INSTALL_DIR/postfix/conf/virtual-alias-maps.cf
+user = $mail_db_user
+password = $mail_db_pass
+hosts = unix:$INSTALL_DIR/mysql/log/mysql.sock
+dbname = $mail_db_name
+query = SELECT destination FROM aliases WHERE source='%s'
+EOF
+# virtual-email-to-email.cf
+cat << EOF > $INSTALL_DIR/postfix/conf/virtual-email-to-email.cf
+user = $mail_db_user
+password = $mail_db_pass
+hosts = unix:$INSTALL_DIR/mysql/log/mysql.sock
+dbname = $mail_db_name
+query =  SELECT email FROM users WHERE email='%s'
+EOF
+# main.cf
+[ ! -f $INSTALL_DIR/postfix/conf/main.cf.old ] && cp $INSTALL_DIR/postfix/conf/main.cf $INSTALL_DIR/postfix/conf/main.cf.old
+cat << EOF > $INSTALL_DIR/postfix/conf/main.cf
+command_directory = /srv/postfix/bin
+daemon_directory = /srv/postfix/bin
+data_directory = /srv/postfix/data
+mailq_path = /srv/postfix/bin/mailq
+newaliases_path = /usr/bin/newaliases
+queue_directory = /srv/postfix/queue
+sendmail_path = /srv/postfix/bin/sendmail
+
+mail_owner = $POSTFIX_USER
+setgid_group = $POSTFIX_POSTDROP_GROUP
+
+myhostname = $(hostname).$DOMAIN
+mydomain = $(hostname).$DOMAIN
+myorigin = $(hostname).$DOMAIN
+mydestination = localhost
+mynetworks = 127.0.0.0/8
+
+smtpd_banner = SMTP Server
+unknown_local_recipient_reject_code = 550
+
+debug_peer_level = 2
+debugger_command = PATH=/bin:/usr/bin:/usr/local/bin ddd \$daemon_directory/\$process_name \$process_id & sleep 5
+
+message_size_limit = 30720000
+alias_maps =
+alias_database =
+virtual_mailbox_base = $MAIL_DIR
+virtual_mailbox_domains = mysql:$INSTALL_DIR/postfix/conf/virtual-mailbox-domains.cf
+virtual_mailbox_maps = mysql:$INSTALL_DIR/postfix/conf/virtual-mailbox-maps.cf
+virtual_alias_maps = mysql:$INSTALL_DIR/postfix/conf/virtual-alias-maps.cf,mysql:$INSTALL_DIR/postfix/conf/virtual-email-to-email.cf
+virtual_uid_maps = static:$POSTFIX_VMAIL_UID
+virtual_gid_maps = static:$POSTFIX_VMAIL_GID
+smtpd_recipient_restrictions = permit_mynetworks,permit_sasl_authenticated,reject_unauth_destination
+smtpd_use_tls = yes
+smtpd_tls_cert_file = $CERTIFICATES_DIR/mta.crt
+smtpd_tls_key_file = $CERTIFICATES_DIR/mta.key
+EOF
+
+# prepare database
+db_pass=$(mysql_get_user_password root)
+$INSTALL_DIR/mysql/bin/mysql.server start
+sleep 3
+cat << EOF | $INSTALL_DIR/mysql/bin/mysql --user=root --password=$db_pass
+CREATE DATABASE $mail_db_name;
+GRANT SELECT, INSERT, UPDATE, DELETE ON $mail_db_name.* TO '$mail_db_user'@'localhost' IDENTIFIED BY '$mail_db_pass';
+USE $mail_db_name;
+CREATE TABLE domains (
+    id int(11) NOT NULL auto_increment,
+    name varchar(128) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE users (
+    id int(11) NOT NULL auto_increment,
+    domain_id int(11) NOT NULL,
+    email varchar(128) NOT NULL,
+    password varchar(256) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY email (email),
+    FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE aliases (
+    id int(11) NOT NULL auto_increment,
+    domain_id int(11) NOT NULL,
+    source varchar(128) NOT NULL,
+    destination varchar(128) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+EOF
+sleep 1
+$INSTALL_DIR/mysql/bin/mysqladmin --user=root --password=$db_pass shutdown
+sleep 1
+db_pass=
+
+# set files permission
+chown -R root:root $INSTALL_DIR/postfix
+chmod 440 $INSTALL_DIR/postfix/conf/virtual-*.cf
+chown root:$POSTFIX_GROUP $INSTALL_DIR/postfix/conf/virtual-*.cf
+chown -R $POSTFIX_USER:$POSTFIX_GROUP $INSTALL_DIR/postfix/{data,log}
+chmod 700 $INSTALL_DIR/postfix/{data,log}
+chown -R $POSTFIX_VMAIL_USER:$POSTFIX_VMAIL_GROUP $MAIL_DIR
+chmod 0700 $MAIL_DIR
+$INSTALL_DIR/postfix/bin/postfix set-permissions
+
+##
+## info
+##
+
+echo -e "\n\n *** Postfix check ***\n"
+$INSTALL_DIR/postfix/bin/postfix check
+echo -e "\n\n *** Postfix config ***\n"
+$INSTALL_DIR/postfix/bin/postconf -n
+echo -e "\n\n *** Postfix modules ***\n"
+$INSTALL_DIR/postfix/bin/postconf -m
+
+##
+## post install
+##
+
+[ -f postfix-${VER_POSTFIX}${PACKAGE_SUFFIX} ] && rm postfix-${VER_POSTFIX}${PACKAGE_SUFFIX}
+[ -f postfix-$VER_POSTFIX.tar.gz ] && rm postfix-$VER_POSTFIX.tar.gz
+[ -f mailx-$mailx_version.tar.bz2 ] && rm mailx-$mailx_version.tar.bz2
+[ -f mailx-$mailx_version-openssl_1.0.0_build_fix-1.patch ] && rm mailx-$mailx_version-openssl_1.0.0_build_fix-1.patch
+[ -d postfix-$VER_POSTFIX ] && rm -rf postfix-$VER_POSTFIX
+[ -d mailx-$mailx_version ] && rm -rf mailx-$mailx_version
+
+# save package version
+package_add_version "postfix" "$VER_POSTFIX"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/postfix/bin
+
+exit 0
+

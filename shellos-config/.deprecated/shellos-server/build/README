@@ -1,0 +1,83 @@
+This directory contains packed archive files of all the projects.
+
+Usage:
+
+################################################################################
+# single package
+
+cd $HOST4GE_DIR/sbin; ./install \
+    --package \
+    --do-not-configure --do-not-reboot 2>&1 | tee $HOST4GE_DIR/log/custom-package.log
+
+################################################################################
+# hypervisor: vms1
+
+# I
+name=vms1
+cd /srv; [ -f host4ge-$name.tar.gz ] && (
+    rm -rf {host4ge,source}
+    tar zxf host4ge-$name.tar.gz
+    mv source host4ge
+    rm host4ge-$name.tar.gz
+    mkdir -p /var/host4ge/{cache/images,tmp}
+    chmod u+x /srv/host4ge/bin/*
+)
+source /srv/host4ge/sbin/variables
+cd ~
+(. /srv/host4ge/bin/remaster --ipaddress "192.168.1.10" --netmask "255.255.255.0" --gateway "192.168.1.1" --nameservers "192.168.1.1" --hostname "vms1" --timezone "Europe/London" --usb /dev/sdb 2>&1 | tee /srv/host4ge/log/remaster.log)
+
+# II
+cd /srv && chmod u+x ./$(hostname).bash && ./$(hostname).bash
+
+# III
+cd /srv/host4ge/sbin && ./$(hostname).bash
+
+################################################################################
+# hypervisor: vms2
+
+# I
+name=vms2
+cd /srv; [ -f host4ge-$name.tar.gz ] && (
+    rm -rf {host4ge,source}
+    tar zxf host4ge-$name.tar.gz
+    mv source host4ge
+    rm host4ge-$name.tar.gz
+    mkdir -p /var/host4ge/{cache/images,tmp}
+    chmod u+x /srv/host4ge/bin/*
+)
+source /srv/host4ge/sbin/variables
+cd ~
+(. /srv/host4ge/bin/remaster --ipaddress "192.168.1.20" --netmask "255.255.255.0" --gateway "192.168.1.1" --nameservers "192.168.1.1" --hostname "vms2" --timezone "Europe/London" --usb /dev/sdb 2>&1 | tee /srv/host4ge/log/remaster.log)
+
+# II
+cd /srv && chmod u+x ./$(hostname).bash && ./$(hostname).bash
+
+# III
+cd /srv/host4ge/sbin && ./$(hostname).bash
+
+################################################################################
+# hypervisor: earth
+
+# I
+wget http://releases.ubuntu.com/12.04/ubuntu-12.04-server-amd64.iso -P ~
+dd if=~/ubuntu-12.04-server-amd64.iso of=/dev/sdc bs=1M; sync
+
+# II
+name=earth
+cd /srv; [ -f host4ge-$name.tar.gz ] && (
+    rm -rf {host4ge,source}
+    tar zxf host4ge-$name.tar.gz
+    mv source host4ge
+    rm host4ge-$name.tar.gz
+    mkdir -p /var/host4ge/{cache/images,tmp}
+    chmod u+x /srv/host4ge/bin/*
+)
+source /srv/host4ge/sbin/variables
+cd ~
+(. /srv/host4ge/bin/remaster --ipaddress "195.162.24.216" --netmask "255.255.254.0" --gateway "195.162.24.1" --nameservers "195.162.24.11 195.162.24.12" --hostname "earth" --timezone "Europe/Warsaw" --usb /dev/sdc 2>&1 | tee /srv/host4ge/log/remaster.log)
+
+# III
+cd /srv && chmod u+x ./$(hostname).bash && ./$(hostname).bash
+
+# IV
+cd /srv/host4ge/sbin && ./$(hostname).bash

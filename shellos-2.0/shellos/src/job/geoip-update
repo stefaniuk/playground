@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# Scheduled job. This script updates geoip database.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="geoip-update"
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ $(job_lock_exists $job_name) == "yes" ]; then
+    # do not log if all jobs are locked
+    [ $(job_lock_all_exists) == "no" ] && \
+        log_info "job $job_name is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+url="http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+file=GeoLiteCity.dat.gz
+dir=$INSTALL_DIR/geoip/share/GeoIP
+chksum=$(${HASH_ALGORITHM}sum $CACHE_DOWNLOADS_DIR/GeoLiteCity.dat.gz)
+result=$(file_download --url $url --force --file $file --donwload-directory $dir --check-file-size 10000000 2> /dev/null)
+if [ "$result" = "success" ]; then
+
+    # compare check sum
+    chksum_new=$(${HASH_ALGORITHM}sum $CACHE_DOWNLOADS_DIR/GeoLiteCity.dat.gz)
+    if [ "$chksum" !=  "$chksum_new" ]; then
+        gunzip -d $dir/GeoLiteCity.dat.gz
+        mv $dir/GeoLiteCity.dat $dir/GeoIPCity.dat
+        msg="database updated"
+        echo -e "\n$msg"
+    else
+        msg="database is current"
+    fi
+
+    # set permission
+    chmod 644 $dir/GeoIPCity.dat
+
+    # check if database file exists
+    if [ ! -f $dir/GeoIPCity.dat ]; then
+        msg="database update failed - database file is missing"
+        echo -e "\n$msg"
+    fi
+
+else
+    msg="database update failed - unable to download file"
+    echo -e "\n$msg"
+fi
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

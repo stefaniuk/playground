@@ -1,0 +1,12 @@
+#!/bin/bash
+
+##
+## server specific variables
+##
+
+# container bridge configuration
+CONTAINER_BRIDGE_NAME=""
+CONTAINER_BRIDGE_IPADDRESS=""
+CONTAINER_BRIDGE_NETMASK=""
+CONTAINER_BRIDGE_NETWORK=""
+CONTAINER_BRIDGE_BROADCAST=""

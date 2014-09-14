@@ -1,0 +1,77 @@
+#!/bin/bash
+
+##
+## create directories
+##
+
+mkdir -p $VAR_DIR
+
+mkdir -p $BACKUP_DIR
+mkdir -p $BACKUP_DATABASES_DIR
+mkdir -p $BACKUP_LOGS_DIR
+
+mkdir -p $CACHE_DIR
+mkdir -p $CACHE_DOWNLOADS_DIR
+mkdir -p $CACHE_IMAGES_DIR
+mkdir -p $CACHE_KERNELS_DIR
+mkdir -p $CACHE_PACKAGES_DIR
+mkdir -p $CACHE_UPDATES_DIR
+
+mkdir -p $HOSTING_DIR
+mkdir -p $HOSTING_ACCOUNTS_DIR
+mkdir -p $HOSTING_APPLICATIONS_DIR
+
+mkdir -p $CERTIFICATES_DIR
+mkdir -p $FLAGS_DIR
+mkdir -p $MAIL_DIR
+mkdir -p $TMP_DIR
+mkdir -p $WORKSPACE_DIR
+
+##
+## set directory permissions
+##
+
+chown -R root:root $HOST4GE_DIR > /dev/null 2>&1
+
+chmod 700 $LOG_DIR > /dev/null 2>&1
+
+chmod 700 $BACKUP_DIR > /dev/null 2>&1
+chmod 700 $BACKUP_DATABASES_DIR > /dev/null 2>&1
+chmod 700 $BACKUP_LOGS_DIR > /dev/null 2>&1
+
+chmod 700 $CACHE_DIR > /dev/null 2>&1
+chmod 700 $CACHE_DOWNLOADS_DIR > /dev/null 2>&1
+chmod 700 $CACHE_IMAGES_DIR > /dev/null 2>&1
+chmod 700 $CACHE_KERNELS_DIR > /dev/null 2>&1
+chmod 700 $CACHE_PACKAGES_DIR > /dev/null 2>&1
+chmod 700 $CACHE_UPDATES_DIR > /dev/null 2>&1
+
+chmod 700 $CERTIFICATES_DIR > /dev/null 2>&1
+chmod 700 $FLAGS_DIR > /dev/null 2>&1
+
+##
+## cleanup
+##
+
+# move included archives
+mv -v $HOST4GE_DIR/*.tar.gz $CACHE_DOWNLOADS_DIR 2> /dev/null
+# remove installation package
+rm -rfv $INSTALL_DIR/host4ge-*.tar.gz
+# move system installation log
+mv /root/*.log $LOG_DIR > /dev/null 2>&1
+rm /root/firstboot* > /dev/null 2>&1
+
+##
+## set file permissions
+##
+
+chmod u+x $BIN_DIR/* > /dev/null 2>&1
+chmod u+x $JOB_DIR/* > /dev/null 2>&1
+chmod u+x $PKG_DIR/* > /dev/null 2>&1
+chmod u+x $SBIN_DIR/* > /dev/null 2>&1
+chmod 600 $LOG_DIR/*.log > /dev/null 2>&1
+
+# make executable shell libraries
+find $LIB_DIR -iname *.sh -exec chmod u+x '{}' \;
+
+exit 0

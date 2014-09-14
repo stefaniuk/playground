@@ -1,0 +1,274 @@
+#!/bin/bash
+#
+# Usage: chmod u+x /srv/host4ge/sbin/install.sh; /srv/host4ge/sbin/install.sh 2>&1 | tee ~/install.log
+
+##
+## variables
+##
+
+[ -z "$timestamp" ] && timestamp=$(date +"%G%m%d%H%M")
+[ -z "$time_start" ] && time_start=$(date +%s)
+[ -z "$script_dir" ] && script_dir=$(dirname $(readlink -f $0))
+
+args=$*
+result=0
+current_dir=$(pwd)
+
+##
+## includes
+##
+
+# include variables - server role must be set there
+echo "Loading variables..."
+source $script_dir/variables > /dev/null 2>&1
+if [ -z "$ROLE_NAME" ]; then
+    echo "Unknown server role."
+    exit 1
+fi
+
+# include arguments
+echo "Loading arguments..."
+source $script_dir/arguments > /dev/null 2>&1
+
+# include versions
+echo "Loading versions..."
+source $script_dir/versions > /dev/null 2>&1
+
+# include constants
+echo "Loading constants..."
+source $script_dir/../bin/constants > /dev/null 2>&1
+
+# include functions
+echo "Loading functions..."
+source $script_dir/../bin/functions > /dev/null 2>&1
+
+##
+## functions
+##
+
+# Installs package.
+#
+#   $1 package name
+function install_package() {
+
+    local package=$1
+
+    cd $script_dir/../pkg
+    if [ "$result" == 0 ] && [ -f ./$package ]; then
+        chmod u+x ./$package
+        . ./$package $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/$package.log
+        result=${PIPESTATUS[0]}
+        [ "$result" != 0 ] && echo "Error in package installation script ($package)."
+    fi
+
+    # call server specific package installation script
+    cd $script_dir/../pkg
+    if [ "$result" == 0 ] && [ -f ./$package.$ROLE_NAME ]; then
+        chmod u+x ./$package.$ROLE_NAME
+        . ./$package.$ROLE_NAME $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/$package.$ROLE_NAME.log
+        result=${PIPESTATUS[0]}
+        [ "$result" != 0 ] && echo "Error in server specific installation script ($package)."
+    fi
+
+    # log event
+    if [ "$result" == 0 ] && [ -f ./$package ]; then
+        log_info "installed $package"
+        echo "Installed $package"
+    else
+        exit $result
+    fi
+}
+
+##
+## main
+##
+
+# switch on debuging
+if [ "$debug" == "Y" ]; then
+    echo "================================================================================"
+    set
+    echo "================================================================================"
+    set -xv
+fi
+
+# log event
+log_info "installation script started"
+echo "Installation script started"
+
+# prerequisites
+mkdir -p $FLAGS_DIR
+mkdir -p $TMP_DIR
+
+# installation log directory
+[ ! -d $HOST4GE_DIR/log/$timestamp ] && (
+    mkdir -p $HOST4GE_DIR/log/$timestamp
+    chmod 700 $HOST4GE_DIR/log/$timestamp
+)
+
+# stop all services
+chmod u+x $HOST4GE_DIR/job/system-services
+INSTALL_DIR=$INSTALL_DIR HOST4GE_DIR=$HOST4GE_DIR \
+    $HOST4GE_DIR/job/system-services --force-stop
+
+# move installation script
+[ -f $INSTALL_DIR/$SERVER_NAME.bash ] && rm -rf $INSTALL_DIR/$SERVER_NAME.bash
+
+# call configuration script (initialise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config ]; then
+    chmod u+x ./config
+    . ./config --initialise $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/config.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in configuration script (initialise)."
+    else
+        # log event
+        log_info "run configuration script (initialise)"
+        echo "Run configuration script (initialise)"
+    fi
+fi
+
+# call server specific configuration script (initialise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config.$ROLE_NAME ]; then
+    chmod u+x ./config.$ROLE_NAME
+    . ./config.$ROLE_NAME --initialise $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/config.$ROLE_NAME.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in server specific configuration script (initialise)."
+    else
+        # log event
+        log_info "run server specific configuration script (initialise)"
+        echo "Run server specific configuration script (initialise)"
+    fi
+fi
+
+# call CUSTOM configuration script (initialise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config.custom ]; then
+    chmod u+x ./config.custom
+    . ./config.custom --initialise $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/config.custom.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in custom configuration script (initialise)."
+    else
+        # log event
+        log_info "run custom configuration script (initialise)"
+        echo "Run custom configuration script (initialise)"
+    fi
+fi
+
+# call server specific installation script
+cd $script_dir
+if [ "$result" == 0 ] && [ -f ./install.$ROLE_NAME ]; then
+    chmod u+x ./install.$ROLE_NAME
+    . ./install.$ROLE_NAME $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/install.$ROLE_NAME.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in server specific installation script."
+    else
+        # log event
+        log_info "run server specific installation script"
+        echo "Run server specific installation script"
+    fi
+fi
+
+# call CUSTOM installation script
+cd $script_dir
+if [ "$result" == 0 ] && [ -f ./install.custom ]; then
+    chmod u+x ./install.custom
+    . ./install.custom $args 2>&1 | tee $HOST4GE_DIR/log/$timestamp/install.custom.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in custom installation script."
+    else
+        # log event
+        log_info "run custom installation script"
+        echo "Run custom installation script"
+    fi
+fi
+
+# call configuration script (finalise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config ]; then
+    chmod u+x ./config
+    . ./config --finalise $args 2>&1 | tee -a $HOST4GE_DIR/log/$timestamp/config.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in configuration script (finalise)."
+    else
+        # log event
+        log_info "run configuration script (finalise)"
+        echo "Run configuration script (finalise)"
+    fi
+fi
+
+# call server specific configuration script (finalise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config.$ROLE_NAME ]; then
+    chmod u+x ./config.$ROLE_NAME
+    . ./config.$ROLE_NAME --finalise $args 2>&1 | tee -a $HOST4GE_DIR/log/$timestamp/config.$ROLE_NAME.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in server specific configuration script (finalise)."
+    else
+        # log event
+        log_info "run server specific configuration script (finalise)"
+        echo "Run server specific configuration script (finalise)"
+    fi
+fi
+
+# call CUSTOM configuration script (finalise)
+cd $script_dir
+if [ "$result" == 0 ] && [ "$do_not_configure" == "N" ] && [ -f ./config.custom ]; then
+    chmod u+x ./config.custom
+    . ./config.custom --finalise $args 2>&1 | tee -a $HOST4GE_DIR/log/$timestamp/config.custom.log
+    result=${PIPESTATUS[0]}
+    if [ "$result" != 0 ]; then
+        echo "Error in custom configuration script (finalise)."
+    else
+        # log event
+        log_info "run custom configuration script (finalise)"
+        echo "Run custom configuration script (finalise)"
+    fi
+fi
+
+# change back directory
+cd $current_dir
+
+# calculate time
+time_end=$(date +%s)
+time=$((time_end-time_start))
+minutes=$(expr $time / 60)
+
+if [ "$result" == 0 ]; then
+    # send email notification
+    if [ "$notify" == "Y" ] && [ -x $INSTALL_DIR/postfix/bin/mailx ]; then
+        (   echo -e "$(hostname -f) ($IP_ADDRESS) has been build at `date +\"%T %Z (%d %b %G)\"`, the whole process took $minutes minutes.\n\nList of installed packages:\n"
+            cat $PACKAGES_FILE | sed 's/=/ /g'
+            echo -e "\n\nList of file hashes:\n"
+            cat $HASH_FILES_FILE
+        ) | $INSTALL_DIR/postfix/bin/mailx -r "admin@$(hostname).$DOMAIN" -s "$(hostname).$DOMAIN - installation script completed" $ADMIN_MAIL
+    fi
+    # log event
+    log_info "installation script completed successfully (time: $minutes min)"
+    echo "Installation script completed successfully (time: $minutes min)"
+else
+    # log event
+    log_info "installation script stopped due to an error (time: $minutes min)"
+    echo "Installation script stopped due to an error (time: $minutes min)"
+fi
+
+# only owner can read/write log files
+find $LOG_DIR -iname *.log -exec chmod 600 '{}' \;
+
+# restart server
+if [ "$result" == 0 ] && [ "$do_not_reboot" == "N" ]; then
+    echo "reboot"
+    reboot
+fi
+
+# switch off debuging
+[ "$debug" == "Y" ] && set +xv
+
+exit $result

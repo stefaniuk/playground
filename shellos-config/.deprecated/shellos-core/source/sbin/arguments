@@ -1,0 +1,75 @@
+#!/bin/bash
+
+##
+## variables
+##
+
+debug=
+owner="root"
+do_not_configure="N"
+do_not_reboot="N"
+
+openjdk_install="N"
+ant_install="N"
+maven_install="N"
+eclipse_install="N"
+shellos_install="N"
+kernel_install="N"
+
+kernel_force_compilation="N"
+packages_force_compilation="N"
+do_not_use_cached_updates="N"
+
+notify="N"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --debug)                            debug="Y"
+                                            ;;
+        --owner)                            shift; owner=$1
+                                            ;;
+        --do-not-configure)                 do_not_configure="Y"
+                                            ;;
+        --do-not-reboot)                    do_not_reboot="Y"
+                                            ;;
+        --openjdk)                          openjdk_install="Y"
+                                            ;;
+        --ant)                              ant_install="Y"
+                                            ;;
+        --maven)                            maven_install="Y"
+                                            ;;
+        --eclipse)                          eclipse_install="Y"
+                                            ;;
+        --shellos)                          shellos_install="Y"
+                                            ;;
+        --kernel)                           kernel_install="Y"
+                                            ;;
+        --kernel-force-compilation)         kernel_force_compilation="Y"
+                                            ;;
+        --packages-force-compilation)       packages_force_compilation="Y"
+                                            ;;
+        --do-not-use-cached-updates)        do_not_use_cached_updates="Y"
+                                            ;;
+        --notify)                           notify="Y"
+                                            ;;
+    esac
+    shift
+done
+
+################################################################################
+## include role specific arguments
+##
+
+[ -f $SHELLOS_DIR/sbin/arguments.$ROLE_NAME ] && \
+    source $SHELLOS_DIR/sbin/arguments.$ROLE_NAME
+
+################################################################################
+## include custom arguments
+##
+
+[ -f $SHELLOS_DIR/sbin/arguments.custom ] && \
+    source $SHELLOS_DIR/sbin/arguments.custom

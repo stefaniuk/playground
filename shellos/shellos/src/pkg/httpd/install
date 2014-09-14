@@ -1,0 +1,632 @@
+#!/bin/bash
+
+##
+## functions
+##
+
+# parameters:
+#    $1 url
+function run_apache_performance_test {
+
+    pkill httpd
+    sleep 1
+    $INSTALL_DIR/httpd/bin/apachectl -k start
+    sleep 3
+    echo -e "\n\n *** Apache Benchmark ***\n"
+    $INSTALL_DIR/httpd/bin/ab -n 10000 -c 10 -k -r $1
+    echo -e "\n\n"
+    sleep 5
+    $INSTALL_DIR/httpd/bin/apachectl -k stop
+}
+
+##
+## check dependencies
+##
+
+if [ ! -f $INSTALL_DIR/zlib/lib/libz.so ]; then
+    echo "Error: Apache HTTPD Server requires zlib!"
+    exit 1
+fi
+
+if [ ! -f $INSTALL_DIR/openssl/bin/openssl ]; then
+    echo "Error: Apache HTTPD Server requires OpenSSL!"
+    exit 1
+fi
+
+##
+## download
+##
+
+pkg_name="httpd-$VER_HTTPD"
+[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://archive.apache.org/dist/httpd/httpd-$VER_HTTPD.tar.gz"
+    file=httpd-$VER_HTTPD.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 5000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    #url="http://archive.apache.org/dist/httpd/httpd-$VER_HTTPD-deps.tar.gz"
+    #file=httpd-$VER_HTTPD-deps.tar.gz
+    #result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 1000000)
+    #if [ "$result" == "error" ]; then
+    #    echo "Error: Unable to download $file file!"
+    #    exit 1
+    #fi
+    url="http://mirrors.ukfast.co.uk/sites/ftp.apache.org//apr/apr-$VER_APR.tar.gz"
+    file=apr-$VER_APR.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    url="http://mirrors.ukfast.co.uk/sites/ftp.apache.org//apr/apr-util-$VER_APR_UTIL.tar.gz"
+    file=apr-util-$VER_APR_UTIL.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 500000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    url="http://mirrors.ukfast.co.uk/sites/ftp.apache.org//apr/apr-iconv-$VER_APR_ICONV.tar.gz"
+    file=apr-iconv-$VER_APR_ICONV.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 1000000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+    url="http://www.apache.org/dist/httpd/mod_fcgid/mod_fcgid-$VER_HTTPD_MOD_FCGID.tar.gz"
+    file=mod_fcgid-$VER_HTTPD_MOD_FCGID.tar.gz
+    result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 50000)
+    if [ "$result" == "error" ]; then
+        echo "Error: Unable to download $file file!"
+        exit 1
+    fi
+fi
+
+##
+## install
+##
+
+pkill httpd
+
+# create user and group
+user_create "$HTTPD_USER" $HTTPD_UID "$HTTPD_GROUP" $HTTPD_GID
+
+if [ "$pkg_result" != "success" ]; then
+
+    echo "Compile Apache HTTPD Server:"
+    [ -d $INSTALL_DIR/httpd ] && rm -rf $INSTALL_DIR/httpd
+    tar -zxf httpd-$VER_HTTPD.tar.gz
+    # install dependencies
+    #tar -zxf httpd-$VER_HTTPD-deps.tar.gz
+    # apr
+    tar -zxf apr-$VER_APR.tar.gz
+    mv apr-$VER_APR httpd-$VER_HTTPD/srclib/apr
+    # apr util
+    tar -zxf apr-util-$VER_APR_UTIL.tar.gz
+    mv apr-util-$VER_APR_UTIL httpd-$VER_HTTPD/srclib/apr-util
+    # apr iconv
+    tar -zxf apr-iconv-$VER_APR_ICONV.tar.gz
+    mv apr-iconv-$VER_APR_ICONV httpd-$VER_HTTPD/srclib/apr-iconv
+    cd httpd-$VER_HTTPD
+    replace_in_file '#define AP_SERVER_BASEPRODUCT "Apache"' '#define AP_SERVER_BASEPRODUCT "WWW Server"' ./include/ap_release.h
+    ./configure \
+        --prefix=$INSTALL_DIR/httpd \
+        --with-mpm=event \
+        --enable-mpms-shared=all \
+        --enable-mods-shared=all \
+        --enable-cgi \
+        --enable-cgid \
+        --enable-fcgid \
+        --enable-proxy \
+        --enable-suexec \
+        --with-suexec-bin=$INSTALL_DIR/httpd/bin/suexec \
+        --with-suexec-caller=$HTTPD_USER \
+        --with-suexec-uidmin=$HTTPD_SUEXEC_UID_MIN \
+        --with-suexec-gidmin=$HTTPD_SUEXEC_GID_MIN \
+        --with-suexec-docroot="$HOSTING_DIR" \
+        --with-suexec-userdir="public" \
+        --with-suexec-logfile=$INSTALL_DIR/httpd/log/httpd-suexec.log \
+        --with-suexec-safepath="/usr/local/bin:/usr/bin:/bin" \
+        --enable-so \
+        --enable-ssl \
+        --with-z=$INSTALL_DIR/zlib \
+        --with-ssl=$INSTALL_DIR/openssl \
+        --with-included-apr \
+        $HTTPD_CONFIGURE_OPTIONS \
+    && make && make install && echo "Apache HTTPD Server installed successfully!" \
+    && rm -rf $INSTALL_DIR/httpd/{conf/extra,logs,man,manual} \
+    && rm -rf $INSTALL_DIR/httpd/htdocs \
+    && mkdir -p $INSTALL_DIR/httpd/{conf,log}/{accounts,applications,domains,tomcat}
+    cd ..
+
+    echo "Compile Apache HTTPD mod_fcgid:"
+    tar -zxf mod_fcgid-$VER_HTTPD_MOD_FCGID.tar.gz
+    cd mod_fcgid-$VER_HTTPD_MOD_FCGID
+    APXS=$INSTALL_DIR/httpd/bin/apxs ./configure.apxs \
+    && make && make install && echo "Apache HTTPD mod_fcgid installed successfully!" \
+    && rm -rf $INSTALL_DIR/httpd/manual \
+    && rm $INSTALL_DIR/httpd/conf/httpd.conf.bak
+    cd ..
+
+    echo "Strip symbols:"
+    development_strip_symbols $INSTALL_DIR/httpd/bin
+    development_strip_symbols $INSTALL_DIR/httpd/modules
+    echo "Create package:"
+    package_create $INSTALL_DIR/httpd $pkg_name
+
+else
+    echo "Install Apache HTTPD Server from package:"
+    package_restore $pkg_name
+fi
+
+# TODO: enable mod_fcgid
+# see: http://forum.linode.com/viewtopic.php?p=42643
+#      http://www.tumelum.de/blog/index.php?/plugin/tag/opensolaris
+#      http://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html
+#      http://www.howtoforge.com/how-to-set-up-apache2-with-mod_fcgid-and-php5-on-ubuntu-10.04
+#      https://blogs.oracle.com/opal/entry/php_fpm_fastcgi_process_manager
+
+# TODO: http://bash.cyberciti.biz/
+
+# check
+if [ ! -f $INSTALL_DIR/httpd/bin/httpd ] || [ ! -f $INSTALL_DIR/httpd/modules/mod_fcgid.so ]; then
+    echo "Error: Apache HTTPD Server has NOT been installed successfully!"
+    exit 1
+fi
+
+##
+## configure
+##
+
+echo "Shared library dependencies for $INSTALL_DIR/httpd/bin/httpd:"
+ldd $INSTALL_DIR/httpd/bin/httpd
+
+# create links to the log files
+ln -sfv /var/log/httpd.log $INSTALL_DIR/httpd/log/httpd.log
+ln -sfv /var/log/httpd.err $INSTALL_DIR/httpd/log/httpd.err
+
+# httpd.conf
+mv -v $INSTALL_DIR/httpd/conf/httpd.conf $INSTALL_DIR/httpd/conf/httpd.conf.old
+cat << EOF > $INSTALL_DIR/httpd/conf/httpd.conf
+ServerRoot $INSTALL_DIR/httpd
+
+# LoadModule foo_module modules/mod_foo.so
+LoadModule authn_file_module modules/mod_authn_file.so
+LoadModule authn_dbm_module modules/mod_authn_dbm.so
+LoadModule authn_anon_module modules/mod_authn_anon.so
+LoadModule authn_dbd_module modules/mod_authn_dbd.so
+LoadModule authn_socache_module modules/mod_authn_socache.so
+LoadModule authn_core_module modules/mod_authn_core.so
+LoadModule authz_host_module modules/mod_authz_host.so
+LoadModule authz_groupfile_module modules/mod_authz_groupfile.so
+LoadModule authz_user_module modules/mod_authz_user.so
+LoadModule authz_dbm_module modules/mod_authz_dbm.so
+LoadModule authz_owner_module modules/mod_authz_owner.so
+LoadModule authz_dbd_module modules/mod_authz_dbd.so
+LoadModule authz_core_module modules/mod_authz_core.so
+LoadModule access_compat_module modules/mod_access_compat.so
+LoadModule auth_basic_module modules/mod_auth_basic.so
+LoadModule auth_form_module modules/mod_auth_form.so
+#LoadModule auth_digest_module modules/mod_auth_digest.so
+LoadModule allowmethods_module modules/mod_allowmethods.so
+LoadModule file_cache_module modules/mod_file_cache.so
+LoadModule cache_module modules/mod_cache.so
+LoadModule cache_disk_module modules/mod_cache_disk.so
+LoadModule socache_shmcb_module modules/mod_socache_shmcb.so
+LoadModule socache_dbm_module modules/mod_socache_dbm.so
+LoadModule socache_memcache_module modules/mod_socache_memcache.so
+#LoadModule watchdog_module modules/mod_watchdog.so
+LoadModule dbd_module modules/mod_dbd.so
+LoadModule dumpio_module modules/mod_dumpio.so
+LoadModule echo_module modules/mod_echo.so
+LoadModule buffer_module modules/mod_buffer.so
+LoadModule data_module modules/mod_data.so
+LoadModule ratelimit_module modules/mod_ratelimit.so
+LoadModule reqtimeout_module modules/mod_reqtimeout.so
+LoadModule ext_filter_module modules/mod_ext_filter.so
+LoadModule request_module modules/mod_request.so
+LoadModule include_module modules/mod_include.so
+LoadModule filter_module modules/mod_filter.so
+LoadModule reflector_module modules/mod_reflector.so
+LoadModule substitute_module modules/mod_substitute.so
+LoadModule sed_module modules/mod_sed.so
+LoadModule charset_lite_module modules/mod_charset_lite.so
+LoadModule deflate_module modules/mod_deflate.so
+LoadModule xml2enc_module modules/mod_xml2enc.so
+#LoadModule proxy_html_module modules/mod_proxy_html.so
+LoadModule mime_module modules/mod_mime.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule log_debug_module modules/mod_log_debug.so
+LoadModule log_forensic_module modules/mod_log_forensic.so
+LoadModule logio_module modules/mod_logio.so
+LoadModule env_module modules/mod_env.so
+LoadModule mime_magic_module modules/mod_mime_magic.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule usertrack_module modules/mod_usertrack.so
+LoadModule unique_id_module modules/mod_unique_id.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule version_module modules/mod_version.so
+LoadModule remoteip_module modules/mod_remoteip.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_connect_module modules/mod_proxy_connect.so
+LoadModule proxy_ftp_module modules/mod_proxy_ftp.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
+LoadModule proxy_scgi_module modules/mod_proxy_scgi.so
+LoadModule proxy_fdpass_module modules/mod_proxy_fdpass.so
+LoadModule proxy_ajp_module modules/mod_proxy_ajp.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_express_module modules/mod_proxy_express.so
+LoadModule session_module modules/mod_session.so
+LoadModule session_cookie_module modules/mod_session_cookie.so
+LoadModule session_dbd_module modules/mod_session_dbd.so
+LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+LoadModule slotmem_plain_module modules/mod_slotmem_plain.so
+LoadModule ssl_module modules/mod_ssl.so
+LoadModule dialup_module modules/mod_dialup.so
+LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
+LoadModule lbmethod_bytraffic_module modules/mod_lbmethod_bytraffic.so
+LoadModule lbmethod_bybusyness_module modules/mod_lbmethod_bybusyness.so
+#LoadModule lbmethod_heartbeat_module modules/mod_lbmethod_heartbeat.so
+#LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
+#LoadModule mpm_worker_module modules/mod_mpm_worker.so
+LoadModule mpm_event_module modules/mod_mpm_event.so
+LoadModule unixd_module modules/mod_unixd.so
+#LoadModule heartbeat_module modules/mod_heartbeat.so
+#LoadModule heartmonitor_module modules/mod_heartmonitor.so
+LoadModule dav_module modules/mod_dav.so
+LoadModule status_module modules/mod_status.so
+LoadModule autoindex_module modules/mod_autoindex.so
+LoadModule asis_module modules/mod_asis.so
+LoadModule info_module modules/mod_info.so
+LoadModule suexec_module modules/mod_suexec.so
+#LoadModule cgid_module modules/mod_cgid.so
+#LoadModule cgi_module modules/mod_cgi.so
+LoadModule dav_fs_module modules/mod_dav_fs.so
+LoadModule dav_lock_module modules/mod_dav_lock.so
+LoadModule vhost_alias_module modules/mod_vhost_alias.so
+LoadModule negotiation_module modules/mod_negotiation.so
+LoadModule dir_module modules/mod_dir.so
+LoadModule actions_module modules/mod_actions.so
+LoadModule speling_module modules/mod_speling.so
+LoadModule userdir_module modules/mod_userdir.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule fcgid_module modules/mod_fcgid.so
+# end of modules
+
+User $HTTPD_USER
+Group $HTTPD_GROUP
+
+PidFile "log/httpd.pid"
+ServerTokens Prod
+ServerSignature Off
+ServerAdmin "admin@$(hostname).$DOMAIN"
+ServerName "$(hostname).$DOMAIN"
+
+Suexec On
+ChrootDir "$HOSTING_DIR"
+DocumentRoot "$HOSTING_DIR/$HOSTING_PUBLIC_RELATIVE_DIR"
+
+<Directory "/">
+    Options FollowSymLinks
+    AllowOverride None
+    Order deny,allow
+    Deny from all
+</Directory>
+
+<FilesMatch "^\\.ht">
+    Order allow,deny
+    Deny from all
+    Satisfy All
+</FilesMatch>
+
+DirectoryIndex index.html
+LogFormat "%v %h \\"%{GEOIP_COUNTRY_NAME}e\\" \\"%{GEOIP_CITY}e\\" \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" log_format
+CustomLog "|$SHELLOS_DIR/bin/log-httpd.pl info" log_format
+ErrorLog "|$SHELLOS_DIR/bin/log-httpd.pl err"
+TypesConfig conf/mime.types
+AddDefaultCharset utf-8
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+<IfModule mod_fcgid.c>
+    FcgidIPCDir "log/fcgidsock"
+    FcgidProcessTableFile "log/fcgid.shm"
+</IfModule>
+
+Include conf/httpd-mpm.conf
+Include conf/httpd-ssl.conf
+Include conf/httpd-vhosts.conf
+EOF
+
+# SEE: http://forum.linode.com/viewtopic.php?p=41452
+# SEE: http://www.devside.net/articles/apache-performance-tuning
+# ps aux --sort -vsize | head
+
+# http://httpd.apache.org/docs/2.4/misc/perf-tuning.html
+# http://www.linuxquestions.org/linux/articles/Technical/Understanding_memory_usage_on_Linux
+
+memory=$(echo `free -m` | awk '{ print $8 }')
+n=$(expr $memory / 512 + 1)
+
+server_limit=$(expr $n \* 3)
+thread_limit=$(expr $n \* 30)
+start_servers=$(expr $n \* 2)
+min_spare_threads=$(expr $n \* 10)
+max_spare_threads=$(expr $n \* 30)
+threads_per_child=$(expr $n \* 10)
+max_request_workers=$(expr $server_limit \* $threads_per_child)
+max_connections_per_child=$(expr $n \* 1000)
+
+# TODO: this has to be tested with more memory than 512MB available
+
+# httpd-mpm.conf
+cat << EOF > $INSTALL_DIR/httpd/conf/httpd-mpm.conf
+# prefork MPM
+# StartServers: number of server processes to start
+# MinSpareServers: minimum number of server processes which are kept spare
+# MaxSpareServers: maximum number of server processes which are kept spare
+# MaxRequestWorkers: maximum number of server processes allowed to start
+# MaxConnectionsPerChild: maximum number of connections a server process serves
+#                         before terminating
+#<IfModule mpm_prefork_module>
+#    StartServers              5
+#    MinSpareServers           5
+#    MaxSpareServers          10
+#    MaxRequestWorkers       150
+#    MaxConnectionsPerChild    0
+#</IfModule>
+<IfModule mpm_prefork_module>
+#    ServerLimit                $( expr $n \*     5 )
+#    # standard options
+#    StartServers               $( expr $n \*     5 )
+#    MinSpareServers            $( expr $n \*     5 )
+#    MaxSpareServers            $( expr $n \*    10 )
+#    MaxRequestWorkers          $( expr $n \*   100 )
+#    MaxConnectionsPerChild     $( expr $n \* 10000 )
+
+    ServerLimit                150
+    StartServers               4
+    MinSpareServers            2
+    MaxSpareServers            5
+    MaxRequestWorkers          100
+    MaxConnectionsPerChild     10000
+
+    keepalive on
+    keepalivetimeout 1
+
+</IfModule>
+
+# worker MPM
+# StartServers: initial number of server processes to start
+# MinSpareThreads: minimum number of worker threads which are kept spare
+# MaxSpareThreads: maximum number of worker threads which are kept spare
+# ThreadsPerChild: constant number of worker threads in each server process
+# MaxRequestWorkers: maximum number of worker threads
+# MaxConnectionsPerChild: maximum number of connections a server process serves
+#                         before terminating
+#<IfModule mpm_worker_module>
+#    StartServers              2
+#    MinSpareThreads          25
+#    MaxSpareThreads          75
+#    ThreadsPerChild          25
+#    MaxRequestWorkers       150
+#    MaxConnectionsPerChild    0
+#</IfModule>
+<IfModule mpm_worker_module>
+    ServerLimit                $server_limit
+    ThreadLimit                $thread_limit
+    # standard options
+    StartServers               $start_servers
+    MinSpareThreads            $min_spare_threads
+    MaxSpareThreads            $max_spare_threads
+    ThreadsPerChild            $threads_per_child
+    MaxRequestWorkers          $max_request_workers
+    MaxConnectionsPerChild     $max_connections_per_child
+</IfModule>
+
+# event MPM
+# StartServers: initial number of server processes to start
+# MinSpareThreads: minimum number of worker threads which are kept spare
+# MaxSpareThreads: maximum number of worker threads which are kept spare
+# ThreadsPerChild: constant number of worker threads in each server process
+# MaxRequestWorkers: maximum number of worker threads
+# MaxConnectionsPerChild: maximum number of connections a server process serves
+#                         before terminating
+#<IfModule mpm_event_module>
+#    StartServers              2
+#    MinSpareThreads          25
+#    MaxSpareThreads          75
+#    ThreadsPerChild          25
+#    MaxRequestWorkers       150
+#    MaxConnectionsPerChild    0
+#</IfModule>
+<IfModule mpm_event_module>
+    ServerLimit                $( expr $n \*     5 )
+    ThreadLimit                $( expr $n \*    25 )
+    # standard options
+    StartServers               $( expr $n \*     4 )
+    MinSpareThreads            $( expr $n \*    25 )
+    MaxSpareThreads            $( expr $n \*    75 )
+    ThreadsPerChild            $( expr $n \*    25 )
+    MaxRequestWorkers          $( expr $n \*   100 )
+    MaxConnectionsPerChild     $( expr $n \* 10000 )
+</IfModule>
+EOF
+
+# httpd-ssl.conf
+(    echo -e "Listen $HTTPD_PORT_SSL" && \
+    echo -e "SSLRandomSeed startup builtin" && \
+    echo -e "SSLRandomSeed connect builtin" && \
+    echo -e "SSLPassPhraseDialog builtin" && \
+    echo -e "SSLSessionCache \"shmcb:$INSTALL_DIR/httpd/log/ssl_scache(512000)\"" && \
+    echo -e "SSLSessionCacheTimeout 300" && \
+    echo -e "AddType application/x-x509-ca-cert .crt" && \
+    echo -e "AddType application/x-pkcs7-crl .crl" \
+) > $INSTALL_DIR/httpd/conf/httpd-ssl.conf
+
+ip_address=$IP_ADDRESS
+vhost_domain=$(hostname)
+vhost_domain_full=${vhost_domain}.$DOMAIN
+if [ "$DOMAIN" == "localhost" ]; then
+    ip_address='*'
+    vhost_domain_full=${vhost_domain}.localhost
+fi
+# httpd-vhosts.conf
+cat << EOF > $INSTALL_DIR/httpd/conf/httpd-vhosts.conf
+Listen $HTTPD_PORT
+
+# ${vhost_domain_full}:80 >>>
+<VirtualHost ${ip_address}:80>
+    ServerName ${vhost_domain_full}
+    DocumentRoot /$HOSTING_PUBLIC_RELATIVE_DIR
+    <Directory /$HOSTING_PUBLIC_RELATIVE_DIR>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+</VirtualHost>
+# <<< ${vhost_domain_full}:80
+
+# ${vhost_domain_full}:443 >>>
+<VirtualHost ${ip_address}:443>
+    ServerName ${vhost_domain_full}:443
+    DocumentRoot /$HOSTING_PUBLIC_RELATIVE_DIR
+    <Directory /$HOSTING_PUBLIC_RELATIVE_DIR>
+        Options Indexes FollowSymLinks
+        AllowOverride AuthConfig FileInfo Indexes Limit Options=ExecCGI,Includes,Indexes,MultiViews,SymlinksIfOwnerMatch
+        Order allow,deny
+        Allow from all
+    </Directory>
+    SSLEngine on
+    SSLCertificateFile $CERTIFICATES_DIR/${vhost_domain_full}.pem
+    SSLCertificateKeyFile $CERTIFICATES_DIR/${vhost_domain_full}.key
+</VirtualHost>
+# <<< ${vhost_domain_full}:443
+
+IncludeOptional $INSTALL_DIR/httpd/conf/accounts/*.conf
+IncludeOptional $INSTALL_DIR/httpd/conf/applications/*.conf
+IncludeOptional $INSTALL_DIR/httpd/conf/domains/*.conf
+IncludeOptional $INSTALL_DIR/httpd/conf/tomcat/*.conf
+EOF
+
+# generate server certificate
+generate_certificate "${vhost_domain_full}"
+
+# vhost log queue
+mkfifo -m644 $INSTALL_DIR/httpd/log/vhost-log.fifo
+
+#
+# server home page
+#
+
+# .htaccess
+cat << EOF > $HOSTING_PUBLIC_DIR/.htaccess
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -s [OR]
+RewriteCond %{REQUEST_FILENAME} -l [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^.*$ - [NC,L]
+RewriteRule ^.*$ index.html [NC,L]
+EOF
+# index.html
+cat << EOF > $HOSTING_PUBLIC_DIR/index.html
+<!doctype html>
+<html>
+    <head>
+    <title>$(hostname).$DOMAIN is under construction</title>
+    <link rel="shortcut icon" href="/under_construction_favicon.ico" />
+    <style type="text/css">
+        body {
+            background-color: black;
+        }
+        #under-construction {
+            width: 500px;
+            height: 300px;
+            background-image:url(/under_construction.png);
+        }
+    </style>
+    </head>
+    <body>
+        <div id="under-construction"></div>
+    </body>
+</html>
+EOF
+# resources
+cp $script_dir/../pkg/$package/under_construction.png $HOSTING_PUBLIC_DIR
+cp $script_dir/../pkg/$package/under_construction_favicon.ico $HOSTING_PUBLIC_DIR
+
+# set files permission
+chown -R root:root $INSTALL_DIR/httpd
+chown -R $HTTPD_USER:$HTTPD_GROUP $INSTALL_DIR/httpd/log
+chmod 700 $INSTALL_DIR/httpd/{bin,modules}
+chmod 500 $INSTALL_DIR/httpd/bin/*
+chmod 700 $INSTALL_DIR/httpd/log
+chmod 4550 $INSTALL_DIR/httpd/bin/suexec
+# chroot
+mkdir -p $HOSTING_DIR/{$HOSTING_PUBLIC_RELATIVE_DIR,lib,tmp,usr/lib}
+chmod 1777 $HOSTING_DIR/tmp
+ln -s $HOSTING_PUBLIC_DIR $INSTALL_DIR/httpd/htdocs
+
+# SEE: http://lwn.net/Articles/281157/
+mount --bind /lib $HOSTING_DIR/lib
+mount -o remount,ro $HOSTING_DIR/lib
+mount --bind /usr/lib $HOSTING_DIR/usr/lib
+mount -o remount,ro $HOSTING_DIR/usr/lib
+
+##
+## post install
+##
+
+[ -f httpd-${VER_HTTPD}${PACKAGE_SUFFIX} ] && rm httpd-${VER_HTTPD}${PACKAGE_SUFFIX}
+[ -f httpd-$VER_HTTPD.tar.gz ] && rm httpd-$VER_HTTPD.tar.gz
+#[ -f httpd-$VER_HTTPD-deps.tar.gz ] && rm httpd-$VER_HTTPD-deps.tar.gz
+[ -f apr-$VER_APR.tar.gz ] && rm apr-$VER_APR.tar.gz
+[ -f apr-util-$VER_APR_UTIL.tar.gz ] && rm apr-util-$VER_APR_UTIL.tar.gz
+[ -f apr-iconv-$VER_APR_ICONV.tar.gz ] && rm apr-iconv-$VER_APR_ICONV.tar.gz
+[ -f mod_fcgid-$VER_HTTPD_MOD_FCGID.tar.gz ] && rm mod_fcgid-$VER_HTTPD_MOD_FCGID.tar.gz
+[ -d httpd-$VER_HTTPD ] && rm -rf httpd-$VER_HTTPD
+[ -d mod_fcgid-$VER_HTTPD_MOD_FCGID ] && rm -rf mod_fcgid-$VER_HTTPD_MOD_FCGID
+
+# save package version
+package_add_version "httpd" "$VER_HTTPD"
+
+# add directories to create hashes
+hashes_add_dir $INSTALL_DIR/httpd/bin
+hashes_add_dir $INSTALL_DIR/httpd/cgi-bin
+hashes_add_dir $INSTALL_DIR/httpd/modules
+
+# test
+echo -e "\n\n *** Apache HTTPD configuration ***\n"
+$INSTALL_DIR/httpd/bin/httpd -V
+echo -e "\n\n *** Apache HTTPD modules ***\n"
+$INSTALL_DIR/httpd/bin/httpd -M
+echo -e "\n\n *** Apache HTTPD directives ***\n"
+$INSTALL_DIR/httpd/bin/httpd -L
+echo -e "\n\n *** Apache HTTPD virtual hosts ***\n"
+$INSTALL_DIR/httpd/bin/httpd -S
+echo -e "\n\n *** Apache HTTPD suexec settings ***\n"
+$INSTALL_DIR/httpd/bin/suexec -V
+echo -e "\n\n *** Apache HTTPD - $(hostname).$DOMAIN request test ***\n"
+run_apache_performance_test "http://$(hostname).$DOMAIN:$HTTPD_PORT/index.html"
+
+# strace -f -o $LOG_DIR/httpd_trace.log httpd -k start
+
+exit 0
+

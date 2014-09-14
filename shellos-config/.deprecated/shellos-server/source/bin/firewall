@@ -1,0 +1,168 @@
+#!/bin/bash
+#
+# This script defines firewall rules.
+
+##
+## includes
+##
+
+# variables
+source $HOST4GE_DIR/conf/variables
+
+# versions
+source $HOST4GE_DIR/conf/versions
+
+# include constants
+source $HOST4GE_DIR/bin/constants
+
+# include functions
+source $HOST4GE_DIR/bin/functions
+
+##
+## variables
+##
+
+iptv4=/sbin/iptables
+iptv6=/sbin/ip6tables
+pubif="$(network_get_interface)" # eth0|br0
+
+enable_firewall="N"
+disable_firewall="N"
+mode="$(firewall_get_mode)" # online|safe|offline
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -e|--enable)    enable_firewall="Y"
+                        ;;
+        -d|--disable)   disable_firewall="Y"
+                        ;;
+    esac
+    shift
+done
+
+##
+## main
+##
+
+# stop fail2ban
+service fail2ban stop
+
+if [ "$enable_firewall" == "Y" ]; then
+
+##
+## === IPv4 ====================================================================
+##
+
+# flush all rules
+$iptv4 -F
+$iptv4 -X
+
+# drop all by default
+$iptv4 -P INPUT DROP
+$iptv4 -P OUTPUT ACCEPT
+$iptv4 -P FORWARD DROP
+
+# allow traffic on loopback and drop all traffic to 127.0.0.0/8 that does not use lo
+$iptv4 -A INPUT -i lo -j ACCEPT
+$iptv4 -A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
+
+# allow ping
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p icmp --icmp echo-request -j ACCEPT
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p icmp --icmp echo-reply -j ACCEPT
+
+# allow traffic already established to continue
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# allow SSH
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p tcp --dport $OPENSSH_PORT -m state --state NEW -m limit --limit 3/min --limit-burst 3 -j ACCEPT
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p tcp --dport $OPENSSH_PORT -m state --state ESTABLISHED -j ACCEPT
+
+# allow OpenVPN
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p $OPENVPN_PROTOCOL --dport $OPENVPN_PORT -m state --state NEW -m limit --limit 3/min --limit-burst 3 -j ACCEPT
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p $OPENVPN_PROTOCOL --dport $OPENVPN_PORT -m state --state ESTABLISHED -j ACCEPT
+
+# allow SMTP
+$iptv4 -A INPUT -i $pubif -d $IP_ADDRESS -p tcp --dport 25 -j ACCEPT
+
+# load firewall rules specific to the server roles
+[ -x $HOST4GE_DIR/bin/firewall.$ROLE_NAME ] && \
+    (. $HOST4GE_DIR/bin/firewall.$ROLE_NAME --ipv4)
+
+# load custom firewall rules
+[ -x $HOST4GE_DIR/bin/firewall.custom ] && \
+    (. $HOST4GE_DIR/bin/firewall.custom --ipv4)
+
+# log dropped packets
+$iptv4 -A INPUT -m limit --limit 6/minute -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# make sure nothing else comes to this box
+$iptv4 -A INPUT -j DROP
+
+##
+## === IPv6 ====================================================================
+##
+
+# flush all rules
+$iptv6 -F
+$iptv6 -X
+
+# drop all by default
+$iptv6 -P INPUT DROP
+$iptv6 -P OUTPUT ACCEPT
+$iptv6 -P FORWARD DROP
+
+# load firewall rules specific to the server roles
+[ -x $HOST4GE_DIR/bin/firewall.$ROLE_NAME ] && \
+    (. $HOST4GE_DIR/bin/firewall.$ROLE_NAME --ipv6)
+
+# load custom firewall rules
+[ -x $HOST4GE_DIR/bin/firewall.custom ] && \
+    (. $HOST4GE_DIR/bin/firewall.custom --ipv6)
+
+# log dropped packets
+$iptv6 -A INPUT -m limit --limit 6/minute -j LOG --log-prefix "iptables denied: " --log-level 7
+
+# make sure nothing else comes to this box
+$iptv6 -A INPUT -j DROP
+
+##
+## =============================================================================
+##
+
+# log event
+logger -p local0.notice -t host4ge "firewall rules loaded"
+
+##
+## === disable firewall ========================================================
+##
+
+elif [ "$disable_firewall" == "Y" ]; then
+
+    # clear IPv4 rules
+    $iptv4 -F
+    $iptv4 -X
+    $iptv4 -P INPUT ACCEPT
+    $iptv4 -P OUTPUT ACCEPT
+    $iptv4 -P FORWARD ACCEPT
+
+    # clear IPv6 rules
+    $iptv6 -F
+    $iptv6 -X
+    $iptv6 -P INPUT ACCEPT
+    $iptv6 -P OUTPUT ACCEPT
+    $iptv6 -P FORWARD ACCEPT
+
+fi
+
+# start fail2ban
+service fail2ban start
+
+# show detailed view of created rules
+$iptv4 -L -v
+$iptv6 -L -v
+
+exit 0

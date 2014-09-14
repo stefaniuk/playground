@@ -1,0 +1,16 @@
+#!/bin/bash
+
+##
+## create directories
+##
+
+mkdir -p $CONTAINERS_DIR
+
+##
+## set directory permissions
+##
+
+chown -R root:root $CONTAINERS_DIR > /dev/null 2>&1
+chmod 700 $CONTAINERS_DIR > /dev/null 2>&1
+
+exit 0

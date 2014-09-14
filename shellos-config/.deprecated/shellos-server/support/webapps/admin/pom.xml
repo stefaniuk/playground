@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.host4ge</groupId>
+    <artifactId>host4ge-admin</artifactId>
+    <version>0.0.1</version>
+    <packaging>war</packaging>
+    <name>host4ge-admin</name>
+    <url>https://github.com/stefaniuk/host4ge</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Servlet API -->
+        <servlet.api.version>6.0</servlet.api.version>
+        <!-- Spring Framework -->
+        <springframework.version>3.1.0.RELEASE</springframework.version>
+        <!-- SLF4J -->
+        <org.slf4j.version>1.6.4</org.slf4j.version>
+        <!-- log4j -->
+        <log4j.version>1.2.16</log4j.version>
+        <!-- Jackson -->
+        <jackson.version>1.9.2</jackson.version>
+        <!-- Code4ge JSON Service-->
+        <code4ge.json.service.version>1.0.2</code4ge.json.service.version>
+        <!-- Code4ge JSF -->
+        <code4ge.jsf.version>1.0.1</code4ge.jsf.version>
+        <!-- JUnit -->
+        <junit.version>4.10</junit.version>
+    </properties>
+    <repositories>
+        <!-- Servlet API -->
+        <repository>
+            <id>java.net2</id>
+            <name>Servlet API</name>
+            <url>http://download.java.net/maven/2</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-web-api</artifactId>
+            <version>${servlet.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+		<!-- Spring Framework: Core utilities. -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${springframework.version}</version>
+			<!-- Exclude Commons Logging in favor of SLF4J -->
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- Spring Framework: Expression Language (depends on spring-core). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-expression</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Bean Factory and JavaBeans utilities (depends on spring-core). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Aspect Oriented Programming (AOP) Framework (depends on spring-core, spring-beans). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Application Context (depends on spring-core, spring-expression, spring-aop, spring-beans). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Various Application Context utilities, including EhCache, JavaMail, Quartz, and Freemarker integration. -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Transaction Management Abstraction (depends on spring-core, spring-beans, spring-aop, spring-context). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: JDBC Data Access Library (depends on spring-core, spring-beans, spring-context, spring-tx). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Object-to-Relation-Mapping (ORM) integration with Hibernate, JPA, and iBatis (depends on spring-core, spring-beans, spring-context, spring-tx). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Object-to-XML Mapping (OXM) abstraction and integration with JAXB, JiBX, Castor, XStream, and XML Beans (depends on spring-core, spring-beans, spring-context). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-oxm</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Web application development utilities applicable to both Servlet and Portlet Environments (depends on spring-core, spring-beans, spring-context). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Spring MVC for Servlet Environments (depends on spring-core, spring-beans, spring-context, spring-web). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<!-- Spring Framework: Spring MVC for Portlet Environments (depends on spring-core, spring-beans, spring-context, spring-web). -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc-portlet</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+        <!-- SLF4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${org.slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${org.slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${org.slf4j.version}</version>
+        </dependency>
+        <!-- log4j -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <!-- Jackson -->
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-lgpl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-lgpl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- Code4ge JSON Service -->
+        <dependency>
+            <groupId>com.code4ge</groupId>
+            <artifactId>code4ge-json-service</artifactId>
+            <version>${code4ge.json.service.version}</version>
+        </dependency>
+        <!-- Code4ge JSF -->
+        <dependency>
+            <groupId>com.code4ge</groupId>
+            <artifactId>code4ge-jsf</artifactId>
+            <version>${code4ge.jsf.version}</version>
+        </dependency>
+        <!-- JUnit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+    </dependencies>
+    <build>
+        <finalName>host4ge-admin</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

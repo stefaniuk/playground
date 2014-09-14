@@ -1,0 +1,6 @@
+#!/bin/bash
+
+chroot_create_hosting_env
+
+exit 0
+

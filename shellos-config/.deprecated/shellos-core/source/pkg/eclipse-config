@@ -1,0 +1,14 @@
+#!/bin/bash
+
+file=eclipse-$VER_ECLIPSE-linux-gtk-x86_64.tar.gz
+
+# set files permission
+chown -R $owner:$owner $INSTALL_DIR/eclipse
+
+# remove file
+[ -f $file ] && rm $file
+
+# save package version
+package_add_version "eclipse" "$VER_ECLIPSE"
+
+exit 0

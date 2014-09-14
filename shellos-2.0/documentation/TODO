@@ -1,0 +1,32 @@
+PROJECT GOALS
+=============
+
+Deliver extended shell functionality for Linux devices.
+
+REQUIREMENTS
+============
+
+Support Ubuntu and Debian.
+
+PRIORITIES AND FEATURES
+=======================
+
+ - Check restart_phpfpm function
+ - Update packages
+ - Update/autoupdate shellos
+ - Create API to manage PHP-FPM instances
+ - implement file permission functions to stop users delete root owned files
+        http://blog.hacker.dk/2010/05/users-can-deletemove-and-rename-files-owned-by-root-eg-via-an-ftp-server-why-and-how-to-fix-unlink_override-v10/?reffed=1
+        http://stackoverflow.com/questions/426230/what-is-the-ld-preload-trick
+ - Integrate with
+        log4sh - https://sites.google.com/a/forestent.com/projects/log4sh
+        shunit2 - https://code.google.com/p/shunit2/
+ - Write unit tests
+ - Upgrade OpenVPN to the current version
+        https://community.openvpn.net/openvpn/wiki/GettingOpenvpnBuild
+        https://community.openvpn.net/openvpn/wiki/BuildingUsingGenericBuildsystem
+ - NFS filesystem mounting
+ - System/appication hooks
+ - Data presentation templates
+ - Consider to install iRedAdmin and ClamAV
+

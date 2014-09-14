@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -x $CMD_GIT ]; then
+
+    cd $WORKSPACE_DIR
+    rm -rf shellos
+    $CMD_GIT clone git://github.com/stefaniuk/shellos.git
+
+fi
+
+exit 0
+

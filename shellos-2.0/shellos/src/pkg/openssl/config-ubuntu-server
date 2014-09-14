@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "Link libraries:"
+development_link_libraries $INSTALL_DIR/openssl/lib
+
+echo "Copy includes:"
+rm -rf /usr/include/openssl
+cp -rfv $INSTALL_DIR/openssl/include/openssl /usr/include/
+
+echo "Copy pkgconfig:"
+cp -vf $INSTALL_DIR/openssl/lib/pkgconfig/* /usr/lib/pkgconfig
+
+exit 0
+

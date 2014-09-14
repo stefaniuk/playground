@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# This script defines default firewall rules.
+# Edit this file to define custom firewall rules.
+
+if [ -x $ETC_DIR/firewall/firewall-${DEVICE} ]; then
+    (. $ETC_DIR/firewall/firewall-${DEVICE} $@)
+fi
+
+exit 0
+

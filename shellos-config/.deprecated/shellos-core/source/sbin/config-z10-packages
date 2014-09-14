@@ -1,0 +1,22 @@
+#!/bin/bash
+
+exit 0
+
+# exclude packages from updates (to remove exclusion use 'echo package install | dpkg --set-selections')
+(
+    echo postfix hold
+) | dpkg --set-selections
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    mutt
+
+# cache apt archives
+if [ ! -f $CACHE_UPDATES_DIR/$CODENAME.$ROLE_NAME.tar.gz ]; then
+    cd /var/cache/apt/archives
+    tar -zcf $CACHE_UPDATES_DIR/$CODENAME.$ROLE_NAME.tar.gz *.deb
+    chmod 400 $CACHE_UPDATES_DIR/$CODENAME.$ROLE_NAME.tar.gz
+    rm -v *.deb
+fi
+
+exit 0

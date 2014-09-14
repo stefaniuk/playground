@@ -1,0 +1,209 @@
+Installation root directory:
+============================
+
+    /srv/
+
+Application directory structure:
+================================
+
+    /srv/[application]/
+        bin/
+        conf/
+        lib/
+        log/
+
+Pid files:
+==========
+
+    /srv/[application]/log/[application].pid
+
+Log files:
+==========
+
+    rsyslog daemon should be used to capture all the logs produced by a service.
+
+    1) File names
+        [application].log
+        [application].err
+
+    2) Location
+
+        /var/log/
+        /srv/[application]/log/
+
+List of the most important software and services:
+=================================================
+
+OpenSSL
+OpenSSH
+OpenVPN
+MySQL
+Apache HTTPD
+PHP
+ProFTPD
+Postfix
+Dovecot
+Java
+Tomcat
+
+phpMyAdmin
+Roundcube
+
+Users and groups:
+=================
+
+build:build         UID=499 GID=499
+host4ge:host4ge     UID=500 GID=500
+mysql:mysql         UID=510 GID=510
+httpd:httpd         UID=520 GID=520
+nginx:nginx         UID=521 GID=521
+tomcat:tomcat       UID=525 GID=525
+proftpd:proftpd     UID=530 GID=530
+postfix:postfix     UID=540 GID=540
+postdrop            GID=541
+dovecot:dovecot     UID=550 GID=550
+dovenull:dovenull   UID=551 GID=551
+vpn:vpn             UID=605 GID=605
+tor:tor             UID=610 GID=610
+vmail:vmail         UID=1100 GID=1100
+ftpjail             GID=9999
+sshjail             GID=10000
+[user:group]        MIN_UID=10001 MAX_UID=19999, MIN_GID=10001 MAX_GID=19999
+
+Ports:
+======
+
+20                  ftp data
+21                  ftp
+25                  smtp
+80                  http
+110                 pop3
+143                 imap
+443                 https
+993                 imaps
+995                 pop3s
+1900 - 1999         ftp passive ports
+2200                sshd
+8009                ajp
+8080                http
+8443                vpn
+
+Environment variables:
+======================
+
+INSTALL_DIR
+HOST4GE_DIR
+
+ADMIN_NAME
+ADMIN_MAIL
+
+LOCAL_DOWNLOAD_USER
+LOCAL_DOWNLOAD_PASS
+LOCAL_DOWNLOAD_URL
+ONLINE_DOWNLOAD_URL
+
+IP_ADDRESS
+IP_ADDRESS1
+IP_ADDRESS2
+IP_ADDRESS3
+IP_ADDRESS4
+NETMASK
+NETWORK
+BROADCAST
+GATEWAY
+NAMESERVER1
+NAMESERVER2
+NAMESERVER3
+NAMESERVER4
+
+DOMAIN
+LOCATION
+COMMON_NAME
+
+SERVER_PROVIDER = home|linode|kylos
+SERVER_HYPERVISOR = vmware|xen
+SERVER_HIERARCHY = master|slave
+SERVER_ROLE = build|test|development|live admin|host <custom>
+SERVER_MODE = offline|maintenance|online|installation
+
+VPN_SERVER_IP
+VPN_SERVER_FQDN
+VPN_SERVER_PORT
+VPN_SERVER_PROTOCOL
+VPN_NETWORK
+VPN_NETMASK
+VPN_IP_POOL
+
+Host4ge API
+===========
+
+Common interface for services:
+
+    start
+    restart
+    reload
+    stop
+    is_running
+
+Common interface for API entities:
+
+    [name]_create
+    [name]_remove
+    [name]_update
+    [name]_exists
+    [name]_list
+    [name]_count
+
+Common interface for API entities wrappers:
+
+    [name]_create.pl
+    [name]_remove.pl
+    [name]_update.pl
+    [name]_exists.pl
+    [name]_list.pl
+    [name]_count.pl
+
+Common interface for service entities:
+
+    [name]_create
+    [name]_remove
+    [name]_update
+    [name]_exists
+    [name]_list
+    [name]_count
+    [name]_help
+
+Common administration interface for service entities:
+
+    [name]_synchronize
+
+Perl script standard return codes:
+
+    FALSE = 0
+    TRUE = 1
+
+Shell script standard return values:
+
+    success
+    error
+    yes
+    no
+
+Scheduled cron jobs
+==================
+
+system maintenance
+
+    system-startup.sh
+    system-status.sh
+    system-update.sh
+
+backup
+
+    backup-databases.sh
+    backup-logs.sh
+    backup-sites.sh
+
+monitoring
+
+    check-services.sh

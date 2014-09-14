@@ -1,0 +1,109 @@
+#!/bin/bash
+#
+# USAGE: ./config --username "username"
+
+##
+## arguments
+##
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --username) shift; username="$1"
+                    ;;
+    esac
+    shift
+done
+
+##
+## functions
+##
+
+function gsettings_export() {
+    local package=$1
+    local path=$2
+    local old_ifs=$IFS
+    [ -z "$path" ] && path=/home/$username/resources
+    IFS=$'\n'
+    rm -f $path/$package.settings
+    for schema in $(gsettings list-schemas | grep ^${package} | sort); do
+        for key in $(gsettings list-keys $schema); do
+            for config in $(gsettings list-recursively $schema | grep "$schema $key"); do
+                local value=$(echo $config | sed "s#\\$schema $key ##g")
+                echo "gsettings set $schema $key \"$value\"" >> $path/$package.settings
+            done
+        done
+    done
+    IFS=$old_ifs
+}
+
+function gsettings_import() {
+    local package=$1
+    local path=$2
+    [ -z "$path" ] && path=/home/$username/resources
+    if [ -f $path/$package.settings ]; then
+        source $path/$package.settings
+    fi
+}
+
+function gconf_export() {
+    local app=$1
+    local path=$2
+    [ -z "$path" ] && path=/home/$username/resources
+    gconftool-2 --dump /apps/$app > $path/$app.xml
+}
+
+function gconf_import() {
+    local app=$1
+    local path=$2
+    [ -z "$path" ] && path=/home/$username/resources
+    if [ -f $path/$app.xml ]; then
+        gconftool-2 --load $path/$app.xml
+    fi
+}
+
+##
+## main
+##
+
+(
+
+apt_get_update="apt-get --yes update"
+apt_get_upgrade="apt-get --yes --force-yes upgrade"
+apt_get_remove="apt-get --yes --purge remove"
+apt_get_install="apt-get --yes --force-yes --ignore-missing --no-install-recommends install"
+apt_add_repository="apt-add-repository --yes"
+
+DEBIAN_FRONTEND="noninteractive"
+
+# configure
+gsettings set com.canonical.indicator.bluetooth visible false
+gsettings set com.canonical.indicator.datetime custom-time-format "%a, %d %b, %k:%M:%S" # SEE: `man date`
+gsettings set com.canonical.indicator.datetime time-format "custom"
+gsettings set com.canonical.indicator.power show-time true
+gsettings set com.canonical.Unity2d.Dash full-screen true
+gsettings set com.canonical.Unity2d.Launcher only-one-launcher true
+gsettings set com.canonical.Unity2d sticky-edges false
+gsettings set com.canonical.Unity.ApplicationsLens display-recent-apps false
+gsettings set com.canonical.unity-greeter background file:///home/$username/wallpaper.jpg
+gsettings set com.canonical.Unity.Launcher favorites "['ubiquity-gtkui.desktop']"
+gsettings set org.gnome.desktop.background picture-uri file:///home/$username/wallpaper.jpg
+# TODO: load compiz-config.profile settings
+
+# configure terminal
+gconf_import "gnome-terminal"
+mkdir -p /home/$username/.config/terminator
+cp /home/$username/resources/terminator.config /home/daniel/.config/terminator/config
+
+# configure text editor
+gsettings_import "org.gnome.gedit"
+
+# configure file manager
+gsettings_import "org.gnome.nautilus"
+
+# keyboard shortcuts, SEE: https://help.ubuntu.com/community/KeyboardShortcuts
+$apt_get_install xbindkeys
+xbindkeys --defaults > /home/$username/.xbindkeysrc
+$apt_get_install xbindkeys-config xvkbd
+
+) 2>&1 | tee /home/$username/config.log
+exit 0

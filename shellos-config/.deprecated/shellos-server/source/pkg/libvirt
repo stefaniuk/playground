@@ -1,0 +1,43 @@
+#!/bin/bash
+
+##
+## download
+##
+
+pkg_name="libvirt-$LIBVIRT_VERSION"
+#[ "$packages_force_compilation" == "N" ] && pkg_result=$(package_download $pkg_name)
+if [ "$pkg_result" != "success" ]; then
+    url="http://libvirt.org/sources/libvirt-$LIBVIRT_VERSION.tar.gz"
+    file=libvirt-$LIBVIRT_VERSION.tar.gz
+    #result=$(file_download --url $url --file $file --cache-dir-name downloads --check-file-size 15000000)
+    #if [ "$result" == "error" ]; then
+        #echo "Error: Unable to download $file file!"
+        #exit 1
+    #fi
+fi
+
+##
+## install
+##
+
+# TODO
+
+DEBIAN_FRONTEND="noninteractive"
+apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+    libsys-virt-perl \
+    libvirt-bin \
+    virtinst
+
+##
+## configure
+##
+
+# TODO
+
+##
+## post install
+##
+
+# TODO
+
+exit 0

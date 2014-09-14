@@ -1,0 +1,43 @@
+#!/bin/bash
+
+##
+## set hostname
+##
+
+hostname $DEVICE_NAME
+
+# /etc/hostname
+echo $(hostname) > /etc/hostname
+
+##
+## set host file
+##
+
+# /etc/hosts
+[ ! -f /etc/hosts.old ] && cp /etc/hosts /etc/hosts.old
+# if IP is address set
+[ -n "$IP_ADDRESS" ] && cat << EOF > /etc/hosts
+127.0.0.1 localhost.localdomain localhost
+$IP_ADDRESS $(hostname).$DOMAIN $(hostname)
+EOF
+# if IP is not address set
+[ -z "$IP_ADDRESS" ] && cat << EOF > /etc/hosts
+127.0.0.1 localhost.localdomain localhost $(hostname).$DOMAIN $(hostname)
+EOF
+# rest of the file
+cat << EOF >> /etc/hosts
+
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+EOF
+if [ -f $SHELLOS_DIR/conf/hosts ]; then
+    ( cat /etc/hosts; cat $SHELLOS_DIR/conf/hosts ) > /etc/hosts.tmp
+    mv /etc/hosts.tmp /etc/hosts
+fi
+
+exit 0
+

@@ -1,0 +1,26 @@
+Description: change SSL_OP_NO_TLSv1_1 from 0x00000400L to 0x10000000L as in
+ 1.0.1b to prevent applications compiled with SSL_OP_ALL from incorrectly
+ disabling TLS 1.1.
+Origin: upstream, http://cvs.openssl.org/chngview?cn=22503
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1018998
+
+Index: openssl-1.0.1/ssl/ssl.h
+===================================================================
+--- openssl-1.0.1.orig/ssl/ssl.h	2012-02-22 09:01:44.000000000 -0500
++++ openssl-1.0.1/ssl/ssl.h	2012-07-03 11:22:32.781475474 -0400
+@@ -556,7 +556,6 @@
+ #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
+ #define SSL_OP_TLS_D5_BUG				0x00000100L
+ #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
+-#define SSL_OP_NO_TLSv1_1				0x00000400L
+ 
+ /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
+  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
+@@ -604,6 +603,7 @@
+ #define SSL_OP_NO_SSLv3					0x02000000L
+ #define SSL_OP_NO_TLSv1					0x04000000L
+ #define SSL_OP_NO_TLSv1_2				0x08000000L
++#define SSL_OP_NO_TLSv1_1				0x10000000L
+ 
+ /* These next two were never actually used for anything since SSLeay
+  * zap so we have some more flags.

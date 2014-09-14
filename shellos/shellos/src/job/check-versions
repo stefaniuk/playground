@@ -1,0 +1,245 @@
+#!/bin/bash
+#
+# Scheduled job. This script checks if the installed packages are in the most recent versions.
+
+##
+## includes
+##
+
+source $SHELLOS_DIR/lib/base > /dev/null 2>&1
+
+##
+## variables
+##
+
+job_name="check-versions"
+
+##
+## main
+##
+
+t1=$(date +%s)
+msg=
+
+# check lock
+[ -f $JOB_LOCK_ALL_FILE ] && exit 0
+if [ $(job_lock_exists $job_name) == "yes" ]; then
+    # do not log if all jobs are locked
+    [ $(job_lock_all_exists) == "no" ] && \
+        log_info "job $job_name is locked"
+    exit 0
+fi
+# set lock
+job_lock_set $job_name
+
+# ---------- BEGIN ----------
+
+function _compare_version() {
+    local pkg=$1
+    local ver=$2
+    local curr_ver=$(package_get_version $pkg)
+    local result=$(package_compare_version $ver $curr_ver)
+    if [ $result == 1 ]; then
+        echo upgrade $pkg $curr_ver to $ver
+    fi
+}
+
+old_ifs=$IFS
+
+##
+## openssl
+##
+
+if [ $(package_is_installed "openssl") == "yes" ]; then
+    version=$(wget -O - http://www.openssl.org/source/ 2> /dev/null | grep -i "LATEST" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "openssl site does not return any result..."
+    else
+        _compare_version "openssl" $version
+    fi
+fi
+
+##
+## openssh
+##
+
+if [ $(package_is_installed "openssh") == "yes" ]; then
+    version=$(wget -O - http://www.openssh.com/ 2> /dev/null | grep -i "Portable OpenSSH" | grep -oEi '[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "openssh site does not return any result..."
+    else
+        _compare_version "openssh" $version
+    fi
+fi
+
+##
+## mysql
+##
+
+if [ $(package_is_installed "mysql") == "yes" ]; then
+    version=$(wget -O - http://dev.mysql.com/downloads/mysql/ 2> /dev/null | grep -i "<h1>MySQL Community Server 5.6" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "mysql site does not return any result..."
+    else
+        _compare_version "mysql" $version
+    fi
+fi
+
+##
+## postfix
+##
+
+if [ $(package_is_installed "postfix") == "yes" ]; then
+    version=$(wget -O - http://mirror.tje.me.uk/pub/mirrors/postfix-release/index.html 2> /dev/null | grep -i "official/postfix" | grep -oEi '2\.10\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "postfix site does not return any result..."
+    else
+        _compare_version "postfix" $version
+    fi
+fi
+
+##
+## proftpd
+##
+
+if [ $(package_is_installed "proftpd") == "yes" ]; then
+    if [ $(contains $(package_get_version "proftpd") "rc") == "yes" ]; then
+        proftpd_ver_name="Release Candidate"
+    else
+        proftpd_ver_name="Stable"
+    fi
+    version=$(wget -O - http://www.proftpd.org/ 2> /dev/null | grep -i "$proftpd_ver_name: <strong>" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "proftpd site does not return any result..."
+    else
+        _compare_version "proftpd" $version
+    fi
+fi
+
+##
+## httpd
+##
+
+if [ $(package_is_installed "httpd") == "yes" ]; then
+    version=$(wget -O - http://httpd.apache.org/download.cgi 2> /dev/null | grep -i "#apache24" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "httpd site does not return any result..."
+    else
+        _compare_version "httpd" $version
+    fi
+fi
+
+##
+## php
+##
+
+if [ $(package_is_installed "php-fpm") == "yes" ]; then
+    IFS=$'\n'
+    versions=$(wget -O - http://php.net/downloads.php 2> /dev/null | grep "id=\"v" | grep -oEi 'v[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort)
+    if [ -z "$versions" ]; then
+        echo "php site does not return any result..."
+    else
+        for version in $versions; do
+            if [[ $version == 5.3.* ]]; then
+                curr_ver=$(package_get_version "php-fpm" | grep "5.3")
+                result=$(package_compare_version $version $curr_ver)
+                if [ $result == 1 ]; then
+                    echo upgrade php $curr_ver to $version
+                fi
+            fi
+            if [[ $version == 5.4.* ]]; then
+                curr_ver=$(package_get_version "php-fpm" | grep "5.4")
+                result=$(package_compare_version $version $curr_ver)
+                if [ $result == 1 ]; then
+                    echo upgrade php $curr_ver to $version
+                fi
+            fi
+            if [[ $version == 5.5.* ]]; then
+                curr_ver=$(package_get_version "php-fpm" | grep "5.5")
+                result=$(package_compare_version $version $curr_ver)
+                if [ $result == 1 ]; then
+                    echo upgrade php $curr_ver to $version
+                fi
+            fi
+        done
+    fi
+    IFS=$old_ifs
+fi
+
+##
+## dovecot
+##
+
+if [ $(package_is_installed "dovecot") == "yes" ]; then
+    version=$(wget -O - http://www.dovecot.org/download.html 2> /dev/null | grep -i "<li>Download.*<a href=\"releases" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "dovecot site does not return any result..."
+    else
+        _compare_version "dovecot" $version
+    fi
+fi
+
+##
+## tomcat
+##
+
+if [ $(package_is_installed "tomcat") == "yes" ]; then
+    version=$(wget -O - http://tomcat.apache.org/download-70.cgi 2> /dev/null | grep -i "<strong>7." | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[a-z0-9]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "tomcat site does not return any result..."
+    else
+        _compare_version "tomcat" $version
+    fi
+fi
+
+##
+## phpmyadmin
+##
+
+if [ $(package_is_installed "phpmyadmin") == "yes" ]; then
+    version=$(wget -O - http://www.phpmyadmin.net/home_page/downloads.php 2> /dev/null | grep -i "release notes" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+[\.0-9]?[a-z0-9\-]*' | grep -v "notes" | grep -v -- "-rc" | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "phpmyadmin site does not return any result..."
+    else
+        _compare_version "phpmyadmin" $version
+    fi
+fi
+
+##
+## roundcube
+##
+
+if [ $(package_is_installed "roundcube ") == "yes" ]; then
+    version=$(wget -O - http://roundcube.net/download 2> /dev/null | grep -i "<strong>Complete" | grep -oEi '[0-9]+\.[0-9]+[\.0-9]?[a-z0-9\-]*' | sort -r | head -1)
+    if [ -z "$version" ]; then
+        echo "roundcube  site does not return any result..."
+    else
+        _compare_version "roundcube " $version
+    fi
+fi
+
+##
+## shellos
+##
+
+# TODO
+
+# ---------- END ------------
+
+# remove lock
+job_lock_unset $job_name
+
+# measure time
+t2=$(date +%s)
+time=$((t2-t1))
+
+# log event only if it takes longer than specified number of seconds or there is a message
+[ $time -le $JOB_LOG_EVENT_TIME ] && [ "$msg" == "" ] && exit 0
+if [ "$msg" == "" ]; then
+    log_info "job $job_name run (time: $time s)"
+else
+    log_info "job $job_name run - $msg (time: $time s)"
+fi
+
+exit 0
+

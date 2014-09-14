@@ -1,0 +1,16 @@
+#!/bin/bash
+
+file=apache-maven-$VER_MAVEN-bin.tar.gz
+
+# extract
+[ -d $INSTALL_DIR/maven ] && rm -rf $INSTALL_DIR/maven
+tar -zxf $file
+mv apache-maven-$VER_MAVEN $INSTALL_DIR/maven
+
+# check
+if [ ! -x $INSTALL_DIR/maven/bin/mvn ]; then
+    echo "Error: Maven has NOT been installed successfully!"
+    exit 1
+fi
+
+exit 0

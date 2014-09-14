@@ -1,0 +1,9 @@
+#!/bin/bash
+
+$CMD_FIREWALL_START
+job_unlock_all
+(cat $SHELLOS_DIR/conf/.crontab-variables; cat $SHELLOS_DIR/conf/.crontab-jobs) | crontab
+(. $SHELLOS_DIR/job/system-start --log-errors)
+
+exit 0
+

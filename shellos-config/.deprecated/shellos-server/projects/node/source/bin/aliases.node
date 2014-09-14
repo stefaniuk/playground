@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+# Global aliases specific to the project. These aliases may depend on variables,
+# constants or functions.
+
+# TODO
