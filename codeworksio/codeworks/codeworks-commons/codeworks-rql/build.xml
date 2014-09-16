@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="codeworks-rql" default="build" basedir=".">
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="detect-os">
+        <property name="dir.bin" value="${basedir}/bin" />
+        <property name="dir.lib" value="${basedir}/lib" />
+        <property name="dir.src" value="${basedir}/src" />
+        <property name="dir.out" value="${basedir}/build" />
+        <property name="antlr4.cmd" value="${dir.bin}/antlr4.${os.script.ext}" />
+        <property name="antlr4.arg" value="*.g4 -package ${java.package}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${dir.out}" />
+        <delete>
+            <fileset dir="${dir.src}" includes="**/*.java,**/*.tokens"/>
+        </delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+        <mkdir dir="${dir.out}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build                                -->
+    <!-- ============================================ -->
+    <target name="build" depends="prepare">
+        <exec
+            executable="${antlr4.cmd}"
+            dir="${dir.src}">
+            <arg line="${antlr4.arg}" />
+        </exec>
+        <javac
+            srcdir="${dir.src}"
+            destdir="${dir.out}"
+            classpath="${dir.lib}/antlr-4.2-complete.jar"
+            includes="**/*.java"
+            includeAntRuntime="false"
+        />
+    </target>
+
+</project>

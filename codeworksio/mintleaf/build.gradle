@@ -1,0 +1,36 @@
+buildscript {
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:1.0.2.RELEASE')
+    }
+
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.12'
+}
+
+allprojects {
+
+    apply plugin: 'groovy'
+    apply plugin: 'spring-boot'
+    apply plugin: 'eclipse'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile('org.springframework.boot:spring-boot-starter-parent')
+        testCompile('org.springframework.boot:spring-boot-starter-test')
+    }
+
+}
+
+subprojects {
+
+}

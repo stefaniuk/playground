@@ -1,0 +1,1059 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.codeworks</groupId>
+    <artifactId>codeworks-dependencies</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <description>Codeworks Dependencies</description>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.0.1.RELEASE</version> <!-- SEE: version number must match in the dependency management section -->
+    </parent>
+
+    <!--
+
+        SEE:
+            [github]/spring-projects/spring-boot/spring-boot-dependencies/pom.xml
+            [github]/spring-projects/spring-boot/spring-boot-starters/pom.xml
+
+    -->
+
+    <!-- === PROPERTIES ============================================================================================ -->
+
+    <properties>
+
+        <!-- Java JDK -->
+        <java.cf-version>1.7</java.cf-version>
+
+        <!-- Servlet API -->
+        <servlet.api.cf-version>${servlet-api.version}</servlet.api.cf-version>
+
+        <!-- Spring -->
+        <spring.cf-version>${spring.version}</spring.cf-version>
+        <!-- Spring Data JPA -->
+        <spring.data.jpa.cf-version>${spring-data-jpa.version}</spring.data.jpa.cf-version>
+        <!-- Spring Data REST -->
+        <spring.data.rest.cf-version>${spring-data-rest.version}</spring.data.rest.cf-version>
+        <!-- Spring Security -->
+        <spring.security.cf-version>${spring-security.version}</spring.security.cf-version>
+        <!-- AspectJ -->
+        <aspectj.cf-version>${aspectj.version}</aspectj.cf-version>
+
+        <!-- Hibernate -->
+        <hibernate.cf-version>${hibernate.version}</hibernate.cf-version>
+        <!-- Hibernate Search -->
+        <hibernate.search.cf-version>[4.5.0.Final,4.5.99.Final]</hibernate.search.cf-version>
+        <!-- Hibernate Validator -->
+        <hibernate.validator.cf-version>${hibernate-validator.version}</hibernate.validator.cf-version>
+        <!-- Ehcache -->
+        <ehcache.cf-version>[2.6.8,2.6.99]</ehcache.cf-version>
+        <!-- BoneCP -->
+        <bonecp.cf-version>[0.8.0.RELEASE,0.8.99.RELEASE]</bonecp.cf-version>
+        <!-- H2 -->
+        <h2.cf-version>${h2.version}</h2.cf-version>
+
+        <!-- Jackson -->
+        <jackson.cf-version>${jackson.version}</jackson.cf-version>
+        <!-- Swagger -->
+        <swagger.cf-version>[0.6.6,0.6.99]</swagger.cf-version>
+        <!-- HttpClient -->
+        <httpclient.cf-version>${httpclient.version}</httpclient.cf-version>
+
+        <!-- Groovy -->
+        <groovy.cf-version>${groovy.version}</groovy.cf-version>
+
+        <!-- Thymeleaf -->
+        <thymeleaf.cf-version>[2.1.2.RELEASE,2.1.99.RELEASE]</thymeleaf.cf-version>
+        <!-- Thymeleaf Security -->
+        <thymeleaf.security.cf-version>[2.1.1.RELEASE,2.1.99.RELEASE]</thymeleaf.security.cf-version>
+        <!-- Bootstrap -->
+        <bootstrap.cf-version>[3.1.0,3.1.99]</bootstrap.cf-version>
+        <!-- jQuery -->
+        <jquery.cf-version>[2.1.0,2.1.99]</jquery.cf-version>
+        <!-- Dojo Toolkit -->
+        <dojo.cf-version>[1.9.1,1.9.99]</dojo.cf-version>
+        <!-- Font Awesome -->
+        <fontawesome.cf-version>[4.0.3,4.0.99]</fontawesome.cf-version>
+
+        <!-- ANTLR -->
+        <antlr.cf-version>[4.2,4.99]</antlr.cf-version>
+        <!--  Joda Time  -->
+        <jodatime.cf-version>2.3</jodatime.cf-version>
+        <!-- Commons Lang -->
+        <commons.lang.cf-version>[3.2.1,3.2.99]</commons.lang.cf-version>
+        <!-- Guava -->
+        <guava.cf-version>[16.0.1,16.0.99]</guava.cf-version>
+        <!-- QRGen -->
+        <qrgen.cf-version>1.3</qrgen.cf-version>
+
+        <!-- log4j -->
+        <log4j.cf-version>${log4j.version}</log4j.cf-version>
+        <!-- SLF4J -->
+        <slf4j.cf-version>${slf4j.version}</slf4j.cf-version>
+        <!-- Logback -->
+        <logback.cf-version>${logback.version}</logback.cf-version>
+
+        <!-- JUnit -->
+        <junit.cf-version>${junit.version}</junit.cf-version>
+        <!-- Mockito -->
+        <mockito.cf-version>${mockito.version}</mockito.cf-version>
+        <!-- Hamcrest -->
+        <hamcrest.cf-version>${hamcrest.version}</hamcrest.cf-version>
+
+        <!-- artifact repository -->
+        <artifact.repository.url>https://</artifact.repository.url>
+
+        <!-- version control -->
+        <version.control.url>https://github.com/codeworksio/${project.artifactId}</version.control.url>
+        <version.control.connection>scm:git:https://github.com/codeworksio/${project.artifactId}.git</version.control.connection>
+        <version.control.developerConnection>scm:git@github.com:codeworksio/${project.artifactId}.git</version.control.developerConnection>
+
+        <!-- deployment -->
+        <deploy.dev.url>https://</deploy.dev.url>
+        <deploy.uat.url>https://</deploy.uat.url>
+
+        <!-- variables overridden by environment profile or child pom -->
+        <tests.skip>true</tests.skip>
+        <checkstyle.skip>true</checkstyle.skip>
+
+        <!-- encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    </properties>
+
+    <!-- === DEPENDENCY MANAGEMENT ================================================================================= -->
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Spring Boot -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>1.0.1.RELEASE</version> <!-- SEE: version number must match the parent -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-tomcat</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Servlet API (PROVIDED) -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${servlet.api.cf-version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Spring -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.cf-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.cf-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-oxm</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-orm</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-expression</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <!-- Spring Data JPA -->
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-jpa</artifactId>
+                <version>${spring.data.jpa.cf-version}</version>
+            </dependency>
+            <!-- Spring Data REST -->
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-rest-webmvc</artifactId>
+                <version>${spring.data.rest.cf-version}</version>
+            </dependency>
+            <!-- Spring WebSocket -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-websocket</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <!-- Spring Security -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-core</artifactId>
+                <version>${spring.security.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
+                <version>${spring.security.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>${spring.security.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-aspects</artifactId>
+                <version>${spring.security.cf-version}</version>
+            </dependency>
+            <!-- AspectJ -->
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>${aspectj.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjrt</artifactId>
+                <version>${aspectj.cf-version}</version>
+            </dependency>
+
+            <!-- Spring JDBC -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.cf-version}</version>
+            </dependency>
+            <!-- Hibernate -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.cf-version}</version>
+            </dependency>
+            <!-- Hibernate Entity Manager -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>${hibernate.cf-version}</version>
+            </dependency>
+            <!-- Hibernate Search -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-search</artifactId>
+                <version>${hibernate.search.cf-version}</version>
+            </dependency>
+            <!-- Hibernate Validator -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate.validator.cf-version}</version>
+            </dependency>
+            <!-- Ehcache -->
+            <dependency>
+               <groupId>net.sf.ehcache</groupId>
+               <artifactId>ehcache-core</artifactId>
+               <version>${ehcache.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-ehcache</artifactId>
+                <version>${hibernate.cf-version}</version>
+            </dependency>
+            <!-- BoneCP -->
+            <dependency>
+                <groupId>com.jolbox</groupId>
+                <artifactId>bonecp</artifactId>
+                <version>${bonecp.cf-version}</version>
+            </dependency>
+            <!-- H2 -->
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.cf-version}</version>
+            </dependency>
+
+            <!-- Jackson -->
+            <dependency>
+               <groupId>com.fasterxml.jackson.core</groupId>
+               <artifactId>jackson-core</artifactId>
+               <version>${jackson.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-hibernate4</artifactId>
+                <version>${jackson.cf-version}</version>
+            </dependency>
+            <!-- Swagger -->
+            <dependency>
+                <groupId>com.mangofactory</groupId>
+                <artifactId>swagger-springmvc</artifactId>
+                <version>${swagger.cf-version}</version>
+            </dependency>
+            <!-- HttpClient -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.cf-version}</version>
+            </dependency>
+
+            <!-- Groovy -->
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>${groovy.cf-version}</version>
+            </dependency>
+
+            <!-- Thymeleaf -->
+            <dependency>
+                <groupId>org.thymeleaf</groupId>
+                <artifactId>thymeleaf</artifactId>
+                <version>${thymeleaf.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thymeleaf</groupId>
+                <artifactId>thymeleaf-spring4</artifactId>
+                <version>${thymeleaf.cf-version}</version>
+            </dependency>
+            <!-- Thymeleaf Security -->
+            <dependency>
+                <groupId>org.thymeleaf.extras</groupId>
+                <artifactId>thymeleaf-extras-springsecurity3</artifactId>
+                <version>${thymeleaf.security.cf-version}</version>
+            </dependency>
+            <!-- Bootstrap -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>bootstrap</artifactId>
+                <version>${bootstrap.cf-version}</version>
+            </dependency>
+            <!-- jQuery -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>jquery</artifactId>
+                <version>${jquery.cf-version}</version>
+            </dependency>
+            <!-- Dojo Toolkit -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>dojo</artifactId>
+                <version>${dojo.cf-version}</version>
+            </dependency>
+            <!-- Font Awesome -->
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>font-awesome</artifactId>
+                <version>${fontawesome.cf-version}</version>
+            </dependency>
+
+            <!-- ANTLR -->
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4</artifactId>
+                <version>${antlr.cf-version}</version>
+            </dependency>
+            <!--  Joda Time -->
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${jodatime.cf-version}</version>
+            </dependency>
+            <!-- Commons Lang -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons.lang.cf-version}</version>
+            </dependency>
+            <!-- Guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.cf-version}</version>
+            </dependency>
+            <!-- QRGen -->
+            <dependency>
+                <groupId>net.glxn</groupId>
+                <artifactId>qrgen</artifactId>
+                <version>${qrgen.cf-version}</version>
+            </dependency>
+
+            <!-- log4j -->
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>${log4j.cf-version}</version>
+            </dependency>
+            <!-- SLF4J -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>log4j-over-slf4j</artifactId>
+                <version>${slf4j.cf-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.cf-version}</version>
+            </dependency>
+            <!-- Logback -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.cf-version}</version>
+            </dependency>
+
+            <!-- JUnit (TEST) -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.cf-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Mockito (TEST) -->
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>${mockito.cf-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Hamcrest (TEST) -->
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-library</artifactId>
+                <version>${hamcrest.cf-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Spring Test (TEST) -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.cf-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Thymeleaf (TEST) -->
+            <dependency>
+                <groupId>org.thymeleaf</groupId>
+                <artifactId>thymeleaf-testing</artifactId>
+                <version>${thymeleaf.cf-version}</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- === DEPENDENCIES ========================================================================================== -->
+
+    <dependencies>
+
+        <!-- log4j -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+        <!-- SLF4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Logback -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- JUnit (TEST) -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Test (TEST) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Mockito (TEST) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Hamcrest (TEST) -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <!-- === BUILD ================================================================================================= -->
+
+    <build>
+
+        <!-- === RESOURCES ========================================================================================= -->
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>logback.*</include>
+                    <include>application.*</include>
+                    <include>data.*</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <!-- === PLUGIN MANAGEMENT ================================================================================= -->
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <fork>true</fork>
+                        <compilerVersion>${java.cf-version}</compilerVersion>
+                        <source>${java.cf-version}</source>
+                        <target>${java.cf-version}</target>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifestEntries>
+                                <SCM-Branch>${vcs.branch}</SCM-Branch>
+                                <SCM-Tag>${vcs.tag}</SCM-Tag>
+                                <SCM-Revision>${vcs.revision}</SCM-Revision>
+                                <SCM-Commit>${vcs.commitsCount}</SCM-Commit>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <configuration>
+                        <failOnMissingWebXml>false</failOnMissingWebXml>
+                        <archive>
+                            <manifestEntries>
+                                <SCM-Branch>${vcs.branch}</SCM-Branch>
+                                <SCM-Tag>${vcs.tag}</SCM-Tag>
+                                <SCM-Revision>${vcs.revision}</SCM-Revision>
+                                <SCM-Commit>${vcs.commitsCount}</SCM-Commit>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>aspectj-maven-plugin</artifactId>
+                    <version>1.6</version>
+                    <executions>
+                        <execution>
+                            <id>compile</id>
+                            <configuration>
+                                <source>${java.cf-version}</source>
+                                <target>${java.cf-version}</target>
+                                <verbose>false</verbose>
+                                <outxml>true</outxml>
+                                <aspectLibraries>
+                                    <aspectLibrary>
+                                        <groupId>org.springframework.security</groupId>
+                                        <artifactId>spring-security-aspects</artifactId>
+                                    </aspectLibrary>
+                                </aspectLibraries>
+                            </configuration>
+                            <goals>
+                                <goal>compile</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>test-compile</id>
+                            <configuration>
+                                <source>${java.cf-version}</source>
+                                <target>${java.cf-version}</target>
+                                <verbose>false</verbose>
+                                <aspectLibraries>
+                                    <aspectLibrary>
+                                        <groupId>org.springframework.security</groupId>
+                                        <artifactId>spring-security-aspects</artifactId>
+                                    </aspectLibrary>
+                                </aspectLibraries>
+                            </configuration>
+                            <goals>
+                                <goal>test-compile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.aspectj</groupId>
+                            <artifactId>aspectjrt</artifactId>
+                            <version>${aspectj.cf-version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.cargo</groupId>
+                    <artifactId>cargo-maven2-plugin</artifactId>
+                    <version>1.4.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.tomcat.maven</groupId>
+                    <artifactId>tomcat7-maven-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.17</version>
+                    <configuration>
+                        <argLine>-XX:-UseSplitVerifier</argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.17</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.surefire</groupId>
+                            <artifactId>surefire-junit4</artifactId>
+                            <version>2.17</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>1.2</version>
+                    <executions>
+                        <execution>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>create-timestamp</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <timestampFormat>yyyy/MM/dd HH:mm:ss.SSS</timestampFormat>
+                        <timestampPropertyName>build.date</timestampPropertyName>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>ru.concerteza.buildnumber</groupId>
+                    <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+                    <version>1.2.7</version>
+                    <executions>
+                        <execution>
+                            <phase>validate</phase>
+                            <goals>
+                                <goal>extract-buildnumber</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <branchProperty>vcs.branch</branchProperty>
+                        <tagProperty>vcs.tag</tagProperty>
+                        <revisionProperty>vcs.revision</revisionProperty>
+                        <commitsCountProperty>vcs.commitsCount</commitsCountProperty>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jxr-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>cobertura-maven-plugin</artifactId>
+                    <version>2.6</version>
+                    <configuration>
+                        <aggregate>true</aggregate>
+                        <formats>
+                            <format>html</format>
+                            <format>xml</format>
+                        </formats>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>2.12</version>
+                    <configuration>
+                        <configLocation>checkstyle.xml</configLocation>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.1</version>
+                    <configuration>
+                        <linkXref>true</linkXref>
+                        <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+                        <minimumTokens>100</minimumTokens>
+                        <targetJdk>${java.cf-version}</targetJdk>
+                        <verbose>true</verbose>
+                        <rulesets>
+                            <ruleset>houserules.xml</ruleset>
+                        </rulesets>
+                        <excludes>
+                            <exclude>**/src/test/resources/**/*.java</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>javancss-maven-plugin</artifactId>
+                    <version>2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>findbugs-maven-plugin</artifactId>
+                    <version>2.5.3</version>
+                    <configuration>
+                        <threshold>Low</threshold>
+                        <effort>Max</effort>
+                        <findbugsXmlOutput>true</findbugsXmlOutput>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>jdepend-maven-plugin</artifactId>
+                    <version>2.0-beta-2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>taglist-maven-plugin</artifactId>
+                    <version>2.4</version>
+                    <configuration>
+                        <tagListOptions>
+                            <tagClasses>
+                                <tagClass>
+                                    <displayName>Work List</displayName>
+                                    <tags>
+                                        <tag>
+                                            <matchString>SEE</matchString>
+                                            <matchType>exact</matchType>
+                                        </tag>
+                                        <tag>
+                                            <matchString>TODO</matchString>
+                                            <matchType>ignoreCase</matchType>
+                                        </tag>
+                                        <tag>
+                                            <matchString>FIXME</matchString>
+                                            <matchType>ignoreCase</matchType>
+                                        </tag>
+                                        <tag>
+                                            <matchString>@deprecated</matchString>
+                                            <matchType>exact</matchType>
+                                        </tag>
+                                    </tags>
+                                </tagClass>
+                            </tagClasses>
+                        </tagListOptions>
+                        <xrefLocation>${project.reporting.outputDirectory}/xref</xrefLocation>
+                        <testXrefLocation>${project.reporting.outputDirectory}/xref</testXrefLocation>
+                    </configuration>
+                </plugin>
+                <!-- The following plugin fixes "Plugin execution not covered by lifecycle configuration" problem that occurs in Eclipse -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>buildnumber-maven-plugin</artifactId>
+                                        <versionRange>[1.2,)</versionRange>
+                                        <goals>
+                                            <goal>create-timestamp</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>ru.concerteza.buildnumber</groupId>
+                                        <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+                                        <versionRange>[1.2.0,)</versionRange>
+                                        <goals>
+                                            <goal>extract-buildnumber</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-antrun-plugin</artifactId>
+                                        <versionRange>[1.7,)</versionRange>
+                                        <goals>
+                                            <goal>run</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                                </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <!-- === PLUGINS =========================================================================================== -->
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>ru.concerteza.buildnumber</groupId>
+                <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+    </build>
+
+    <!-- === REPORTING ============================================================================================= -->
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>javancss-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jdepend-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>taglist-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <!-- === DEVELOPERS ============================================================================================ -->
+
+    <developers>
+        <developer>
+            <name>Daniel Stefaniuk</name>
+            <email>daniel.stefaniuk@gmail.com</email>
+            <url>http://stefaniuk.org</url>
+        </developer>
+    </developers>
+
+    <!-- === VERSION CONTROL ======================================================================================= -->
+
+    <scm>
+        <url>${version.control.url}</url>
+        <connection>${version.control.connection}</connection>
+        <developerConnection>${version.control.developerConnection}</developerConnection>
+    </scm>
+
+    <!-- === LICENCE =============================================================================================== -->
+
+    <licenses>
+        <license>
+            <name>The "New" BSD Licence</name>
+            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+        </license>
+    </licenses>
+
+    <!-- === REPOSITORIES ========================================================================================== -->
+
+    <repositories>
+        <!--<repository>
+            <id>custom-repository</id>
+            <name>Custom Repository</name>
+            <url>${artifact.repository.url}/</url>
+        </repository>-->
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>http://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!--<repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>http://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>-->
+        <!--<repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>http://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>-->
+        <!--<repository>
+            <id>terracotta-releases</id>
+            <name>Terracotta Releases</name>
+            <url>http://www.terracotta.org/download/reflector/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>-->
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2</url>
+        </pluginRepository>
+        <!--<pluginRepository>
+            <id>spring-milestones</id>
+            <url>http://repo.spring.io/milestone</url>
+        </pluginRepository>-->
+        <!--<pluginRepository>
+            <id>spring-snapshots</id>
+            <url>http://repo.spring.io/snapshot</url>
+        </pluginRepository>-->
+    </pluginRepositories>
+
+    <!-- === DISTRIBUTION MANAGEMENT =============================================================================== -->
+
+    <distributionManagement>
+        <!--<repository>
+            <id>deployment</id>
+            <name>Releases Repository</name>
+            <url>${artifact.repository.url}/releases/</url>
+        </repository>-->
+        <!--<snapshotRepository>
+            <id>deployment</id>
+            <name>Snapshots Repository</name>
+            <url>${artifact.repository.url}/snapshots/</url>
+        </snapshotRepository>-->
+    </distributionManagement>
+
+</project>

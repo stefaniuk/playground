@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="antlr" default="test" basedir=".">
+
+    <property file="build.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="detect-os">
+
+        <property name="java.version" value="1.7" />
+
+        <property name="dir.bin" value="${basedir}/bin" />
+        <property name="dir.lib" value="${basedir}/lib" />
+        <property name="dir.src" value="${basedir}/src" />
+        <property name="dir.out" value="${basedir}/build" />
+
+        <property name="cmd.antlr4" value="${dir.bin}/antlr4.${os.script.ext}" />
+        <property name="arg.antlr4" value="*.g4 -package ${jar.package}" />
+        <property name="cmd.grun" value="${dir.bin}/grun.${os.script.ext}" />
+        <property name="cmd.mvn" value="${dir.bin}/mvn.${os.script.ext}" />
+
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${dir.out}" />
+        <delete>
+            <fileset dir="${dir.src}" includes="**/*.java,**/*.tokens"/>
+        </delete>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+        <mkdir dir="${dir.out}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build                                -->
+    <!-- ============================================ -->
+    <target name="build" depends="prepare">
+        <exec
+            executable="${cmd.antlr4}"
+            dir="${dir.src}">
+            <arg line="${arg.antlr4}" />
+        </exec>
+        <javac
+            srcdir="${dir.src}"
+            destdir="${dir.out}"
+            classpath="${dir.lib}/antlr-4.2-complete.jar"
+            includes="**/*.java"
+            includeAntRuntime="false"
+        />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: test                                 -->
+    <!-- ============================================ -->
+    <target name="test" depends="build">
+        <exec executable="${cmd.grun}" dir="${dir.out}"><arg line="${jar.package}.Grammar prog -tree ${dir.src}/Grammar.test" /></exec>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: jar                                  -->
+    <!-- ============================================ -->
+    <target name="jar" depends="build">
+        <jar
+            basedir="${dir.out}"
+            destfile="${dir.out}/${jar.file}"
+            includes="**/*.class"
+        />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: install                              -->
+    <!-- ============================================ -->
+    <target name="install" depends="jar">
+        <exec
+            executable="${cmd.mvn}"
+            dir="${dir.out}">
+            <arg line="install:install-file -Dfile=${jar.file} -DgroupId=${jar.groupId} -DartifactId=${jar.artifactId} -Dversion=${jar.version} -Dpackaging=jar -DgeneratePom=true" />
+        </exec>
+    </target>
+
+</project>

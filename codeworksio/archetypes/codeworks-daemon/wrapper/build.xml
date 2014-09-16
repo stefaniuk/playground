@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="codeworks-daemon" default="prepare" basedir=".">
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init">
+        <property name="dir.build" value="${basedir}/build" />
+        <property name="dir.resources" value="${basedir}/resources" />
+        <property name="dir.bin" value="${dir.resources}/bin" />
+        <property name="dir.lib" value="${dir.resources}/lib" />
+        <property name="dir.log" value="${dir.resources}/log" />
+        <property name="dir.tmp" value="${dir.resources}/tmp" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <delete dir="${dir.build}" />
+        <delete dir="${dir.lib}" />
+        <delete dir="${dir.log}" />
+        <delete dir="${dir.tmp}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="clean">
+        <mkdir dir="${dir.build}" />
+        <mkdir dir="${dir.lib}" />
+        <mkdir dir="${dir.log}" />
+        <mkdir dir="${dir.tmp}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build                                -->
+    <!-- ============================================ -->
+    <target name="build" depends="init">
+        <zip destfile="${dir.build}/${daemon.pkg.name}.zip">
+            <zipfileset dir="${dir.resources}" prefix="${daemon.name}" />
+        </zip>
+        <tar destfile="${dir.build}/${daemon.pkg.name}.tar.gz" compression="gzip">
+            <zipfileset dir="${dir.resources}" prefix="${daemon.name}" />
+        </tar>
+    </target>
+
+</project>

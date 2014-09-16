@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>file-monitor-service</artifactId>
+    <packaging>jar</packaging>
+    <name>${project.artifactId}</name>
+
+    <parent>
+        <groupId>io.codeworks</groupId>
+        <artifactId>file-monitor</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <!-- === PROPERTIES ============================================================================================ -->
+
+    <properties>
+
+        <daemon.class>io.codeworks.file.monitor.service.FileMonitorService</daemon.class>
+        <daemon.jar.name>${project.artifactId}-${project.version}</daemon.jar.name>
+        <daemon.pkg.name>${project.artifactId}-${project.version}</daemon.pkg.name>
+
+        <!-- Commons Daemon -->
+        <commons.daemon.version>[1.0.15,1.0.99]</commons.daemon.version>
+
+    </properties>
+
+    <!-- === DEPENDENCIES ========================================================================================== -->
+
+    <dependencies>
+
+        <!-- File Monitor Core (PROJECT) -->
+        <dependency>
+            <groupId>io.codeworks</groupId>
+            <artifactId>file-monitor-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Commons Daemon -->
+        <dependency>
+            <groupId>commons-daemon</groupId>
+            <artifactId>commons-daemon</artifactId>
+            <version>${commons.daemon.version}</version>
+        </dependency>
+
+        <!-- Codeworks Script Launcher -->
+        <dependency>
+            <groupId>io.codeworks</groupId>
+            <artifactId>codeworks-script-launcher</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+    <!-- === BUILD ================================================================================================= -->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <finalName>${daemon.jar.name}</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>${daemon.class}</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <SCM-Branch>${vcs.branch}</SCM-Branch>
+                            <SCM-Tag>${vcs.tag}</SCM-Tag>
+                            <SCM-Revision>${vcs.revision}</SCM-Revision>
+                            <SCM-Commit>${vcs.commitsCount}</SCM-Commit>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>clean</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <target>
+                                <ant dir="${basedir}/wrapper" antfile="build.xml" target="clean" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>wrap</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="daemon.name" value="${project.artifactId}" />
+                                <property name="daemon.version" value="${project.version}" />
+                                <property name="daemon.pkg.name" value="${daemon.pkg.name}" />
+                                <ant dir="${basedir}/wrapper" antfile="build.xml" target="prepare" />
+                                <copy file="${basedir}/target/${daemon.jar.name}.jar" todir="${basedir}/wrapper/resources/lib" />
+                                <ant dir="${basedir}/wrapper" antfile="build.xml" target="build" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <copy todir="${basedir}/target">
+                                    <fileset dir="${basedir}/wrapper/build">
+                                        <include name="${daemon.pkg.name}.*" />
+                                    </fileset>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sun</groupId>
+                        <artifactId>tools</artifactId>
+                        <version>${java.version}.0</version>
+                        <scope>system</scope>
+                        <systemPath>${java.home}/../lib/tools.jar</systemPath>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

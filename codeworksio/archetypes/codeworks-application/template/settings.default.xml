@@ -1,0 +1,32 @@
+<settings
+    xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <!--
+
+        SEE: $M2_HOME/conf/settings.xml
+        SEE: ${user.home}/.m2/settings.xml
+
+    -->
+
+    <servers>
+        <server>
+            <id>deploy-war-dev</id>
+            <username>deploy</username>
+            <password>password</password>
+        </server>
+        <server>
+            <id>deploy-war-uat</id>
+            <username>deploy</username>
+            <password>password</password>
+        </server>
+    </servers>
+
+    <activeProfiles>
+        <activeProfile>local</activeProfile>
+        <activeProfile>h2</activeProfile>
+        <activeProfile>boot</activeProfile>
+    </activeProfiles>
+
+</settings>

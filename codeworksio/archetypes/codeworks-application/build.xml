@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="codeworks-application-archetype" default="test" basedir=".">
+
+    <property file="archetype.properties" />
+
+    <!-- ============================================ -->
+    <!-- detect operating system                      -->
+    <!-- ============================================ -->
+    <condition property="os.windows">
+        <os family="windows" />
+    </condition>
+    <condition property="os.unix">
+        <os family="unix" />
+    </condition>
+    <target name="detect-windows" if="os.windows">
+        <property name="os.script.ext" value="bat" />
+    </target>
+    <target name="detect-unix" if="os.unix">
+        <property name="os.script.ext" value="sh" />
+    </target>
+    <target name="detect-os" depends="detect-windows, detect-unix" />
+
+    <!-- ============================================ -->
+    <!-- target: init                                 -->
+    <!-- ============================================ -->
+    <target name="init" depends="detect-os">
+        <property name="dir.resources" value="${basedir}/resources" />
+        <property name="dir.template" value="${basedir}/template" />
+        <property name="dir.archetype" value="${basedir}/archetype" />
+        <property name="dir.test" value="${basedir}/test" />
+        <property name="dir.temp" value="${basedir}/temp" />
+        <property name="dir.project" value="${basedir}/project" />
+        <property name="file.archetype.properties" value="${basedir}/archetype.properties" />
+        <property name="cmd.mvn" value="${dir.resources}/mvn.${os.script.ext}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: clean                                -->
+    <!-- ============================================ -->
+    <target name="clean" depends="init">
+        <exec executable="${cmd.mvn}" dir="${dir.template}"><arg line="clean" /></exec>
+        <delete dir="${dir.archetype}" />
+        <delete dir="${dir.test}" />
+        <delete dir="${dir.temp}" />
+        <delete dir="${dir.project}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: prepare                              -->
+    <!-- ============================================ -->
+    <target name="prepare" depends="init">
+        <mkdir dir="${dir.archetype}" />
+        <mkdir dir="${dir.test}" />
+        <mkdir dir="${dir.temp}" />
+        <mkdir dir="${dir.project}" />
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: build                                -->
+    <!-- ============================================ -->
+    <target name="build" depends="clean,prepare">
+        <!-- copy template to a temporary directory -->
+        <copy todir="${dir.temp}">
+            <fileset dir="${dir.template}">
+                <exclude name="**/.classpath" />
+                <exclude name="**/.project" />
+                <exclude name="**/.settings/**" />
+                <exclude name="**/target/**" />
+            </fileset>
+        </copy>
+        <copy file="${dir.template}/.gitignore" todir="${dir.temp}" />
+        <!-- create archetype from template -->
+        <exec executable="${cmd.mvn}" dir="${dir.temp}"><arg line="archetype:create-from-project" /></exec>
+        <!-- copy archetype -->
+        <copy todir="${dir.archetype}">
+            <fileset dir="${dir.temp}/target/generated-sources/archetype">
+                <exclude name="**/target/**" />
+            </fileset>
+        </copy>
+        <copy file="${dir.template}/.gitignore" todir="${dir.archetype}/src/main/resources/archetype-resources" />
+        <copy file="${file.archetype.properties}" todir="${dir.archetype}/src/test/resources/projects/basic" overwrite="true" />
+        <delete dir="${dir.temp}" />
+        <!-- fix files -->
+        <fixcrlf srcdir="${dir.archetype}" includes="**/*" tab="remove" tablength="4" fixlast="true" eol="unix" />
+        <!-- install archetype -->
+        <exec executable="${cmd.mvn}" dir="${dir.archetype}"><arg line="clean install" /></exec>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: test                                 -->
+    <!-- ============================================ -->
+    <target name="test" depends="build">
+        <!-- create test project from archetype -->
+        <exec executable="${cmd.mvn}" dir="${dir.test}"><arg line="archetype:generate -DarchetypeGroupId=io.codeworks.archetypes -DarchetypeArtifactId=codeworks-application-archetype -DarchetypeVersion=0.0.1-SNAPSHOT -DgroupId=${groupId} -DartifactId=${artifactId} -Dversion=${version} -Dpackage=${package}" /></exec>
+        <!-- fix files -->
+        <fixcrlf srcdir="${dir.test}" includes="**/*" tab="remove" tablength="4" fixlast="true" eol="unix" />
+        <!-- test archetype -->
+        <exec executable="${cmd.mvn}" dir="${dir.test}/${artifactId}"><arg line="test -Put" /></exec>
+    </target>
+
+    <!-- ============================================ -->
+    <!-- target: project                              -->
+    <!-- ============================================ -->
+    <target name="project" depends="init">
+        <!-- prepare -->
+        <delete dir="${dir.project}" />
+        <mkdir dir="${dir.project}" />
+        <!-- get project details -->
+        <input message="groupId:" addproperty="custom.groupId" defaultvalue="${groupId}" />
+        <input message="artifactId:" addproperty="custom.artifactId" defaultvalue="${artifactId}" />
+        <input message="version:" addproperty="custom.version" defaultvalue="${version}" />
+        <input message="package:" addproperty="custom.package" defaultvalue="${package}" />
+        <!-- create project from archetype -->
+        <exec executable="${cmd.mvn}" dir="${dir.project}"><arg line="archetype:generate -DarchetypeGroupId=io.codeworks.archetypes -DarchetypeArtifactId=codeworks-application-archetype -DarchetypeVersion=0.0.1-SNAPSHOT -DgroupId=${custom.groupId} -DartifactId=${custom.artifactId} -Dversion=${custom.version} -Dpackage=${custom.package}" /></exec>
+        <!-- fix files -->
+        <fixcrlf srcdir="${dir.project}" includes="**/*" tab="remove" tablength="4" fixlast="true" eol="unix" />
+    </target>
+
+</project>
