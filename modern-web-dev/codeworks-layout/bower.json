@@ -1,0 +1,11 @@
+{
+    "name": "codeworks-layout",
+    "version": "0.0.1",
+    "dependencies": {
+        "bootstrap": ">=3.1.0",
+        "font-awesome": ">=4.0.0",
+        "modernizr": ">=2.7.0",
+        "jquery": ">=2.1.0"
+    },
+    "devDependencies": {}
+}

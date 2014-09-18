@@ -1,0 +1,71 @@
+/* global
+--------------------------------------------------------------------------------------------------------------------- */
+
+body {
+    color: #5a5a5a;
+}
+
+.divider {
+    margin: 30px 0;
+}
+
+.ex-login-form {
+    padding-top: 4px;
+}
+
+.ex-search-box .input-group-addon {
+    background-color: #ffffff;
+}
+.ex-search-box .form-group {
+    margin-bottom: 0;
+}
+
+/* navigation
+--------------------------------------------------------------------------------------------------------------------- */
+
+.navbar-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 20;
+}
+
+.navbar-wrapper .container {
+    padding-right: 0;
+    padding-left: 0;
+}
+.navbar-wrapper .navbar {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+/* responsive
+--------------------------------------------------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+
+    body {
+        padding-top: 40px;
+    }
+
+}
+
+@media (min-width: 768px) {
+
+    .navbar-wrapper {
+        margin-top: 20px;
+    }
+    .navbar-wrapper .container {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+    .navbar-wrapper .navbar {
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+}
+
+@media (min-width: 992px) {
+
+}

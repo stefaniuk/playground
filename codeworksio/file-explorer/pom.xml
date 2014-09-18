@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.codeworks</groupId>
+    <artifactId>file-explorer</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>file-explorer</name>
+    <description>File Explorer</description>
+
+    <!-- === PROPERTIES ============================================================================================ -->
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Java JDK -->
+        <java.version>1.7</java.version>
+
+        <!-- log4j -->
+        <log4j.version>[1.2.17,1.2.99)</log4j.version>
+        <!-- SLF4J -->
+        <slf4j.version>[1.7.5,1.7.99)</slf4j.version>
+
+        <!-- JUnit -->
+        <junit.version>[4.11,4.99)</junit.version>
+
+        <!-- TrueVFS -->
+        <truevfs.version>[0.10.5,0.10.99)</truevfs.version>
+        <!-- Guava -->
+        <guava.version>[16.0,16.99)</guava.version>
+        <!-- Servlet API -->
+        <servlet.api.version>[3.1.0,3.1.99)</servlet.api.version>
+        <!-- Spring Framework -->
+        <springframework.version>[4.0.1.RELEASE,4.0.99.RELEASE)</springframework.version>
+        <!-- Jackson -->
+        <jackson.version>[2.3.1,2.3.99)</jackson.version>
+        <!-- Joda Time -->
+        <joda.time.version>[2.3,2.9)</joda.time.version>
+
+    </properties>
+
+    <!-- === DEPENDENCIES ========================================================================================== -->
+
+    <dependencies>
+
+        <!-- log4j -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <!-- SLF4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- JUnit (TEST) -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Framework - Test (TEST) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <!-- === DEPENDENCY MANAGEMENT ================================================================================= -->
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- File Explorer Commons (PROJECT) -->
+            <dependency>
+                <groupId>io.codeworks</groupId>
+                <artifactId>file-explorer-commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- TrueVFS -->
+            <dependency>
+                <groupId>net.java.truevfs</groupId>
+                <artifactId>truevfs-profile-full</artifactId>
+                <version>${truevfs.version}</version>
+            </dependency>
+
+            <!-- Guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <!-- Servlet API (PROVIDED) -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${servlet.api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Spring Framework -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${springframework.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${springframework.version}</version>
+            </dependency>
+            <!-- Spring Framework - Test -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${springframework.version}</version>
+            </dependency>
+            <!-- Jackson -->
+            <dependency>
+               <groupId>com.fasterxml.jackson.core</groupId>
+               <artifactId>jackson-core</artifactId>
+               <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!-- Joda Time -->
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.time.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+
+    <!-- === RESOURCES ============================================================================================= -->
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>log4j.properties</include>
+                </includes>
+            </resource>
+        </resources>
+
+    <!-- === PLUGIN MANAGEMENT ===================================================================================== -->
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.1</version>
+                    <configuration>
+                        <fork>true</fork>
+                        <compilerVersion>${java.version}</compilerVersion>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+    <!-- === PLUGINS =============================================================================================== -->
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+
+    </build>
+
+    <!-- === MODULES =============================================================================================== -->
+
+    <modules>
+        <module>file-explorer-commons</module>
+        <module>file-explorer-server</module>
+        <module>file-explorer-client</module>
+    </modules>
+
+</project>
