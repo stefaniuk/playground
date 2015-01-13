@@ -1,0 +1,9 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export ANT_HOME=$ant_path
+[ "$DIST" == "cygwin" ] && export ANT_HOME=$(echo $ANT_HOME | cyg2win_path)
+export PATH=$ANT_HOME/bin:$PATH

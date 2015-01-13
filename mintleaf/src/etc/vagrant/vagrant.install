@@ -1,0 +1,154 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://www.vagrantup.com/downloads"
+        vagrant_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        [ "$DIST" == "ubuntu" ] && vagrant_file="vagrant_${vagrant_version}_x86_64.deb"
+        [ "$DIST" == "macosx" ] && vagrant_file="vagrant_${vagrant_version}.dmg"
+        vagrant_file_size=70000000
+        vagrant_download_url="https://dl.bintray.com/mitchellh/vagrant/${vagrant_file}"
+
+        [ "$DIST" == "macosx" ] && vagrant_home=/Applications/Vagrant
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_vagrant
+    _unpack_vagrant
+    _set_file_permissions_vagrant
+}
+
+function uninstall_module() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+        dpkg -P vagrant
+        rm -rf $vagrant_path
+    elif [ "$DIST" == "macosx" ]; then
+        rm -rf $vagrant_path
+        sudo rm -rf $vagrant_home
+        sudo pkgutil --forget com.vagrant.vagrant
+    fi
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+        if [ -x /usr/bin/vagrant ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    elif [ "$DIST" == "macosx" ]; then
+        if [ -x $vagrant_path/bin/vagrant ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_vagrant
+        _unpack_vagrant
+        _set_file_permissions_vagrant
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $vagrant_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $vagrant_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_vagrant() {
+
+    local result=$(file_download --url $vagrant_download_url --file $vagrant_file --size $vagrant_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $vagrant_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_vagrant() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+
+        dpkg -i $tmp_dir/$vagrant_file
+
+        mkdir -p $vagrant_path/bin
+        rm -f $vagrant_path/bin/vagrant
+        ln -s /usr/bin/vagrant $vagrant_path/bin/vagrant
+        rm -rf $vagrant_path/opt
+        ln -s /opt/vagrant $vagrant_path/opt
+
+        echo $(get_module_latest_version) > $vagrant_path/version
+
+    elif [ "$DIST" == "macosx" ]; then
+
+        hdiutil mount -quiet $tmp_dir/$vagrant_file
+        sudo installer -pkg /Volumes/Vagrant/Vagrant.pkg -target /
+        hdiutil unmount -quiet /Volumes/Vagrant
+
+        sudo chown -R $(id -un):$(id -gn) $vagrant_home
+        echo $(get_module_latest_version) > $vagrant_home/version
+
+        rm -rf $vagrant_path
+        ln -s $vagrant_home $vagrant_path
+
+    fi
+}
+
+function _set_file_permissions_vagrant() {
+
+    chown -R $(id -un):$(id -gn) $vagrant_path
+    if [ "$DIST" == "macosx" ]; then
+        sudo chown -R root:$(id -gn root) $vagrant_home
+    fi
+}

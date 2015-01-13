@@ -1,0 +1,156 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://spring.io/tools/sts/all"
+        spring_sts_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+\.RELEASE' | sort_ver_rev | head -1)
+        spring_sts_version_number_only=$(echo $spring_sts_version | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')
+        spring_sts_eclipse_version=$(echo "$_WWW" | grep -oEi 'e[0-9]+\.[0-9]+(\.[0-9]+)?' | grep -oEi '[0-9]+\.[0-9]+(\.[0-9]+)?' | sort_ver_rev | head -1)
+        spring_sts_eclipse_version_major_minor_only=$(echo "$spring_sts_eclipse_version" | grep -oEi '[0-9]+\.[0-9]+')
+        [ "$DIST" == "macosx" ] && spring_sts_file="spring-tool-suite-${spring_sts_version}-e${spring_sts_eclipse_version}-macosx-cocoa-x86_64.tar.gz"
+        [ "$DIST" == "cygwin" ] && [ "$ARCH_NAME" == "i386" ] && spring_sts_file="spring-tool-suite-${spring_sts_version}-e${spring_sts_eclipse_version}-win32.zip"
+        [ "$DIST" == "cygwin" ] && [ "$ARCH_NAME" == "amd64" ] && spring_sts_file="spring-tool-suite-${spring_sts_version}-e${spring_sts_eclipse_version}-win32-x86_64.zip"
+        spring_sts_file_size=300000000
+        spring_sts_download_url="http://download.springsource.com/release/STS/${spring_sts_version_number_only}/dist/e${spring_sts_eclipse_version_major_minor_only}/${spring_sts_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST" == "cygwin" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_spring_sts
+    _unpack_spring_sts
+    _configure_spring_sts
+    _create_shourtcut_spring_sts
+    _set_file_permissions_spring_sts
+}
+
+function uninstall_module() {
+
+    rm -rf $spring_sts_path
+    rm -rf $spring_sts_data_path
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "macosx" ]; then
+        if [ -L $spring_sts_path/Spring\ STS.app ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    elif [ "$DIST" == "cygwin" ]; then
+        if [ -f $spring_sts_path/Spring\ STS.lnk ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_spring_sts
+        _unpack_spring_sts
+        _configure_spring_sts
+        _create_shourtcut_spring_sts
+        _set_file_permissions_spring_sts
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $spring_sts_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $spring_sts_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_spring_sts() {
+
+    local result=$(file_download --url $spring_sts_download_url --file $spring_sts_file --size $spring_sts_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $spring_sts_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_spring_sts() {
+
+    [ "$DIST" == "macosx" ] && tar -zxf $tmp_dir/$spring_sts_file -C $tmp_dir
+    [ "$DIST" == "cygwin" ] && unzip -q $tmp_dir/$spring_sts_file -d $tmp_dir
+    rm -rf $spring_sts_path
+    mv $tmp_dir/sts-bundle $spring_sts_path
+    mkdir -p $spring_sts_data_path
+    echo $(get_module_latest_version) > $spring_sts_path/version
+}
+
+function _configure_spring_sts() {
+
+    # STS.ini
+    if [ "$DIST" == "macosx" ]; then
+        echo "-Dosgi.instance.area.default=${spring_sts_data_path}" >> $spring_sts_path/sts-${spring_sts_version}/STS.app/Contents/MacOS/STS.ini
+    elif [ "$DIST" == "cygwin" ]; then
+        echo "-Dosgi.instance.area.default=$(echo ${spring_sts_data_path} | cyg2win_slash_path)" >> $spring_sts_path/sts-${spring_sts_version}/STS.ini
+    fi
+}
+
+function _create_shourtcut_spring_sts() {
+
+    if [ "$DIST" == "macosx" ]; then
+        ln -s $spring_sts_path/sts-${spring_sts_version}/STS.app $spring_sts_path/Spring\ STS.app
+    elif [ "$DIST" == "cygwin" ]; then
+        cd $spring_sts_path
+        mkshortcut --name="Spring STS" --workingdir="$spring_sts_path/sts-${spring_sts_version}" $spring_sts_path/sts-${spring_sts_version}/STS.exe
+    fi
+}
+
+function _set_file_permissions_spring_sts() {
+
+    chown -R $(id -un):$(id -gn) $spring_sts_path
+    chown -R $(id -un):$(id -gn) $spring_sts_data_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $spring_sts_path/sts-${spring_sts_version}/STS.exe
+        find $spring_sts_path/sts-${spring_sts_version} -name *.dll -exec chmod +x {} \;
+    fi
+}

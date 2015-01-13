@@ -1,0 +1,16 @@
+task build(type: Tar) {
+
+    destinationDir = new File("build")
+    baseName = project.name
+    extension = "tar.gz"
+    compression = Compression.GZIP
+
+    from("src/bin") {
+        into "bin"
+        fileMode = 0755
+    }
+    from("src/conf") { into "conf" }
+    from("src/etc") { into "etc" }
+    from("src/lib") { into "lib" }
+
+}

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_php_cmd() {
+
+    local count=`php --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_module() {
+
+    test_php_cmd
+}

@@ -1,0 +1,179 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://www.virtualbox.org/wiki/Downloads"
+        virtualbox_version_major=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        virtualbox_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        virtualbox_build=$(echo "$_WWW" | grep -oEi "$virtualbox_version-[0-9]+" | grep -oEi '[0-9]+$' | sort_ver_rev | head -1)
+        [ "$DIST" == "ubuntu" ] && virtualbox_file="virtualbox-${virtualbox_version_major}_${virtualbox_version}-${virtualbox_build}~Ubuntu~raring_amd64.deb"
+        [ "$DIST" == "ubuntu" ] && virtualbox_output_file="virtualbox-${virtualbox_version}_amd64.deb"
+        [ "$DIST" == "ubuntu" ] && virtualbox_file_size=60000000
+        [ "$DIST" == "macosx" ] && virtualbox_file="VirtualBox-${virtualbox_version}-${virtualbox_build}-OSX.dmg"
+        [ "$DIST" == "macosx" ] && virtualbox_output_file="virtualbox-${virtualbox_version}.dmg"
+        [ "$DIST" == "macosx" ] && virtualbox_file_size=100000000
+        virtualbox_download_url="http://download.virtualbox.org/virtualbox/${virtualbox_version}/${virtualbox_file}"
+
+        [ "$DIST" == "macosx" ] && virtualbox_home=/Applications/VirtualBox.app
+
+        virtualbox_ext_pack_file="Oracle_VM_VirtualBox_Extension_Pack-${virtualbox_version}-${virtualbox_build}.vbox-extpack"
+        virtualbox_ext_pack_file_size=15000000
+        virtualbox_ext_pack_download_url="http://download.virtualbox.org/virtualbox/${virtualbox_version}/${virtualbox_ext_pack_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_virtualbox
+    _unpack_virtualbox
+    _set_file_permissions_virtualbox
+    _install_extension_pack_virtualbox
+}
+
+function uninstall_module() {
+
+    rm -rf $virtualbox_path
+    [ "$DIST" == "macosx" ] && rm -rf $virtualbox_home
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+        if [ -x $virtualbox_path/bin/VBoxManage ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    elif [ "$DIST" == "macosx" ]; then
+        if [ -x $virtualbox_path/Contents/MacOS/VBoxManage ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_virtualbox
+        _unpack_virtualbox
+        _set_file_permissions_virtualbox
+        _install_extension_pack_virtualbox
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $virtualbox_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $virtualbox_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_virtualbox() {
+
+    local result=$(file_download --url $virtualbox_download_url --file $virtualbox_output_file --size $virtualbox_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $virtualbox_file file!"
+        exit 1
+    fi
+
+    local result=$(file_download --url $virtualbox_ext_pack_download_url --file $virtualbox_ext_pack_file --size $virtualbox_ext_pack_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $virtualbox_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_virtualbox() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+            linux-headers-$(uname -r) \
+            build-essential \
+            dkms
+        dpkg -i $tmp_dir/$virtualbox_output_file
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends -f install
+
+        rm -rf $virtualbox_path
+        mkdir -p $virtualbox_path/bin
+        for file in $(ls -1 /usr/bin/{VBox,vbox,Virtual,virtual,rdesktop-vrdp}*); do
+            ln -s $file $virtualbox_path/bin/
+        done
+
+        echo $(get_module_latest_version) > $virtualbox_path/version
+
+    elif [ "$DIST" == "macosx" ]; then
+
+        hdiutil mount -quiet $tmp_dir/$virtualbox_output_file
+        sudo installer -pkg /Volumes/VirtualBox/VirtualBox.pkg -target /
+        hdiutil unmount -quiet /Volumes/VirtualBox
+
+        sudo chown -R $(id -un):$(id -gn) $virtualbox_home
+        echo $(get_module_latest_version) > $virtualbox_home/version
+
+        rm -rf $virtualbox_path
+        ln -s $virtualbox_home $virtualbox_path
+
+    fi
+}
+
+function _set_file_permissions_virtualbox() {
+
+    chown -R $(id -un):$(id -gn) $virtualbox_path
+    if [ "$DIST" == "macosx" ]; then
+        sudo chown -R root:$(id -gn root) $virtualbox_home
+    fi
+}
+
+function _install_extension_pack_virtualbox() {
+
+    if [ "$DIST" == "ubuntu" ]; then
+        $virtualbox_path/bin/VBoxManage extpack install --replace $tmp_dir/$virtualbox_ext_pack_file
+    elif [ "$DIST" == "macosx" ]; then
+        $virtualbox_path/Contents/MacOS/VBoxManage extpack install --replace $tmp_dir/$virtualbox_ext_pack_file
+    fi
+}

@@ -1,0 +1,303 @@
+#!/bin/bash
+
+################################################################################
+## common routines
+##
+
+function tomcat_get_ver() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Get Tomcat major version currently used.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    if [ -L $tomcat_default_path ]; then
+        local ver=$(java -classpath $tomcat_default_path/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep -i 'tomcat' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')
+        ver=$(echo $ver | grep -oEi '^[0-9]+')
+    else
+        ver=0
+    fi
+
+    echo $ver
+}
+
+function tomcat_set_ver() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Set Tomcat major version to be used.
+
+    PARAMETERS:
+        \$1 version, e.g. 7, 8 or 0 (defaults to 7)
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -ne 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+
+    rm -f $tomcat_default_path
+    if [ $ver == "7" ] || [ $ver == "0" ]; then
+        ln -s $tomcat7_path $tomcat_default_path
+    elif [ $ver == "8" ]; then
+        ln -s $tomcat8_path $tomcat_default_path
+    fi
+}
+
+function tomcat_start() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Start Tomcat server.
+
+    PARAMETERS:
+        \$1 version     e.g. 7 or 8
+        --quick-start
+        --wait          wait for the application to start up
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+    if [ -z "$ver" ] || [ "$ver" == "--quick-start" ]; then
+        ver=$(tomcat_get_ver)
+    fi
+
+    # get optional parameters
+    local quick_start=$result_neg
+    local wait=$result_neg
+    while [ "$1" != "" ]; do
+        case $1 in
+            --quick-start)  quick_start=$result_pos
+                            ;;
+            --wait)         wait=$result_pos
+                            ;;
+        esac
+        shift
+    done
+
+    # configure
+    function __tomcat_config_urandom() {
+        local path=$1
+        if [ $quick_start == $result_pos ]; then
+            file_replace_str "^#JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" "JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" $path/bin/setenv.sh
+        else
+            file_replace_str "^JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" "#JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" $path/bin/setenv.sh
+        fi
+    }
+
+    # start
+    if [ "$ver" == 7 ]; then
+        __tomcat_config_urandom $tomcat7_path
+        local java_path=$java7_path
+        [ -z "$java_path" ] && java_path=$java_default_path
+        $tomcat7_path/bin/daemon.sh --java-home $java_path --tomcat-user $tomcat7_user start
+    elif [ "$ver" == 8 ]; then
+        __tomcat_config_urandom $tomcat8_path
+        local java_path=$java8_path
+        [ -z "$java_path" ] && java_path=$java_default_path
+        $tomcat8_path/bin/daemon.sh --java-home $java_path --tomcat-user $tomcat8_user start
+    fi
+
+    # wait
+    if [ $wait == $result_pos ]; then
+        while true; do
+            printf "."
+            sleep 1
+            local result=$(wget -T 1 -t 1 -qO- http://127.0.0.1:8080 | grep -i 'apache tomcat' | wc -l)
+            if [ $result -gt 0 ]; then
+                printf "\n"
+                break
+            fi
+        done
+    else
+        sleep 3
+    fi
+}
+
+function tomcat_stop() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Stop Tomcat server.
+
+    PARAMETERS:
+        \$1 version, e.g. 7 or 8
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+    if [ -z "$ver" ]; then
+        ver=$(tomcat_get_ver)
+    fi
+
+    if [ "$ver" == 7 ]; then
+        local java_path=$java7_path
+        [ -z "$java_path" ] && java_path=$java_default_path
+        $tomcat7_path/bin/daemon.sh --java-home $java_path --tomcat-user $tomcat7_user stop
+    elif [ "$ver" == 8 ]; then
+        local java_path=$java8_path
+        [ -z "$java_path" ] && java_path=$java_default_path
+        $tomcat8_path/bin/daemon.sh --java-home $java_path --tomcat-user $tomcat8_user stop
+    fi
+}
+
+function tomcat_restart() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Restart Tomcat server.
+
+    PARAMETERS:
+        \$1 version     e.g. 7 or 8
+        --quick-start
+        --wait          wait for the application to restart
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+    if [ -z "$ver" ] || [ "$ver" == "--quick-start" ]; then
+        ver=$(tomcat_get_ver)
+    fi
+
+    # get optional parameters
+    local quick_start=
+    local wait=
+    while [ "$1" != "" ]; do
+        case $1 in
+            --quick-start)  quick_start="--quick-start"
+                            ;;
+            --wait)         wait="--wait"
+                            ;;
+        esac
+        shift
+    done
+
+    if [ "$ver" == 7 ] || [ "$ver" == 8 ]; then
+        tomcat_stop $ver
+        sleep 3
+        tomcat_start $ver $quick_start $wait
+    fi
+}
+
+function tomcat_is_running() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Check if Tomcat server is running.
+
+    PARAMETERS:
+        \$1 version, e.g. 7 or 8
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+    if [ -z "$ver" ]; then
+        ver=$(tomcat_get_ver)
+    fi
+
+    local count=0
+    if [ "$ver" == 7 ]; then
+        count=$(ps aux | grep -v grep | grep jsvc | grep $tomcat7_path | wc -l)
+    elif [ "$ver" == 8 ]; then
+        count=$(ps aux | grep -v grep | grep jsvc | grep $tomcat8_path | wc -l)
+    fi
+    if [ $count -gt 0 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function tomcat_deploy_war() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Deploy WAR file to Tomcat server.
+
+    PARAMETERS:
+        --version <number>  Tomcat server version number
+        --war <file>        full path to WAR file
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -lt 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get optional parameters
+    local ver=
+    local war=
+    while [ "$1" != "" ]; do
+        case $1 in
+            --version)  shift; ver=$1
+                        ;;
+            --war)      shift; war=$1
+                        ;;
+        esac
+        shift
+    done
+
+    # check parameters again
+    if [ -z "$ver" ]; then
+        ver=$(tomcat_get_ver)
+    fi
+    if [ -z "$war" ] || [ ! -f "$war" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    if [ "$ver" == 7 ]; then
+        cp $war $tomcat7_path/webapps
+    elif [ "$ver" == 8 ]; then
+        cp $war $tomcat8_path/webapps
+    fi
+}

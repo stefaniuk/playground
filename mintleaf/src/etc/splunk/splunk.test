@@ -1,0 +1,53 @@
+#!/bin/bash
+
+################################################################################
+## test general routines
+##
+
+function test_start_running_stop() {
+
+    printf "    waiting ($FUNCNAME) "
+    splunk_start --wait > /dev/null 2>&1
+    local cmd1=`splunk_is_running`
+
+    splunk_stop > /dev/null 2>&1
+    local cmd2=`splunk_is_running`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_neg $FUNCNAME "$cmd2"
+}
+
+function test_restart() {
+
+    printf "    waiting ($FUNCNAME) "
+    splunk_start --wait > /dev/null 2>&1
+    local cmd1=`splunk_is_running`
+
+    printf "    waiting ($FUNCNAME) "
+    splunk_restart --wait > /dev/null 2>&1
+    local cmd2=`splunk_is_running`
+
+    splunk_stop > /dev/null 2>&1
+    local cmd3=`splunk_is_running`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_pos $FUNCNAME "$cmd2"
+    assert_result_neg $FUNCNAME "$cmd3"
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+    assert_prog_exists "python"
+}
+
+function test_module() {
+
+    test_start_running_stop
+    test_restart
+}

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export PACKER_HOME=$packer_path
+[ "$DIST" == "cygwin" ] && export PACKER_HOME=$(echo $PACKER_HOME | cyg2win_path)
+export PATH=$PACKER_HOME:$PATH

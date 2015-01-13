@@ -1,0 +1,53 @@
+#!/bin/bash
+
+################################################################################
+## test general routines
+##
+
+function test_start_running_stop() {
+
+    printf "    waiting ($FUNCNAME) "
+    scm_manager_start --wait
+    local cmd1=`scm_manager_is_running`
+
+    scm_manager_stop
+    local cmd2=`scm_manager_is_running`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_neg $FUNCNAME "$cmd2"
+}
+
+function test_restart() {
+
+    printf "    waiting ($FUNCNAME) "
+    scm_manager_start --wait
+    local cmd1=`scm_manager_is_running`
+
+    printf "    waiting ($FUNCNAME) "
+    scm_manager_restart --wait
+    local cmd2=`scm_manager_is_running`
+
+    scm_manager_stop
+    local cmd3=`scm_manager_is_running`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_pos $FUNCNAME "$cmd2"
+    assert_result_neg $FUNCNAME "$cmd3"
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+    assert_prog_exists "git" "svn"
+}
+
+function test_module() {
+
+    test_start_running_stop
+    test_restart
+}

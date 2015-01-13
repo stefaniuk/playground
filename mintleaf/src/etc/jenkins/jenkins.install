@@ -1,0 +1,185 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://mirrors.jenkins-ci.org/war/"
+        jenkins_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+[0-9]+[0-9]+' | sort_ver_rev | head -1)
+        jenkins_file="jenkins-${jenkins_version}.war"
+        jenkins_file_size=50000000
+        jenkins_download_url="http://mirrors.jenkins-ci.org/war/${jenkins_version}/jenkins.war"
+
+        jenkins_update_url="http://updates.jenkins-ci.org/update-center.json"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$OS" == "linux" ] || [ "$DIST_BASED_ON" == "linux" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_jenkins
+    _copy_jenkins
+    _set_file_permissions_jenkins
+    _install_plugins
+}
+
+function uninstall_module() {
+
+    rm -rf $jenkins_path
+    rm -rf $jenkins_data_path
+}
+
+function is_module_installed() {
+
+    if [ -f $jenkins_path/bin/jenkins.war ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        jenkins_stop
+
+        _init_variables
+
+        _download_jenkins
+        _copy_jenkins
+        _set_file_permissions_jenkins
+        _install_plugins
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $jenkins_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $jenkins_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_jenkins() {
+
+    local result=$(file_download --url $jenkins_download_url --file $jenkins_file --size $jenkins_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $jenkins_file file!"
+        exit 1
+    fi
+}
+
+function _copy_jenkins() {
+
+    rm -rf $jenkins_path
+    mkdir -p $jenkins_path/{bin,conf,log}
+    cp $tmp_dir/$jenkins_file $jenkins_path/bin/jenkins.war
+    mkdir -p $jenkins_data_path
+    echo "$jenkins_version" > $jenkins_path/version
+}
+
+function _set_file_permissions_jenkins() {
+
+    [ $(user_exists $jenkins_user) == $result_pos ] && user_delete $jenkins_user
+    user_create $jenkins_user $jenkins_group --home $jenkins_data_path
+    chown -R $jenkins_user:$jenkins_group $jenkins_path
+    chown -R $jenkins_user:$jenkins_group $jenkins_data_path
+}
+
+function _install_plugins() {
+
+    printf "    installing plug-ins "
+    jenkins_start --wait
+    printf "\n"
+    sleep 3
+
+    curl -sL "${jenkins_update_url}" | sed '1d;$d' | curl -X POST -H 'Accept: application/json' -d @- "http://127.0.0.1:${jenkins_port}/jenkins/updateCenter/byId/default/postBack" > /dev/null 2>&1
+
+    #jenkins_cli install-plugin "analysis-collector"
+    jenkins_cli install-plugin "ansicolor"
+    #jenkins_cli install-plugin "build-pipeline-plugin"
+    #jenkins_cli install-plugin "checkstyle"
+    #jenkins_cli install-plugin "clover"
+    #jenkins_cli install-plugin "cloverphp"
+    #jenkins_cli install-plugin "cobertura"
+    jenkins_cli install-plugin "dashboard-view"
+    #jenkins_cli install-plugin "delivery-pipeline-plugin"
+    #jenkins_cli install-plugin "depgraph-view"
+    #jenkins_cli install-plugin "deploy"
+    jenkins_cli install-plugin "disk-usage"
+    #jenkins_cli install-plugin "docker-build-publish"
+    #jenkins_cli install-plugin "docker-build-step"
+    #jenkins_cli install-plugin "docker-plugin"
+    #jenkins_cli install-plugin "dry"
+    #jenkins_cli install-plugin "envfile"
+    #jenkins_cli install-plugin "envinject"
+    #jenkins_cli install-plugin "favorite"
+    #jenkins_cli install-plugin "favorite-view"
+    #jenkins_cli install-plugin "findbugs"
+    #jenkins_cli install-plugin "fitnesse"
+    jenkins_cli install-plugin "git"
+    jenkins_cli install-plugin "gradle"
+    jenkins_cli install-plugin "greenballs"
+    jenkins_cli install-plugin "groovy"
+    #jenkins_cli install-plugin "jacoco"
+    #jenkins_cli install-plugin "jdepend"
+    jenkins_cli install-plugin "jquery"
+    jenkins_cli install-plugin "jquery-ui"
+    #jenkins_cli install-plugin "m2release"
+    #jenkins_cli install-plugin "nexus-task-runner"
+    #jenkins_cli install-plugin "packer"
+    #jenkins_cli install-plugin "phing"
+    #jenkins_cli install-plugin "performance"
+    #jenkins_cli install-plugin "pmd"
+    #jenkins_cli install-plugin "promoted-builds"
+    #jenkins_cli install-plugin "promoted-builds-simple"
+    #jenkins_cli install-plugin "publish-over-ftp"
+    #jenkins_cli install-plugin "publish-over-ssh"
+    jenkins_cli install-plugin "saferestart"
+    #jenkins_cli install-plugin "seleniumhq"
+    jenkins_cli install-plugin "simple-theme-plugin"
+    #jenkins_cli install-plugin "sloccount"
+    #jenkins_cli install-plugin "sonar"
+    #jenkins_cli install-plugin "tasks"
+    #jenkins_cli install-plugin "vagrant"
+    #jenkins_cli install-plugin "violations"
+    #jenkins_cli install-plugin "virtualbox"
+    #jenkins_cli install-plugin "warnings"
+    #jenkins_cli install-plugin "xunit"
+
+    jenkins_stop
+}

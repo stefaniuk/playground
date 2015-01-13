@@ -1,0 +1,179 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://www.scm-manager.org/download/" --filter 'app.tar.gz'
+        scm_manager_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        scm_manager_file="scm-server-${scm_manager_version}-app.tar.gz"
+        scm_manager_file_size=20000000
+        scm_manager_download_url="http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm//scm-server/${scm_manager_version}/${scm_manager_file}"
+
+        scm_manager_plugins_url="http://plugins.scm-manager.org/scm-plugin-backend/page/detail"
+        scm_manager_scm_url="http://127.0.0.1:8080/scm"
+        scm_manager_username="scmadmin"
+        scm_manager_password="scmadmin"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$OS" == "linux" ] || [ "$DIST_BASED_ON" == "linux" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_scm_manager
+    _unpack_scm_manager
+    _configure_scm_manager
+    _set_file_permissions_scm_manager
+    _install_plugins
+}
+
+function uninstall_module() {
+
+    rm -rf $scm_manager_path
+    rm -rf $scm_manager_data_path
+}
+
+function is_module_installed() {
+
+    if [ -x $scm_manager_path/bin/scm-server ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        scm_manager_stop
+
+        _init_variables
+
+        _download_scm_manager
+        _unpack_scm_manager
+        _configure_scm_manager
+        _set_file_permissions_scm_manager
+        _install_plugins
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $scm_manager_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $scm_manager_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_scm_manager() {
+
+    local result=$(file_download --url $scm_manager_download_url --file $scm_manager_file --size $scm_manager_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $scm_manager_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_scm_manager() {
+
+    tar -zxf $tmp_dir/$scm_manager_file -C $tmp_dir
+    rm -rf $scm_manager_path
+    mv $tmp_dir/scm-server $scm_manager_path
+    mkdir -p $scm_manager_data_path
+    echo "$scm_manager_version" > $scm_manager_path/version
+}
+
+function _configure_scm_manager() {
+
+    # bin/scm-server
+    file_replace_str "ARCH=\`uname -m\`" "ARCH=\`uname -m\`\nJAVA_HOME=$JAVA_HOME" $scm_manager_path/bin/scm-server
+}
+
+function _set_file_permissions_scm_manager() {
+
+    [ $(user_exists $scm_manager_user) == $result_pos ] && user_delete $scm_manager_user
+    user_create $scm_manager_user $scm_manager_group --home $scm_manager_data_path
+    chown -R $scm_manager_user:$scm_manager_group $scm_manager_path
+    chown -R $scm_manager_user:$scm_manager_group $scm_manager_data_path
+    chmod +x $scm_manager_path/bin/scm-server
+}
+
+function _install_plugins() {
+
+    printf "    installing plug-ins "
+    scm_manager_start --wait
+    printf "\n"
+    sleep 3
+
+    _install_plugin "sonia.scm.plugins" "scm-activity-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-archive-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-auth-ldap-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-authormapping-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-branchwp-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-directfilelink-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-filteredviews-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-fork-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-gravatar-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-jenkins-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-jira-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-mail-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-message-regex-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-notify-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-pathwp-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-pushlog-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-scheduler-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-script-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-statistic-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-svnuser-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-userrename-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-userrepo-plugin"
+    _install_plugin "sonia.scm.plugins" "scm-webhook-plugin"
+
+    scm_manager_stop
+}
+
+function _install_plugin() {
+
+    local groupId=$1
+    local artifactId=$2
+    local version=$(wget -O - ${scm_manager_plugins_url}/${groupId}/${artifactId}.html 2> /dev/null | grep -A 10 -i 'plugin versions' | grep -v -i 'minimum version' | grep -oEi '[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+    local url="${scm_manager_scm_url}/api/rest/plugins/install/${groupId}:${artifactId}:${version}.json"
+
+    echo $url
+    printf "\n"
+    curl -i -X POST $url --user "${scm_manager_username}:${scm_manager_password}"
+}

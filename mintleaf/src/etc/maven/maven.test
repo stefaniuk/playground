@@ -1,0 +1,30 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_mvn_cmd() {
+
+    local mvn=$maven_path/bin/mvn
+    [ "$DIST" == "cygwin" ] && mvn=$maven_path/bin/mvn.bat
+
+    local count=`$mvn -version | grep -i 'apache maven' | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+}
+
+function test_module() {
+
+    test_mvn_cmd
+}

@@ -1,0 +1,661 @@
+#!/bin/bash
+
+# measure startup time
+time_start=$(date +%s)
+
+################################################################################
+## functions
+##
+
+function _detect_system() {
+
+    function _lowercase() {
+
+        echo "$1" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"
+    }
+
+    # set defalut values
+    OS=$(uname)
+    DIST="unknown"
+    DIST_BASED_ON="unknown"
+    PSEUDO_NAME="unknown"
+    VERSION="unknown"
+    ARCH=$(uname -m)
+    ARCH_NAME="unknown" # can be "i386" or "amd64"
+    KERNEL=$(uname -r)
+
+    # mac os x
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+
+        OS="unix"
+        DIST="macosx"
+        DIST_BASED_ON="bsd"
+        [ $(sw_vers -productVersion | grep 10.8  | wc -l) -gt 0 ] && PSEUDO_NAME="Mountain Lion"
+        [ $(sw_vers -productVersion | grep 10.9  | wc -l) -gt 0 ] && PSEUDO_NAME="Mavericks"
+        [ $(sw_vers -productVersion | grep 10.10 | wc -l) -gt 0 ] && PSEUDO_NAME="Yosemite"
+        VERSION=$(sw_vers -productVersion)
+        ARCH_NAME="i386"
+        [ $(uname -m | grep 64 | wc -l) -gt 0 ] && ARCH_NAME="amd64"
+
+    # debian family
+    elif [ -f /etc/debian_version ]; then
+
+        local id=$(cat /etc/os-release | grep "^ID=" | awk -F= '{ print $2 }')
+        if [ "$id" == "debian" ] || [ "$id" == "raspbian" ]; then
+            DIST=$id
+            PSEUDO_NAME=$(cat /etc/os-release | grep "^VERSION=" | awk -F= '{ print $2 }' | grep -oEi '[a-z]+')
+            VERSION=$(cat /etc/debian_version)
+        else
+            DIST=$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F= '{ print $2 }')
+            PSEUDO_NAME=$(cat /etc/lsb-release | grep '^DISTRIB_CODENAME' | awk -F=  '{ print $2 }')
+            VERSION=$(cat /etc/lsb-release | grep '^DISTRIB_RELEASE' | awk -F=  '{ print $2 }')
+        fi
+        DIST_BASED_ON="debian"
+        ARCH_NAME="i386"
+        [ $(uname -m | grep 64 | wc -l) -gt 0 ] && ARCH_NAME="amd64"
+
+    # redhat family
+    elif [ -f /etc/redhat-release ]; then
+
+        DIST=$(cat /etc/redhat-release | sed s/\ release.*//)
+        [ "$DIST" == "red" ] && DIST="redhat"
+        DIST_BASED_ON="redhat"
+        PSEUDO_NAME=$(cat /etc/redhat-release | sed s/.*\(// | sed s/\)//)
+        VERSION=$(cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//)
+        ARCH_NAME="i386"
+        [ $(uname -m | grep 64 | wc -l) -gt 0 ] && ARCH_NAME="amd64"
+
+    # cygwin
+    elif [[ "$OSTYPE" == "cygwin"* ]]; then
+
+        OS="windows"
+        DIST="cygwin"
+        DIST_BASED_ON="linux"
+        PSEUDO_NAME="Windows"
+        VERSION=$(cmd /c ver | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')
+        ARCH_NAME="i386"
+        [ $(uname -m | grep 64 | wc -l) -gt 0 ] && ARCH_NAME="amd64"
+        KERNEL=$(uname -r | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+')
+
+    fi
+
+    # convert to lower case
+    OS=$(_lowercase $OS)
+    DIST=$(_lowercase $DIST)
+    DIST_BASED_ON=$(_lowercase $DIST_BASED_ON)
+    PSEUDO_NAME=$(_lowercase $PSEUDO_NAME)
+    VERSION=$(_lowercase $VERSION)
+    ARCH=$(_lowercase $ARCH)
+    ARCH_NAME=$(_lowercase $ARCH_NAME)
+    KERNEL=$(_lowercase $KERNEL)
+}
+
+function _print_system_info() {
+
+    echo "OS: $OS"
+    echo "DIST: $DIST"
+    echo "DIST BASED ON: $DIST_BASED_ON"
+    echo "PSEUDO NAME: $PSEUDO_NAME"
+    echo "VERSION: $VERSION"
+    echo "ARCH: $ARCH"
+    echo "ARCH NAME: $ARCH_NAME"
+    echo "KERNEL: $KERNEL"
+}
+
+function _argument_exists() {
+
+    # This function uses global variable $args that contains all the arguments
+    # specified while executing ./bin/install.sh or ./bin/test.sh scripts.
+
+    local arg=$1
+
+    if [ $(echo "$args" | grep -- "$arg" | wc -l) -gt 0 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function _include_file() {
+
+    local file=$1
+
+    if [ -f ${file} ]; then
+        source ${file}
+        logger_debug "Include ${file}"
+    fi
+    if [ -f ${file}.${DIST_BASED_ON} ]; then
+        source ${file}.${DIST_BASED_ON}
+        logger_debug "Include ${file}.${DIST_BASED_ON}"
+    fi
+    if [ -f ${file}.${DIST} ]; then
+        source ${file}.${DIST}
+        logger_debug "Include ${file}.${DIST}"
+    fi
+    if [ -f ${file}.${ARCH_NAME} ]; then
+        source ${file}.${ARCH_NAME}
+        logger_debug "Include ${file}.${ARCH_NAME}"
+    fi
+    if [ -f ${file}.${DIST}-${ARCH_NAME} ]; then
+        source ${file}.${DIST}-${ARCH_NAME}
+        logger_debug "Include ${file}.${DIST}-${ARCH_NAME}"
+    fi
+    if [ -f ${file}.custom ]; then
+        source ${file}.custom
+        logger_debug "Include ${file}.custom"
+    fi
+}
+
+function _is_module_supported() {
+
+    local module=$1; shift
+
+    if [ -f $module_dir/$module/$module.install ]; then
+        (
+            unset -f is_module_supported
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            is_module_supported $*
+        )
+    else
+        echo $result_neg
+    fi
+}
+
+function _install_module() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ]; then
+        (
+
+            logger_debug "Install $module module"
+
+            _enable_module $module
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+
+            source $MINTLEAF_HOME/lib/sh/asserts
+            _include_file $module_dir/$module/$module.test
+
+            if [ $module == "mintleaf" ]; then
+                install_module $*
+                assert_prerequisites
+            else
+                assert_prerequisites
+                install_module $*
+            fi
+        )
+    fi
+}
+
+function _uninstall_module() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ]; then
+        (
+
+            logger_debug "Uninstall $module module"
+
+            _enable_module $module
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            uninstall_module $*
+        )
+    fi
+}
+
+function _is_module_installed() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ]; then
+        (
+            unset -f is_module_installed
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            is_module_installed $*
+        )
+    else
+        echo $result_neg
+    fi
+}
+
+function _update_module() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ] && [ $(_is_module_installed $module) == $result_pos ]; then
+        (
+
+            logger_debug "Update $module module"
+
+            _enable_module $module
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            update_module $*
+        )
+    else
+        echo $resul_neg
+    fi
+}
+
+function _get_module_current_version() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ] && [ $(_is_module_installed $module) == $result_pos ]; then
+        (
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            get_module_current_version $*
+        )
+    else
+        echo $result_error
+    fi
+}
+
+function _get_module_latest_version() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_supported $module) == $result_pos ]; then
+        (
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            get_module_latest_version $*
+        )
+    else
+        echo $result_error
+    fi
+}
+
+function _test_module() {
+
+    local module=$1; shift
+
+    if [ $module == "mintleaf" ] || [ $(_is_module_installed $module) == $result_pos ]; then
+        (
+
+            logger_debug "Test $module module"
+
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+
+            source $MINTLEAF_HOME/lib/sh/asserts
+            _include_file $module_dir/$module/$module.test
+
+            [ $(func_exists test_module) == $result_pos ] &&                        test_module $*
+            [ $(func_exists test_module_${DIST_BASED_ON}) == $result_pos ] &&       test_module_${DIST_BASED_ON} $*
+            [ $(func_exists test_module_${DIST}) == $result_pos ] &&                test_module_${DIST} $*
+            [ $(func_exists test_module_${ARCH_NAME}) == $result_pos ] &&           test_module_${ARCH_NAME} $*
+            [ $(func_exists test_module_${DIST}_${ARCH_NAME}) == $result_pos ] &&   test_module_${DIST}_${ARCH_NAME} $*
+            [ $(func_exists test_module_custom) == $result_pos ] &&                 test_module_custom $*
+        )
+    fi
+}
+
+function _load_module() {
+
+    local module=$1
+
+    if [ $module == "mintleaf" ] || ([ $(_is_module_installed $module) == $result_pos ] && [ $(_is_module_enabled $module) == $result_pos ]); then
+
+        logger_debug "Load $module module"
+
+        _include_file $module_dir/$module/$module.config
+        _include_file $module_dir/$module/$module.module
+    fi
+}
+
+function _is_module_backup_supported() {
+
+    local module=$1
+
+    if [ -f $module_dir/$module/$module.install ]; then
+        (
+            unset -f backup_module
+            unset -f restore_module
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            if [ $(func_exists backup_module) == $result_pos ] && [ $(func_exists restore_module) == $result_pos ]; then
+                echo $result_pos
+            else
+                echo $result_neg
+            fi
+        )
+    else
+        echo $result_neg
+    fi
+}
+
+function _backup_module() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_backup_supported $module) == $result_pos ]; then
+        (
+
+            logger_debug "Backup $module module"
+
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            backup_module $*
+        )
+    else
+        echo $result_neg
+    fi
+}
+
+function _restore_module() {
+
+    local module=$1; shift
+
+    if [ $(_is_module_backup_supported $module) == $result_pos ]; then
+        (
+
+            logger_debug "Restore $module module"
+
+            _include_file $module_dir/$module/$module.config
+            _include_file $module_dir/$module/$module.install
+            _include_file $module_dir/$module/$module.module
+            restore_module $*
+        )
+    else
+        echo $result_neg
+    fi
+}
+
+function _enable_module() {
+
+    local module=$1
+
+    if [ -f $module_dir/$module/$module.module.off ]; then
+        mv $module_dir/$module/$module.module.off $module_dir/$module/$module.module
+    fi
+}
+
+function _disable_module() {
+
+    local module=$1
+
+    if [ $module != "mintleaf" ] && [ -f $module_dir/$module/$module.module ]; then
+        mv $module_dir/$module/$module.module $module_dir/$module/$module.module.off
+    fi
+}
+
+function _is_module_enabled() {
+
+    local module=$1
+
+    if [ $(_is_module_installed $module) == $result_pos ] && ([ $module == "mintleaf" ] || [ -f $module_dir/$module/$module.module ]); then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function _list_modules() {
+
+    local option=1
+    local verbose=
+    while [ "$1" != "" ]; do
+        case $1 in
+            -a) option=1
+                ;;
+            -s) option=2
+                ;;
+            -i) option=3
+                ;;
+            -e) option=4
+                ;;
+            -d) option=5
+                ;;
+            -v) verbose=$result_pos
+                ;;
+        esac
+        shift
+    done
+
+    function __print_module() {
+        local m=$1
+        if [ "$verbose" == $result_pos ]; then
+            local ms="."
+            [ $(_is_module_supported $m) == $result_pos ] && ms="x"
+            local mi="."
+            [ $(_is_module_installed $m) == $result_pos ] && mi="x"
+            local me="."
+            [ $(_is_module_enabled $m) == $result_pos ] && me="x"
+            echo "${ms}${mi}${me} $m"
+        else
+            echo $m
+        fi
+    }
+
+    # list all
+    if [ $option -eq 1 ]; then
+        for module in $(ls -1d $module_dir/*/); do
+            local pre=$module_dir/
+            local suf=/
+            local m="${module#${module%${pre}*}${pre}}"
+            m="${m%${suf}*}"
+            __print_module $m
+        done
+
+    # list supported
+    elif [ $option -eq 2 ]; then
+        for module in $(ls -1d $module_dir/*/); do
+            local pre=$module_dir/
+            local suf=/
+            local m="${module#${module%${pre}*}${pre}}"
+            m="${m%${suf}*}"
+            [ $(_is_module_supported $m) == $result_pos ] && __print_module $m
+        done
+
+    # list installed
+    elif [ $option -eq 3 ]; then
+        for module in $(ls -1d $module_dir/*/); do
+            local pre=$module_dir/
+            local suf=/
+            local m="${module#${module%${pre}*}${pre}}"
+            m="${m%${suf}*}"
+            [ $(_is_module_installed $m) == $result_pos ] && __print_module $m
+        done
+
+    # list enabled
+    elif [ $option -eq 4 ]; then
+        for module in $(find $module_dir -type f -name "*.module" -printf "%f\n"); do
+            local suf=".module"
+            __print_module "${module%${suf}*}"
+        done
+
+    # list disabled
+    elif [ $option -eq 5 ]; then
+        for module in $(find $module_dir -type f -name "*.module.off" -printf "%f\n"); do
+            local suf=".module.off"
+            __print_module "${module%${suf}*}"
+        done
+    fi
+}
+
+function _list_functions() {
+
+    local module=${1-mintleaf}
+
+    cat $module_dir/$module/$module.module* | \
+        grep '^function\|^[ \t]*DESCRIPTION' | \
+        sed s/function\ // | sed s/\(\)\ // | sed 's/{//' | \
+        perl -0777 -pe "s/\s*\n\s*DESCRIPTION:/:/igs" | \
+        grep -v "^_" | \
+        sed s/\.$//
+}
+
+function _sudo () {
+
+    local func="$1"
+
+    local params=( "$@" )   # array containing all parameters
+    unset params[0]         # remove first element
+
+    local content="#!/bin/bash\n\n"
+    content="${content}params=(\n"
+    local regex="\s+"
+    for param in "${params[@]}"; do
+        if [[ "$param" =~ $regex ]]; then
+            content="${content}\t\"${param}\"\n"
+        else
+            content="${content}\t${param}\n"
+        fi
+    done
+    content="$content)\n"
+
+    local file="$HOME/_sudo.$$"
+    echo -e "$content" > $file
+    echo "#$( type "$func" )" >> $file
+    echo -e "\n$func \"\${params[@]}\"\n" >> $file
+    sudo bash $file
+    rm $file
+}
+
+function abspath() {
+    pushd . > /dev/null; if [ -d "$1" ]; then cd "$1"; dirs -l +0; else cd "`dirname \"$1\"`"; cur_dir=`dirs -l +0`; if [ "$cur_dir" == "/" ]; then echo "$cur_dir`basename \"$1\"`"; else echo "$cur_dir/`basename \"$1\"`"; fi; fi; popd > /dev/null;
+}
+
+function print_header() {
+    tput setaf 15
+    tput bold
+    echo "$1"
+    tput sgr 0
+}
+
+function print_title() {
+    tput setaf 4
+    tput bold
+    echo "$1"
+    tput sgr 0
+}
+
+function print_info() {
+    tput setaf 3
+    echo "$1"
+    tput sgr 0
+}
+
+function print_error() {
+    tput setaf 1
+    tput bold
+    echo "$1"
+    echo
+    tput sgr 0
+}
+
+################################################################################
+## config
+##
+
+_detect_system
+
+################################################################################
+## variables
+##
+
+if [[ -z "$MINTLEAF_HOME" ]]; then
+    [[ -f /usr/local/mintleaf/bin/bootstrap ]] && MINTLEAF_HOME=/usr/local/mintleaf
+fi
+
+result_pos="yes"
+result_neg="no"
+result_error="error"
+
+# directories
+module_dir=$MINTLEAF_HOME/etc
+log_dir=$MINTLEAF_HOME/log
+data_dir=$MINTLEAF_HOME/var
+apps_dir=$data_dir/applications
+tools_dir=$data_dir/tools
+jobs_dir=$data_dir/jobs
+tmp_dir=$data_dir/.cache
+if [ "$DIST" == "macosx" ]; then
+    apps_dir=$HOME/Applications
+    tools_dir=$HOME/Tools
+fi
+if [ "$DIST" == "cygwin" ]; then
+    # it has to be C: drive
+    apps_dir=/cygdrive/c/applications
+    tools_dir=/cygdrive/c/tools
+fi
+
+# files
+log_file=$log_dir/mintleaf.log
+
+################################################################################
+## logging
+##
+
+if [ "$OS" == "linux" ] && [ -n "$LOG_LEVEL" ]; then
+
+    # load script
+    __log_name=${_LOG_NAME:-"mintleaf"}
+    LOG4SH_CONFIGURATION="none" source $MINTLEAF_HOME/lib/sh/log4sh
+
+    # load configuration
+    log4sh_resetConfiguration
+    log4sh_doConfigure $MINTLEAF_HOME/conf/log4sh.conf
+    logger_setLevel $LOG_LEVEL
+
+else
+
+    log4sh_resetConfiguration(){ :; }
+    log4sh_doConfigure(){ :; }
+    log(){ :; }
+    logger_fatal(){ :; }
+    logger_error(){ :; }
+    logger_warn(){ :; }
+    logger_info(){ :; }
+    logger_debug(){ :; }
+    logger_trace(){ :; }
+    logger_setLevel(){ :; }
+    logger_getLevel(){ echo "NONE"; }
+    logger_setThreadName(){ :; }
+
+fi
+
+################################################################################
+## modules
+##
+
+logger_info "Loading MintLeaf..."
+
+# load modules
+_load_module "mintleaf"
+if [ -n "$MINTLEAF_MODULES" ]; then
+    _modules="$MINTLEAF_MODULES"
+else
+    _modules=$(_list_modules)
+fi
+for _module in $_modules; do
+    if [ "$_module" != "mintleaf" ]; then
+        _load_module $_module
+    fi
+done
+unset _modules _module
+
+# load user scripts
+if [ -d $HOME/.mintleaf ]; then
+    _include_file $HOME/.mintleaf/.mintleaf
+fi
+
+# log startup time
+time_end=$(date +%s)
+seconds=$((time_end-time_start))
+logger_info "MintLeaf loaded in ${seconds} seconds"
+unset time_start time_end seconds

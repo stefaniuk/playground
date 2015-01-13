@@ -1,0 +1,187 @@
+#!/bin/bash
+
+function assert_eq() {
+
+    local func=$1
+    local arg1=$(echo "$2" | sed 's/^[ ]*//g')
+    local arg2=$(echo "$3" | sed 's/^[ ]*//g')
+
+    local result="ok"
+    if [ ! "$arg1" == "$arg2" ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_not_eq() {
+
+    local func=$1
+    local arg1=$(echo "$2" | sed 's/^[ ]*//g')
+    local arg2=$(echo "$3" | sed 's/^[ ]*//g')
+
+    local result="ok"
+    if [ "$arg1" == "$arg2" ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_lt() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+
+    local result="ok"
+    if [ ! $arg1 -lt $arg2 ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_le() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+
+    local result="ok"
+    if [ ! $arg1 -le $arg2 ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_gt() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+
+    local result="ok"
+    if [ ! $arg1 -gt $arg2 ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_ge() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+
+    local result="ok"
+    if [ ! $arg1 -ge $arg2 ]; then
+        result="error"
+    fi
+    echo "$func $result"
+}
+
+function assert_between() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+    local arg3=$4
+
+    local result="ok"
+    if [ $arg1 -lt $arg2 ] || [ $arg1 -gt $arg3 ]; then
+        local result="error";
+    fi
+    echo "$func $result"
+}
+
+function assert_contains() {
+
+    local func=$1
+    local arg1="$2"
+    local arg2="$3"
+
+    local result="ok"
+    if [ $(str_contains "$arg1" "$arg2") == $result_neg ]; then
+        local result="error";
+    fi
+    echo "$func $result"
+}
+
+function assert_length() {
+
+    local func=$1
+    local arg1=$2
+    local arg2=$3
+
+    local result="ok"
+    if [ ${#arg1} -ne $arg2 ]; then
+        local result="error";
+    fi
+    echo "$func $result"
+}
+
+function assert_result_pos() {
+
+    assert_eq $1 $2 $result_pos
+}
+
+function assert_result_neg() {
+
+    assert_eq $1 $2 $result_neg
+}
+
+function assert_files_exist() {
+
+    local func=$1; shift
+
+    local result="ok"
+    for arg in "$@"; do
+        if [ ! -s $arg ]; then
+            result="error"
+            break
+        fi
+    done
+    echo "$func $result"
+}
+
+function assert_prog_exists() {
+
+    local progs=$*
+
+    for prog in $progs; do
+        if [ `which $prog 2> /dev/null | wc -l` -gt 0 ] || [ `alias $prog 2> /dev/null | wc -l` -gt 0  ] || [ $(func_exists $prog) == $result_pos ]; then
+            echo "program ${prog} ok"
+            return
+        fi
+    done
+    echo "program ${progs} missing"
+}
+
+function assert_module_installed() {
+
+    local module=$1
+
+    if [ $(_is_module_installed $module) == $result_pos ]; then
+        echo "module ${module} ok"
+    else
+        echo "module ${module} not installed"
+    fi
+}
+
+function assert_prerequisites() {
+
+    # do not run further tests if some programs are missing
+    local log=/tmp/mintleaf-test-prerequisites.$$
+    (
+        [ $(func_exists test_prerequisites) == $result_pos ] &&                         test_prerequisites
+        [ $(func_exists test_prerequisites_${DIST_BASED_ON}) == $result_pos ] &&        test_prerequisites_${DIST_BASED_ON} $*
+        [ $(func_exists test_prerequisites_${DIST}) == $result_pos ] &&                 test_prerequisites_${DIST} $*
+        [ $(func_exists test_prerequisites_${ARCH_NAME}) == $result_pos ] &&            test_prerequisites_${ARCH_NAME} $*
+        [ $(func_exists test_prerequisites_${DIST}_${ARCH_NAME}) == $result_pos ] &&    test_prerequisites_${DIST}_${ARCH_NAME} $*
+        [ $(func_exists test_prerequisites_custom) == $result_pos ] &&                  test_prerequisites_custom $*
+    ) 2>&1 | tee -a $log
+
+    local count_failed=$(cat $log | grep "^program\|^module" | grep -v "ok$" | wc -l | sed 's/^[ ]*//g')
+    rm -f $log
+    if [ $count_failed -gt 0 ] && [ $arg_ignore_tests == $result_neg ]; then
+        exit 2
+    fi
+}

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+CYGWIN="winsymlinks:native"
+
+################################################################################
+## path routines
+##
+
+function cyg2win_path() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Convert Cygwin directory path to Windows path (it must be C:
+                drive).
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    if [ $# -eq 0 ]; then
+        sed 's/\/cygdrive\/c/c:/g' | sed 's/\//\\/g' < /dev/stdin
+    else
+        echo "$1" | sed 's/\/cygdrive\/c/c:/g' | sed 's/\//\\/g'
+    fi
+}
+
+function cyg2win_slash_path() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Convert Cygwin directory path to Windows path but preserve
+                slashes (it must be C: drive).
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    if [ $# -eq 0 ]; then
+        sed 's/\/cygdrive\/c/c:/g' < /dev/stdin
+    else
+        echo "$1" | sed 's/\/cygdrive\/c/c:/g'
+    fi
+}

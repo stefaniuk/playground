@@ -1,0 +1,137 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://tomcat.apache.org/download-70.cgi"
+        tomcat7_version=$(echo "$_WWW" | grep -oEi '7\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        tomcat7_file="apache-tomcat-${tomcat7_version}.tar.gz"
+        tomcat7_file_size=8000000
+        tomcat7_download_url="http://www.mirrorservice.org/sites/ftp.apache.org/tomcat/tomcat-7/v${tomcat7_version}/bin/${tomcat7_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_tomcat7
+    _unpack_tomcat7
+    _build_daemon_tomcat7
+    _set_file_permissions_tomcat7
+
+    # set as default
+    if [ ! -L $tomcat_default_path ]; then
+        rm -rf $tomcat_default_path
+        ln -s $tomcat7_path $tomcat_default_path
+    fi
+}
+
+function uninstall_module() {
+
+    rm -rf $tomcat7_path
+}
+
+function is_module_installed() {
+
+    if [ -x $tomcat7_path/bin/jsvc ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_tomcat7
+        _unpack_tomcat7
+        _build_daemon_tomcat7
+        _set_file_permissions_tomcat7
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $tomcat7_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $tomcat7_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_tomcat7() {
+
+    local result=$(file_download --url $tomcat7_download_url --file $tomcat7_file --size $tomcat7_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $tomcat7_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_tomcat7() {
+
+    tar -zxf $tmp_dir/$tomcat7_file -C $tmp_dir
+    rm -rf $tomcat7_path
+    mv $(ls -d -1 $tmp_dir/apache-tomcat-7*/) $tomcat7_path
+    rm -rf $tomcat7_path/webapps/{docs,examples}
+    echo "#JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" > $tomcat7_path/bin/setenv.sh # SEE: http://wiki.apache.org/tomcat/HowTo/FasterStartUp from more details
+    echo $(get_module_latest_version) > $tomcat7_path/version
+}
+
+function _build_daemon_tomcat7() {
+
+    local current_dir=$PWD
+    cd $tomcat7_path/bin
+    tar -zxf commons-daemon-native.tar.gz
+    cd $(find . -iname "commons-daemon-*-src")/unix
+    ./configure \
+        --with-java=$java_default_path \
+    && make && cp jsvc ../..
+    cd ../..
+    rm -rf $(find . -iname "commons-daemon-*-src")
+    cd $current_dir
+}
+
+function _set_file_permissions_tomcat7() {
+
+    chown -R $(id -un):$(id -gn) $tomcat7_path
+    if [ "$DIST" != "macosx" ]; then
+        [ $(user_exists $tomcat7_user) == $result_pos ] && user_delete $tomcat7_user
+        user_create $tomcat7_user $tomcat7_group --home $tomcat7_path/temp
+        chown -R $tomcat7_user:$tomcat7_group $tomcat7_path/{conf,logs,temp,webapps,work}
+        chmod 0400 $tomcat7_path/conf/*
+        chmod 0700 $tomcat7_path/{conf,logs,temp,webapps,work}
+    fi
+}

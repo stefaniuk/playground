@@ -1,0 +1,98 @@
+#!/bin/bash
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    # debian family
+    if [ "$DIST_BASED_ON" == "debian" ]; then
+
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+            subversion
+
+    # redhat family
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+    
+        yum --assumeyes install \
+            subversion
+
+    fi
+}
+
+function uninstall_module() {
+
+    # debian family
+    if [ "$DIST_BASED_ON" == "debian" ]; then
+
+        apt-get --yes --force-yes --purge remove subversion
+        apt-get --yes --force-yes autoremove
+        apt-get clean
+
+    # redhat family
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+    
+        yum --assumeyes remove \
+            subversion
+
+    fi
+}
+
+function is_module_installed() {
+
+    if [ $(which $cmd_svn 2> /dev/null | wc -l) -gt 0 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        # debian family
+        if [ "$DIST_BASED_ON" == "debian" ]; then
+
+            apt-get --yes --force-yes --ignore-missing --no-install-recommends --only-upgrade install \
+                subversion
+
+        # redhat family
+        elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+            yum --assumeyes update \
+                subversion
+
+        fi
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    echo $(svn --version | grep -i 'version' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+}
+
+function get_module_latest_version() {
+
+    # debian family
+    if [ "$DIST_BASED_ON" == "debian" ]; then
+
+        echo $(apt-cache show subversion | grep '^Version:' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+
+    # redhat family
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        echo $(yum list installed | grep '^subversion' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+
+    fi
+}

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_packer_cmd() {
+
+    local packer=$packer_path/packer
+    [ "$DIST" == "cygwin" ] && packer=$packer_path/packer.exe
+
+    local count=`$packer --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_module_installed "virtualbox"
+}
+
+function test_module() {
+
+    test_packer_cmd
+}

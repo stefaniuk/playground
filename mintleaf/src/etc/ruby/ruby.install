@@ -1,0 +1,117 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        if [ $(which rvm 2> /dev/null | wc -l) -eq 0 ]; then
+            \curl -sSL https://get.rvm.io | bash -s stable
+            source $rvm_path/scripts/rvm
+        else
+            rvm get stable --auto-dotfiles
+        fi
+        ruby_version=$(rvm list known | grep "\[ruby-\]" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+(\[.*\])?' | sed -e s'/\[//'g | sed -e s'/\]//'g | sort_ver_rev | head -1)
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_ruby
+    _link_ruby
+}
+
+function uninstall_module() {
+
+    rvm remove "ruby-$(get_module_current_version)"
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        if [ -x $ruby_path/bin/ruby ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_ruby
+        _link_ruby
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $ruby_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $ruby_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_ruby() {
+
+    rvm install "ruby-${ruby_version}"
+    rvm --default use "ruby-${ruby_version}"
+}
+
+function _link_ruby() {
+
+    mkdir -p $ruby_path
+    rm -rf $ruby_path/bin
+    ln -s $rvm_path/rubies/default/bin $ruby_path/bin
+    rm -rf $ruby_path/include
+    ln -s $rvm_path/rubies/default/include $ruby_path/include
+    rm -rf $ruby_path/lib
+    ln -s $rvm_path/rubies/default/lib $ruby_path/lib
+    rm -rf $ruby_path/share
+    ln -s $rvm_path/rubies/default/share $ruby_path/share
+    rm -f $ruby_path/.irbrc
+    ln -s $rvm_path/rubies/default/.irbrc $ruby_path/.irbrc
+    rm -f $ruby_path/config
+    ln -s $rvm_path/rubies/default/config $ruby_path/config
+
+    echo "$ruby_version" > $ruby_path/version
+}

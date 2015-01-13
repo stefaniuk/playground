@@ -1,0 +1,141 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://sourceforge.net/projects/ddclient/files/ddclient/"
+        ddclient_version=$(echo "$_WWW"  | grep ddclient | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        ddclient_file="ddclient-${ddclient_version}.tar.gz"
+        ddclient_file_size=40000
+        ddclient_download_url="http://sourceforge.net/projects/ddclient/files/ddclient/ddclient-${ddclient_version}/${ddclient_file}/download"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$OS" == "linux" ] || [ "$DIST" == "macosx" ] || [ "$DIST" == "cygwin" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_ddclient
+    _unpack_ddclient
+    _configure_ddclient
+    _set_file_permissions_ddclient
+}
+
+function uninstall_module() {
+
+    rm -rf $ddclient_path
+}
+
+function is_module_installed() {
+
+    if [ -x $ddclient_path/bin/ddclient ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_ddclient
+        _unpack_ddclient
+        _configure_ddclient
+        _set_file_permissions_ddclient
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $ddclient_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $ddclient_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_ddclient() {
+
+    local result=$(file_download --url $ddclient_download_url --file $ddclient_file --size $ddclient_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $ddclient_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_ddclient() {
+
+    tar -zxf $tmp_dir/$ddclient_file -C $tmp_dir
+    rm -rf $ddclient_path
+    mv $(ls -d -1 $tmp_dir/ddclient-*/) $ddclient_path
+    rm $ddclient_path/*.exe
+    mkdir -p $ddclient_path/{bin,conf,etc,var}
+    mv $ddclient_path/{ddclient,*.sh} $ddclient_path/bin
+    mv $ddclient_path/*.conf $ddclient_path/conf
+    mv $ddclient_path/sample-etc_* $ddclient_path/etc
+    echo $(get_module_latest_version) > $ddclient_path/version
+}
+
+function _configure_ddclient() {
+
+    cat << EOF >> $ddclient_path/conf/ddclient.conf
+daemon=300
+syslog=yes
+pid=$ddclient_path/var/ddclient.pid
+ssl=yes
+
+##
+## DNS-O-Matic account-configuration
+##
+use=web, web=myip.dnsomatic.com
+server=updates.dnsomatic.com,      \\
+protocol=dyndns2,                  \\
+login=dnsomatic_username,          \\
+password=dnsomatic_password        \\
+all.dnsomatic.com
+EOF
+
+    file_replace_str "/etc/ddclient" "$ddclient_path/conf" $ddclient_path/bin/ddclient
+    file_replace_str "/var/cache/ddclient" "$ddclient_path/var" $ddclient_path/bin/ddclient
+}
+
+function _set_file_permissions_ddclient() {
+
+    chmod +x $ddclient_path/bin/*
+    chown -R $(id -un):$(id -gn) $ddclient_path
+}

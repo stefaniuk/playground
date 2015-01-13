@@ -1,0 +1,113 @@
+#!/bin/bash
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST_BASED_ON" == "debian" ] || [ "$DIST_BASED_ON" == "redhat" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    if [ "$DIST" == "macosx" ]; then
+
+        brew install \
+            git 2> /dev/null
+
+    elif [ "$DIST_BASED_ON" == "debian" ]; then
+
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+            git
+
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        yum --assumeyes install \
+            git
+
+    fi
+}
+
+function uninstall_module() {
+
+    if [ "$DIST" == "macosx" ]; then
+
+        brew uninstall \
+            git 2> /dev/null
+
+    elif [ "$DIST_BASED_ON" == "debian" ]; then
+
+        apt-get --yes --force-yes --purge remove git
+        apt-get --yes --force-yes autoremove
+        apt-get clean
+
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        yum --assumeyes remove \
+            git
+
+    fi
+}
+
+function is_module_installed() {
+
+    if which git > /dev/null; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        if [ "$DIST" == "macosx" ]; then
+
+            brew upgrade \
+                git 2> /dev/null
+
+        elif [ "$DIST_BASED_ON" == "debian" ]; then
+
+            apt-get --yes --force-yes --ignore-missing --no-install-recommends --only-upgrade install \
+                git
+
+        elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+            yum --assumeyes update \
+                git
+
+        fi
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    git --version | grep -i 'version' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1
+}
+
+function get_module_latest_version() {
+
+    if [ "$DIST" == "macosx" ]; then
+
+        brew info git | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1
+
+    elif [ "$DIST_BASED_ON" == "debian" ]; then
+
+        apt-cache show git | grep '^Version:' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1
+
+    elif [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        yum list installed | grep '^git' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1
+
+    fi
+}

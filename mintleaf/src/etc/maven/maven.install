@@ -1,0 +1,123 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://maven.apache.org/download.cgi"
+        maven_version=$(echo "$_WWW" | grep -oEi '3\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        maven_file="apache-maven-${maven_version}-bin.tar.gz"
+        maven_file_size=500000
+        maven_download_url="http://mirrors.ukfast.co.uk/sites/ftp.apache.org/maven/maven-3/${maven_version}/binaries/${maven_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_maven
+    _unpack_maven
+    _set_file_permissions_maven
+}
+
+function uninstall_module() {
+
+    if [ "$DIST" == "macosx" ]; then
+        rm -f ~/.mavenrc
+    fi
+
+    rm -rf $maven_path
+}
+
+function is_module_installed() {
+
+    local mvn=$maven_path/bin/mvn
+    [ "$DIST" == "cygwin" ] && mvn=$maven_path/bin/mvn.bat
+
+    if [ -x $mvn ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_maven
+        _unpack_maven
+        _set_file_permissions_maven
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $maven_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $maven_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_maven() {
+
+    local result=$(file_download --url $maven_download_url --file $maven_file --size $maven_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $maven_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_maven() {
+
+    tar -zxf $tmp_dir/$maven_file -C $tmp_dir
+    rm -rf $maven_path
+    mv $(ls -d -1 $tmp_dir/apache-maven-*/) $maven_path
+    echo "$maven_version" > $maven_path/version
+
+    if [ "$DIST" == "macosx" ]; then
+        cat <<EOF > ~/.mavenrc
+JAVA_HOME=$java_default_path
+EOF
+    fi
+}
+
+function _set_file_permissions_maven() {
+
+    chown -R $(id -un):$(id -gn) $maven_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $maven_path/bin/mvn.bat
+    fi
+}

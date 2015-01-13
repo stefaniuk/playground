@@ -1,0 +1,26 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_composer_cmd() {
+
+    local count=`composer --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "php"
+}
+
+function test_module() {
+
+    test_composer_cmd
+}

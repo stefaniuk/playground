@@ -1,0 +1,30 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_android_studio_cmd() {
+
+    printf "    waiting ($FUNCNAME) "
+    $android_studio_path/bin/studio.exe &
+    local i=0
+    while true; do
+        printf "."
+        sleep 1
+        local count=$(ps aux | grep -v grep | grep android-studio | wc -l)
+        if [ $count -gt 0 ] && [ $i -ge 2 ]; then
+            printf "\n"
+            break
+        fi
+        i=$(expr $i + 1)
+    done
+
+    local pid=$(ps aux | grep -v grep | grep android-studio | awk '{ print $1 }')
+    kill -s TERM $pid > /dev/null 2>&1
+    sleep 3
+
+    local count=$(ps aux | grep -v grep | grep android-studio | wc -l)
+
+    assert_eq $FUNCNAME $count 0
+}

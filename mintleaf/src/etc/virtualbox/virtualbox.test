@@ -1,0 +1,55 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_vboxmanage_cmd() {
+
+    [ "$DIST" == "ubuntu" ] && local vboxmanage=$virtualbox_path/bin/VBoxManage
+    [ "$DIST" == "macosx" ] && local vboxmanage=$virtualbox_path/Contents/MacOS/VBoxManage
+
+    local count=`$vboxmanage --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+function test_virtualbox_cmd() {
+
+    [ "$DIST" == "ubuntu" ] && local virtualbox=$virtualbox_path/bin/VirtualBox
+    [ "$DIST" == "macosx" ] && local virtualbox=$virtualbox_path/Contents/MacOS/VirtualBox
+
+    printf "    waiting ($FUNCNAME) "
+    $virtualbox &
+    local i=0
+    while true; do
+        printf "."
+        sleep 1
+        local count=$(ps aux | grep -v grep | grep VirtualBox | wc -l)
+        if [ $count -gt 0 ] && [ $i -ge 2 ]; then
+            printf "\n"
+            break
+        fi
+        i=$(expr $i + 1)
+    done
+
+    local pid=$(ps aux | grep -v grep | grep VirtualBox | awk '{ print $2 }')
+    kill -s TERM $pid > /dev/null 2>&1
+    sleep 3
+
+    local count=$(ps aux | grep -v grep | grep VirtualBox | wc -l)
+
+    assert_eq $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_module() {
+
+    test_vboxmanage_cmd
+    if [ "$DIST" == "macosx" ] || [ $(pidof X 2> /dev/null | wc -l) -gt 0 ]; then
+        test_virtualbox_cmd 2> /dev/null
+    fi
+}

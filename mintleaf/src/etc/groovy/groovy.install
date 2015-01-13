@@ -1,0 +1,113 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://groovy.codehaus.org/Download"
+        groovy_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)*' | grep -v installer | sort_ver_rev | head -1)
+        groovy_file="groovy-binary-${groovy_version}.zip"
+        groovy_file_size=30000000
+        groovy_download_url="http://dl.bintray.com/groovy/maven/${groovy_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_groovy
+    _unpack_groovy
+    _set_file_permissions_groovy
+}
+
+function uninstall_module() {
+
+    rm -rf $groovy_path
+}
+
+function is_module_installed() {
+
+    local groovy=$groovy_path/bin/groovy
+    [ "$DIST" == "cygwin" ] && groovy=$groovy_path/bin/groovy.bat
+
+    if [ -x $groovy ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_groovy
+        _unpack_groovy
+        _set_file_permissions_groovy
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $groovy_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $groovy_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_groovy() {
+
+    local result=$(file_download --url $groovy_download_url --file $groovy_file --size $groovy_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $groovy_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_groovy() {
+
+    unzip -q $tmp_dir/$groovy_file -d $tmp_dir
+    rm -rf $groovy_path
+    mv $(ls -d -1 $tmp_dir/groovy-*/) $groovy_path
+    echo "$groovy_version" > $groovy_path/version
+}
+
+function _set_file_permissions_groovy() {
+
+    chown -R $(id -un):$(id -gn) $groovy_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $groovy_path/bin/groovy.bat
+    fi
+}

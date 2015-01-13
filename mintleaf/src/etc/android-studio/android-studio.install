@@ -1,0 +1,137 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://developer.android.com/sdk/installing/studio.html"
+        android_studio_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+/android-studio-bundle' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        android_studio_build=$(echo "$_WWW" | grep -oEi 'android-studio-bundle-[0-9]+\.[0-9]+\-' | grep -oEi '[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        [ "$DIST" == "macosx" ] && android_studio_file="android-studio-bundle-${android_studio_build}-mac.dmg"
+        [ "$DIST" == "cygwin" ] && android_studio_file="android-studio-bundle-${android_studio_build}-windows.exe"
+        [ "$DIST" == "macosx" ] && android_studio_output_file="android-studio-${android_studio_version}-mac.dmg"
+        [ "$DIST" == "cygwin" ] && android_studio_output_file="android-studio-${android_studio_version}-windows.exe"
+        android_studio_file_size=350000000
+        android_studio_download_url="http://dl.google.com/android/studio/install/${android_studio_version}/${android_studio_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST" == "cygwin" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_android_studio
+    _unpack_android_studio
+    _set_file_permissions_android_studio
+}
+
+function uninstall_module() {
+
+    if [ "$DIST" == "macosx" ]; then
+        echo "TODO"
+    elif [ "$DIST" == "cygwin" ]; then
+        $android_studio_path/uninstall.exe /S
+        rm -f $android_studio_path
+        rm -rf $LOCALAPPDATA/Android/android-studio
+    fi
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "macosx" ]; then
+        if [ -x $android_studio_path/bin/studio ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    elif [ "$DIST" == "cygwin" ]; then
+        if [ -x $android_studio_path/bin/studio.exe ] && [ -x $android_studio_path/bin/studio64.exe ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_android_studio
+        _unpack_android_studio
+        _set_file_permissions_android_studio
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $android_studio_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $android_studio_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_android_studio() {
+
+    local result=$(file_download --url $android_studio_download_url --file $android_studio_output_file --size $android_studio_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $android_studio_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_android_studio() {
+
+    if [ "$DIST" == "macosx" ]; then
+        echo "TODO"
+    elif [ "$DIST" == "cygwin" ]; then
+        chmod +x $tmp_dir/$android_studio_output_file
+        $tmp_dir/$android_studio_output_file /S
+        rm -f $android_studio_path
+        ln -s $(echo $LOCALAPPDATA/Android/android-studio | cyg2win_path) $android_studio_path
+    fi
+    echo $(get_module_latest_version) > $android_studio_path/version
+}
+
+function _set_file_permissions_android_studio() {
+
+    chown -R $(id -un):$(id -gn) $android_studio_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $android_studio_path/bin/*.{bat,exe}
+    fi
+}

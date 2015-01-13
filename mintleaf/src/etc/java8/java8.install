@@ -1,0 +1,115 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://jdk8.java.net/download.html" --filter 'href=".*/download/jdk'
+        java8_update=$(echo "$_WWW" | grep -oEi '/jdk[0-9]+u[0-9]+' | grep -oEi '[0-9]+$' | sort_ver_rev | head -1)
+        java8_build=$(echo "$_WWW" | grep -oEi '/b[0-9]+' | grep -oEi '[0-9]+$' | sort_ver_rev | head -1)
+        java8_date=$(echo "$_WWW" | grep -E '(linux|macosx)' | grep -oEi '[0-9]+_[a-zA-Z]+_20[0-9]+' | sort_ver_rev | head -1)
+        [ "$OS" == "linux" ]    && java8_file="jdk-8u${java8_update}-ea-bin-b${java8_build}-linux-x64-${java8_date}.tar.gz"
+        [ "$DIST" == "macosx" ] && java8_file="jdk-8u${java8_update}-ea-bin-b${java8_build}-macosx-x86_64-${java8_date}.dmg"
+        java8_file_size=100000000
+        java8_download_url="http://www.java.net/download/jdk8u${java8_update}/archive/b${java8_build}/binaries/${java8_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_java
+    _unpack_java
+    _set_file_permissions_java
+
+    # set as default
+    if [ ! -L $java_default_path ]; then
+        rm -rf $java_default_path
+        ln -s $java8_path $java_default_path
+    fi
+}
+
+function uninstall_module() {
+
+    rm -rf $java8_path
+}
+
+function is_module_installed() {
+
+    if [ -x $java8_path/bin/javac ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_java
+        _unpack_java
+        _set_file_permissions_java
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $java8_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo "8u${java8_update} b${java8_build}"
+}
+
+################################################################################
+## private routines
+##
+
+function _download_java() {
+
+    local result=$(file_download --url $java8_download_url --file $java8_file --size $java8_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $java8_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_java() {
+
+    tar -zxf $tmp_dir/$java8_file -C $tmp_dir
+    rm -rf $java8_path
+    mv $tmp_dir/jdk1.8* $java8_path
+    echo $(get_module_latest_version) > $java8_path/version
+}
+
+function _set_file_permissions_java() {
+
+    chown -R $(id -un):$(id -gn) $java8_path
+}

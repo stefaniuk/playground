@@ -1,0 +1,230 @@
+#!/bin/bash
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    # mac os x
+    if [ "$DIST" == "macosx" ]; then
+
+        if [ $arg_update_system == $result_pos ]; then
+            sudo softwareupdate --install -all
+        fi
+        if [ -z $(which brew) ]; then
+            ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        fi
+        brew tap homebrew/dupes 2> /dev/null
+        brew install \
+            ack \
+            bash \
+            binutils \
+            coreutils \
+            curl \
+            gcc \
+            lynx \
+            makedepend \
+            mc \
+            pcre \
+            screen \
+            tmux \
+            tree \
+            vim \
+            wget \
+            zsh \
+            2> /dev/null
+        brew linkapps > /dev/null
+        if [ $arg_update_packages == $result_pos ]; then
+            brew upgrade
+        fi
+        #xcode-select --install
+
+    # ubuntu
+    elif [ "$DIST" == "ubuntu" ]; then
+
+        DEBIAN_FRONTEND="noninteractive"
+        if [ $arg_update_packages == $result_pos ]; then
+            apt-get --yes update
+        fi
+        if [ $arg_update_system == $result_pos ]; then
+            apt-get --yes --force-yes upgrade
+            apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+        fi
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+            ack-grep \
+            build-essential \
+            curl \
+            debconf-utils \
+            expect \
+            lynx \
+            mc \
+            pcregrep \
+            screen \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wget \
+            zsh
+        apt-get --yes --force-yes autoremove
+        apt-get clean
+
+    # raspbian
+    elif [ "$DIST" == "raspbian" ]; then
+
+        DEBIAN_FRONTEND="noninteractive"
+        if [ $arg_update_packages == $result_pos ]; then
+            apt-get --yes update
+        fi
+        if [ $arg_update_system == $result_pos ]; then
+            apt-get --yes --force-yes upgrade
+            apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
+        fi
+        apt-get --yes --force-yes --ignore-missing --no-install-recommends install \
+            ack-grep \
+            bc \
+            curl \
+            expect \
+            lynx \
+            mc \
+            pcregrep \
+            screen \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wget \
+            zsh
+        apt-get --yes --force-yes autoremove
+        apt-get clean
+
+    # centos
+    elif [ "$DIST" == "centos" ]; then
+
+        if [ $arg_update_system == $result_neg ]; then
+            yum --assumeyes update
+        fi
+        yum --assumeyes install \
+            bc \
+            curl \
+            expect \
+            gcc \
+            lynx \
+            mc \
+            net-tools \
+            pcre \
+            pcre-tools \
+            screen \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wget \
+            zsh
+
+    # scientific
+    elif [ "$DIST" == "scientific" ]; then
+
+        if [ $arg_update_system == $result_neg ]; then
+            yum --assumeyes update
+        fi
+        yum --assumeyes install \
+            bc \
+            curl \
+            expect \
+            gcc \
+            lynx \
+            mc \
+            net-tools \
+            pcre \
+            screen \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wget \
+            zsh
+
+    # cygwin
+    elif [ "$DIST" == "cygwin" ]; then
+
+        wget http://apt-cyg.googlecode.com/svn/trunk/apt-cyg
+        chmod +x apt-cyg
+        mv apt-cyg /usr/local/bin/
+
+        apt-cyg install \
+            bc \
+            curl \
+            expect \
+            lynx \
+            mc \
+            pcre \
+            screen \
+            tmux \
+            tree \
+            unzip \
+            vim \
+            wget \
+            zsh
+
+    fi
+
+    _create_directories_mintleaf
+    _set_file_permissions_mintleaf
+}
+
+function uninstall_module() {
+
+    echo "TODO"
+}
+
+function is_module_installed() {
+
+    if [ -f $MINTLEAF_HOME/bin/bootstrap ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    echo "TODO"
+}
+
+function get_module_current_version() {
+
+    echo "TODO"
+}
+
+function get_module_latest_version() {
+
+    echo "TODO"
+}
+
+################################################################################
+## private routines
+##
+
+function _create_directories_mintleaf() {
+
+    mkdir -p $log_dir
+    mkdir -p $data_dir
+    mkdir -p $apps_dir
+    mkdir -p $tools_dir
+    mkdir -p $jobs_dir
+    mkdir -p $tmp_dir
+}
+
+function _set_file_permissions_mintleaf() {
+
+    chown -R $(id -un):$(id -gn) $MINTLEAF_HOME
+    chmod 0755 $MINTLEAF_HOME
+    chmod +x $MINTLEAF_HOME/bin/mintleaf
+}

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_groovy_cmd() {
+
+    local groovy=$groovy_path/bin/groovy
+    [ "$DIST" == "cygwin" ] && groovy=$groovy_path/bin/groovy.bat
+
+    local count=`$groovy --version | grep -i 'groovy version' | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+}
+
+function test_module() {
+
+    test_groovy_cmd
+}

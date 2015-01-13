@@ -1,0 +1,129 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://www.sonatype.org/nexus/archived"
+        nexus_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        nexus_file="nexus-${nexus_version}.tar.gz"
+        nexus_file_size=40000000
+        nexus_download_url="http://download.sonatype.com/nexus/oss/nexus-${nexus_version}-bundle.tar.gz"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$OS" == "linux" ] || [ "$DIST_BASED_ON" == "linux" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_nexus
+    _unpack_nexus
+    _configure_nexus
+    _set_file_permissions_nexus
+}
+
+function uninstall_module() {
+
+    rm -rf $nexus_path
+    rm -rf $nexus_data_path
+}
+
+function is_module_installed() {
+
+    if [ -x $nexus_path/bin/nexus ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        nexus_stop
+
+        _init_variables
+
+        _download_nexus
+        _unpack_nexus
+        _configure_nexus
+        _set_file_permissions_nexus
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $nexus_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $nexus_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_nexus() {
+
+    local result=$(file_download --url $nexus_download_url --file $nexus_file --size $nexus_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $nexus_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_nexus() {
+
+    tar -zxf $tmp_dir/$nexus_file -C $tmp_dir
+    rm -rf $nexus_path
+    mv $(ls -d -1 $tmp_dir/nexus-*/) $nexus_path
+    rm -rf $tmp_dir/sonatype-work
+    mkdir -p $nexus_data_path
+    echo "$nexus_version" > $nexus_path/version
+}
+
+function _configure_nexus() {
+
+    # bin/jsw/conf/wrapper.conf
+    file_replace_str "wrapper.java.command=java" "wrapper.java.command=$JAVA_HOME/bin/java" $nexus_path/bin/jsw/conf/wrapper.conf
+
+    # conf/nexus.properties
+    file_replace_str "nexus-work=\${bundleBasedir}/../sonatype-work/nexus" "nexus-work=$nexus_data_path" $nexus_path/conf/nexus.properties
+}
+
+function _set_file_permissions_nexus() {
+
+    [ $(user_exists $nexus_user) == $result_pos ] && user_delete $nexus_user
+    user_create $nexus_user $nexus_group --home $nexus_data_path
+    chown -R $nexus_user:$nexus_group $nexus_path
+    chown -R $nexus_user:$nexus_group $nexus_data_path
+}

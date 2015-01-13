@@ -1,0 +1,908 @@
+#!/bin/bash
+
+################################################################################
+## test base routines
+##
+
+function test_list_modules() {
+
+    local cmd=`list_modules | grep "^mintleaf$" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 1
+}
+
+function test_print_module_info() {
+
+    local cmd=`print_module_info | wc -l | sed 's/^[ ]*//g'`
+
+    assert_gt $FUNCNAME "$cmd" 3
+}
+
+function test_list_functions() {
+
+    local cmd=`list_functions | grep -i "^list_functions: show all available functions for given module$" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 1
+}
+
+function test_create_module() {
+
+    local module="this_is_a_test_module"
+
+    create_module $module
+
+    local cmd=`ls -la $module_dir/$module/* | wc -l | sed 's/^[ ]*//g'`
+
+    assert_ge $FUNCNAME "$cmd" 6
+
+    rm -rf $module_dir/$module
+}
+
+################################################################################
+## test general routines
+##
+
+function test_func_exists() {
+
+    local cmd=`func_exists "func_exists"`
+
+    assert_result_pos $FUNCNAME "$cmd"
+}
+
+function test_usleep() {
+
+    if [ "$DIST" == "macosx" ]; then
+        local t1=$(date +%s)
+        usleep 2000
+        local t2=$(date +%s)
+        assert_between $FUNCNAME `expr $t2 - $t1` 2 3
+    else
+        local t1=$(($(date +%s%N)/1000000))
+        usleep 2000
+        local t2=$(($(date +%s%N)/1000000))
+        assert_between $FUNCNAME `expr $t2 - $t1` 1000 3000
+    fi
+}
+
+function test_h2d() {
+
+    local cmd=`h2d ff`
+
+    assert_eq $FUNCNAME "$cmd" 255
+}
+
+function test_d2h() {
+
+    local cmd=`d2h 255`
+
+    assert_eq $FUNCNAME "$cmd" "ff"
+}
+
+function test_random() {
+
+    local cmd=`random 128`
+
+    assert_length $FUNCNAME "$cmd" 128
+}
+
+function test_trim() {
+
+    local cmd=`trim "   This is a string!   "`
+
+    assert_eq $FUNCNAME "$cmd" "This is a string!"
+}
+
+function test_lower() {
+
+    local cmd=`lower "MAKE ME LOWER!"`
+
+    assert_eq $FUNCNAME "$cmd" "make me lower!"
+}
+
+function test_upper() {
+
+    local cmd=`upper "make me upper!"`
+
+    assert_eq $FUNCNAME "$cmd" "MAKE ME UPPER!"
+}
+
+function test_str_sanitise() {
+
+    # test 1
+
+    local cmd1=`str_sanitise "xxx___XXX___000"`
+
+    assert_eq $FUNCNAME "$cmd1" "xxxxxx000"
+
+    # test 2
+
+    local cmd2=`str_sanitise "xxx___:___XXX___:___000" '\.' --allowed-characters ':' --max-length 12`
+
+    assert_eq $FUNCNAME "$cmd2" "xxx.:.xxx.:."
+}
+
+function test_str_substring() {
+
+    local cmd=`str_substring "begin-middle-end" "begin-" "-end"`
+
+    assert_eq $FUNCNAME "$cmd" "middle"
+}
+
+function test_str_contains() {
+
+    local cmd=`str_contains "This is a test!" "test"`
+
+    assert_result_pos $FUNCNAME "$cmd"
+}
+
+function test_str_begins() {
+
+    local cmd=`str_begins "begin-string" "begin-"`
+
+    assert_result_pos $FUNCNAME "$cmd"
+}
+
+function test_str_ends() {
+
+    local cmd=`str_ends "string-end" "-end"`
+
+    assert_result_pos $FUNCNAME "$cmd"
+}
+
+function test_str_split_part() {
+
+    local cmd=`str_split_part "col1:col2:col3" ":" 2`
+
+    assert_eq $FUNCNAME "$cmd" "col2"
+}
+
+function test_str_compare_ver() {
+
+    # test 1
+
+    local cmd1=`str_compare_ver 1.0.0 1.0.0`
+
+    assert_eq $FUNCNAME "$cmd1" 0
+
+    # test 2
+
+    local cmd2=`str_compare_ver 1.0.1 1.0.0`
+
+    assert_eq $FUNCNAME "$cmd2" 1
+
+    # test 3
+
+    local cmd3=`str_compare_ver 1.0.1 2.0.1`
+
+    assert_eq $FUNCNAME "$cmd3" -1
+}
+
+function test_sort_ver() {
+
+    local file1=/tmp/test_sort_ver_1.$$
+    local file2=/tmp/test_sort_ver_2.$$
+    local file3=/tmp/test_sort_ver_3.$$
+
+    cat <<EOF > $file1
+1.2.100.4
+1.2.3.4
+10.1.2.3
+9.1.2.3
+EOF
+    cat <<EOF > $file2
+1.2.3.4
+1.2.100.4
+9.1.2.3
+10.1.2.3
+EOF
+
+    cat $file1 | sort_ver > $file3
+    local cmd=`cmp --silent $file2 $file3 || echo $result_pos`
+
+    assert_not_eq $FUNCNAME "$cmd" "$result_pos"
+
+    rm -f $file1
+    rm -f $file2
+    rm -f $file3
+}
+
+function test_sort_ver_rev() {
+
+    local file1=/tmp/test_sort_ver_rev_1.$$
+    local file2=/tmp/test_sort_ver_rev_2.$$
+    local file3=/tmp/test_sort_ver_rev_3.$$
+
+    cat <<EOF > $file1
+1.2.100.4
+1.2.3.4
+10.1.2.3
+9.1.2.3
+EOF
+    cat <<EOF > $file2
+10.1.2.3
+9.1.2.3
+1.2.100.4
+1.2.3.4
+EOF
+
+    cat $file1 | sort_ver_rev > $file3
+    local cmd=`cmp --silent $file2 $file3 || echo $result_pos`
+
+    assert_not_eq $FUNCNAME "$cmd" "$result_pos"
+
+    rm -f $file1
+    rm -f $file2
+    rm -f $file3
+}
+
+function test_hash_type() {
+
+    local cmd=`hash_type $(echo "test" | md5sum | awk '{ print $1 }')`
+    assert_eq $FUNCNAME "$cmd" "md5"
+
+    cmd=`hash_type $(echo "test" | sha1sum | awk '{ print $1 }')`
+    assert_eq $FUNCNAME "$cmd" "sha1"
+
+    cmd=`hash_type $(echo "test" | sha256sum | awk '{ print $1 }')`
+    assert_eq $FUNCNAME "$cmd" "sha256"
+
+    cmd=`hash_type $(echo "test" | sha384sum | awk '{ print $1 }')`
+    assert_eq $FUNCNAME "$cmd" "sha384"
+
+    cmd=`hash_type $(echo "test" | sha512sum | awk '{ print $1 }')`
+    assert_eq $FUNCNAME "$cmd" "sha512"
+}
+
+function test_color_codes_remove() {
+
+    local cmd=`echo -e "\e[0;33myellow\e[0m" | color_codes_remove`
+    assert_eq $FUNCNAME "$cmd" "yellow"
+}
+
+################################################################################
+## test file routines
+##
+
+function test_file_escape_name() {
+
+    local str='a = real \good %* load of c$rap='
+    local cmd=`file_escape_name "$str"`
+
+    assert_eq $FUNCNAME "$cmd" "a\ \=\ real\ \\\good\ %\*\ load\ of\ c\\\$rap\="
+}
+
+function test_file_contains() {
+
+    local file=/tmp/test_file_contains.$$
+
+    cat <<EOF > $file
+line1
+line2
+line3
+EOF
+    local cmd=`file_contains "1\nline" $file`
+
+    assert_result_pos $FUNCNAME "$cmd"
+
+    rm -f $file
+}
+
+function test_file_replace_str() {
+
+    local file=/tmp/test_file_replace_str.$$
+
+    # test 1
+
+    cat <<EOF > $file
+line1
+line2
+line3
+EOF
+    file_replace_str "line" "data" $file
+    local cmd=`cat $file | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 3
+
+    rm -f $file
+
+    # test 2
+
+    cat <<EOF > $file
+line
+line
+line
+EOF
+    file_replace_str "ne\nline\nli" "-data-" $file --multiline
+    local cmd=`cat $file`
+
+    assert_eq $FUNCNAME "$cmd" "li-data-ne"
+
+    rm -f $file
+
+    # test 3
+
+    cat <<EOF > $file
+abcd
+efgh
+jikl
+EOF
+    file_replace_str "bcd(.)*jik" "x" $file --multiline
+    local cmd=`cat $file`
+
+    assert_eq $FUNCNAME "$cmd" "axl"
+
+    rm -f $file
+
+    # test 4
+
+    cat <<EOF > $file
+/usr/local/mintleaf
+EOF
+    file_replace_str "/usr/local/mintleaf" "/var/log" $file
+    local count=`cat $file | grep '/var/log' | wc -l`
+
+    assert_eq $FUNCNAME "$count" 1
+
+    rm -f $file
+
+    # test 5
+
+    cat <<EOF > $file
+/usr/local/mintleaf
+EOF
+    file_replace_str "/usr/local/mintleaf\n" "/var/log\n" $file --multiline
+    local count=`cat $file | grep '/var/log' | wc -l`
+
+    assert_eq $FUNCNAME "$count" 1
+
+    rm -f $file
+}
+
+function test_file_remove_str() {
+
+    local file=/tmp/test_file_remove_str.$$
+
+    # test 1
+
+    cat <<EOF > $file
+line1
+line2
+line3
+EOF
+    file_remove_str "line" $file
+    local cmd=`cat $file | grep "line" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 0
+
+    rm -f $file
+
+    # test 2
+
+    cat <<EOF > $file
+line
+line
+line
+EOF
+    file_remove_str "ine\nline\nlin" $file --multiline
+    local cmd=`cat $file`
+
+    assert_eq $FUNCNAME "$cmd" "le"
+
+    rm -f $file
+
+    # test 3
+
+    cat <<EOF > $file
+abcd
+efgh
+jikl
+EOF
+    file_remove_str "bcd(.)*jik" $file --multiline
+    local cmd=`cat $file`
+
+    assert_eq $FUNCNAME "$cmd" "al"
+
+    rm -f $file
+
+    # test 4
+
+    cat <<EOF > $file
+/usr/local/mintleaf
+EOF
+    file_remove_str "/usr/local/mintleaf" $file
+    local count=`cat $file | sed '/^\s*$/d' | wc -l`
+
+    assert_eq $FUNCNAME "$count" 0
+
+    rm -f $file
+
+    # test 5
+
+    cat <<EOF > $file
+/usr/local/mintleaf
+EOF
+    file_remove_str "/usr/local/mintleaf\n" $file --multiline
+    local count=`cat $file | sed '/^\s*$/d' | wc -l`
+
+    assert_eq $FUNCNAME "$count" 0
+
+    rm -f $file
+}
+
+function test_file_download() {
+
+    local url=http://ipv4.download.thinkbroadband.com/5MB.zip
+    local file=5mb.zip
+    local dir=/tmp
+    local size=5000000
+
+    local cmd=$(file_download --url $url --file $file --download-directory $dir --size $size --do-not-cache)
+
+    assert_eq $FUNCNAME "$cmd" $result_pos
+
+    rm -f $dir/$file
+}
+
+function test_file_valid_hash() {
+
+    local file=$MINTLEAF_HOME/bin/bootstrap
+    local algorithm="sha1"
+    local hash=
+    if [ "$DIST" == "macosx" ]; then
+        hash=`shasum -a 1 $file | awk '{ print $1 }'`
+    else
+        hash=`${algorithm}sum $file | awk '{ print $1 }'`
+    fi
+    local cmd=`file_valid_hash $file $hash $algorithm`
+
+    assert_eq $FUNCNAME "$cmd" $result_pos
+}
+
+function test_dir_find_str() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    cat <<EOF > $dir/test_dir_find_str-file1.txt
+test_dir_find_str-file1
+EOF
+    cat <<EOF > $dir/test_dir_find_str-file2.txt
+test_dir_find_str-file2
+EOF
+    cat <<EOF > $dir/test_dir_find_str-file3.txt
+test_dir_find_str-file3
+EOF
+    local cmd=`dir_find_str "test_dir_find_str-file" $dir | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 3
+
+    rm -rf $dir
+}
+
+function test_dir_replace_str() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    cat <<EOF > $dir/dir_replace_str-file1.txt
+dir_replace_str-file1
+EOF
+    cat <<EOF > $dir/dir_replace_str-file2.txt
+dir_replace_str-file2
+EOF
+    cat <<EOF > $dir/dir_replace_str-file3.txt
+dir_replace_str-file3
+EOF
+    dir_replace_str "dir_replace_str-file" "data" $dir
+    local cmd=`dir_find_str "data" $dir | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 3
+
+    rm -rf $dir
+}
+
+function test_dir_remove_str() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    cat <<EOF > $dir/dir_remove_str-file1.txt
+dir_remove_str-file1
+EOF
+    cat <<EOF > $dir/dir_remove_str-file2.txt
+dir_remove_str-file2
+EOF
+    cat <<EOF > $dir/dir_remove_str-file3.txt
+dir_remove_str-file3
+EOF
+    local cmd=`dir_remove_str "dir_remove_str-file" $dir`
+    cmd=`dir_find_str "dir_remove_str-file" $dir | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 0
+
+    rm -rf $dir
+}
+
+################################################################################
+## test chroot routines
+##
+
+function test_chroot_dependency_list() {
+
+    local cmd=`chroot_dependency_list /bin/bash | grep "ld-linux" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 1
+}
+
+function test_chroot_dependency_list_all() {
+
+    local cmd=`chroot_dependency_list_all /bin/bash | grep "ld-linux" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd" 1
+}
+
+function test_chroot_dependency_copy() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    chroot_dependency_copy /bin/bash $dir > /dev/null 2>&1
+    local cmd=`find $dir -name *.so.* | wc -l | sed 's/^[ ]*//g'`
+
+    assert_ge $FUNCNAME "$cmd" 1
+
+    rm -rf $dir
+}
+
+function test_chroot_mount_dir() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    chroot_mount_dir /bin $dir/bin --read-only
+
+    # test 1
+
+    local cmd1=`ls -1 $dir/bin | wc -l | sed 's/^[ ]*//g'`
+
+    assert_gt $FUNCNAME "$cmd1" 50
+
+    # test 2
+
+    local cmd2=`mount -l | grep $dir/bin | grep "ro" | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd2" 1
+
+    umount $dir/bin
+    rm -rf $dir
+}
+
+function test_chroot_create_remove_env() {
+
+    local dir=/tmp/$$
+    mkdir $dir
+
+    # test 1
+
+    chroot_create_env $dir
+    local cmd1=`ls -1 $dir/bin | wc -l | sed 's/^[ ]*//g'`
+
+    assert_gt $FUNCNAME "$cmd1" 50
+
+    # test 2
+
+    chroot_remove_env $dir
+    local cmd2=`ls -1 $dir/bin | wc -l | sed 's/^[ ]*//g'`
+
+    assert_eq $FUNCNAME "$cmd2" 0
+
+    rm -rf $dir
+}
+
+function test_is_chroot() {
+
+    local cmd=`is_chroot`
+
+    assert_eq $FUNCNAME "$cmd" "$result_neg"
+}
+
+################################################################################
+## test user routines
+##
+
+function test_user_exists() {
+
+    # test 1
+
+    local cmd1=`user_exists this_is_a_test_user`
+
+    assert_result_neg $FUNCNAME "$cmd1"
+
+    # test 2
+
+    local cmd2=`user_exists root`
+
+    assert_result_pos $FUNCNAME "$cmd2"
+}
+
+function test_group_exists() {
+
+    # test 1
+
+    local cmd1=`group_exists this_is_a_test_group`
+
+    assert_result_neg $FUNCNAME "$cmd1"
+
+    # test 2
+
+    local cmd2=`group_exists root`
+
+    assert_result_pos $FUNCNAME "$cmd2"
+}
+
+function test_user_create() {
+
+    local name="this_is_a_test"
+
+    # test 1
+
+    user_create $name $name > /dev/null 2>&1
+    local a1=`user_exists $name`
+    local a2=`group_exists $name`
+
+    assert_eq $FUNCNAME "$a1 $a2" "$result_pos $result_pos"
+
+    userdel $name > /dev/null 2>&1
+    groupdel $name > /dev/null 2>&1
+
+    # test 2
+
+    user_create $name $name \
+        --uid $uid_max --gid $gid_max \
+        --groups bin,sys \
+        --home /tmp/$name \
+        --shell /bin/bash > /dev/null 2>&1
+    local a1=`user_exists $name`
+    local a2=`group_exists $name`
+
+    assert_eq $FUNCNAME "$a1 $a2" "$result_pos $result_pos"
+
+    userdel -rf $name > /dev/null 2>&1
+    groupdel $name > /dev/null 2>&1
+}
+
+function test_user_delete() {
+
+    local name="this_is_a_test"
+
+    user_create $name $name > /dev/null 2>&1
+    local a1=`user_exists $name`
+    local a2=`group_exists $name`
+
+    user_delete $name
+    local a3=`user_exists $name`
+    local a4=`group_exists $name`
+
+    assert_eq $FUNCNAME "$a1 $a2 $a3 $a4" "$result_pos $result_pos $result_neg $result_neg"
+}
+
+################################################################################
+## test security routines
+##
+
+function test_sec_generate_cert() {
+
+    local name="test"
+
+    sec_generate_cert $name --dir /tmp > /dev/null 2>&1
+
+    assert_files_exist $FUNCNAME /tmp/$name.crt /tmp/$name.key /tmp/$name.pem
+
+    rm -f /tmp/$name.*
+}
+
+################################################################################
+## test network routines
+##
+
+function test_net_is_connected() {
+
+    local cmd=`net_is_connected`
+
+    assert_result_pos $FUNCNAME "$cmd"
+}
+
+function test_net_get_external_ip() {
+
+    local cmd=`net_get_external_ip | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | wc -l`
+
+    assert_gt $FUNCNAME "$cmd" 0
+}
+
+################################################################################
+## test www routines
+##
+
+function test_www_get() {
+
+    www_get "https://www.google.co.uk" --filter "google"
+    local cmd=`echo "$_WWW" | wc -l`
+
+    assert_gt $FUNCNAME "$cmd" 3
+}
+
+################################################################################
+## test project specific routines
+##
+
+function test_config_option_set() {
+
+    local file=/tmp/test_config_option_set.$$
+
+    config_option_set "test.option" "value" $file
+    local cmd=`cat $file | grep 'test.option' | grep 'value' | wc -l | sed 's/^[ ]*//g'`
+
+    assert_gt $FUNCNAME "$cmd" 0
+
+    rm -f $file
+}
+
+function test_config_option_get() {
+
+    local file=/tmp/test_config_option_set.$$
+
+    cat <<EOF > $file
+test.option = value1 value2 value3
+EOF
+    local cmd=`config_option_get 'test.option' $file`
+
+    assert_contains $FUNCNAME "$cmd" "value1 value2 value3"
+
+    rm -f $file
+}
+
+function test_download_parse_args() {
+
+    local url=http://php.net/download/file
+    local file=php-5.6.tar.gz
+    local size=10000000
+    local hash="4e1243bd22c66e76c2ba9eddc1f91394e57f9f83"
+    local ver="5.6"
+    local src="src"
+
+    download_parse_args "php" "--php --php-src --php-ver $ver --php-url $url --php-file $file --php-size $size --php-hash $hash" > /dev/null
+
+    assert_eq $FUNCNAME "$_URL" "$url"
+    assert_eq $FUNCNAME "$_FILE" "$file"
+    assert_eq $FUNCNAME "$_SIZE" "$size"
+    assert_eq $FUNCNAME "$_HASH" "$hash"
+    assert_eq $FUNCNAME "$_VER" "$ver"
+    assert_eq $FUNCNAME "$_SRC" "$src"
+}
+
+function test_download_by_args() {
+
+    local url=http://ipv4.download.thinkbroadband.com/5MB.zip
+    local file=test
+    local size=5000000
+    local hash="0cc897be1958c0f44371a8ff3dddbc092ff530d0"
+
+    download_parse_args "test" "--test-url $url --test-file $file --test-size $size --test-hash $hash" > /dev/null
+    local cmd=$(download_by_args)
+
+    assert_result_pos $FUNCNAME "$cmd"
+
+    rm $tmp_dir/$file
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "awk"
+    assert_prog_exists "bash"
+    assert_prog_exists "bc"
+    assert_prog_exists "curl"
+    assert_prog_exists "expect"
+    assert_prog_exists "find"
+    assert_prog_exists "gcc"
+    assert_prog_exists "grep"
+    assert_prog_exists "md5sum"
+    assert_prog_exists "mount"
+    assert_prog_exists "openssl"
+    assert_prog_exists "pcregrep"
+    assert_prog_exists "perl"
+    assert_prog_exists "sed"
+    assert_prog_exists "sha1sum"
+    assert_prog_exists "sha256sum"
+    assert_prog_exists "sha384sum"
+    assert_prog_exists "sha512sum"
+    assert_prog_exists "sort"
+    assert_prog_exists "stat"
+    assert_prog_exists "umount"
+    assert_prog_exists "uniq"
+    assert_prog_exists "unzip"
+    assert_prog_exists "wc"
+    assert_prog_exists "wget"
+    assert_prog_exists "xargs"
+
+    if [ "$OS" == "linux" ]; then
+        assert_prog_exists "groupadd"
+        assert_prog_exists "useradd"
+    fi
+
+    if [ "$DIST" == "macosx" ]; then
+        assert_prog_exists "brew"
+        assert_prog_exists "otool"
+    else
+        assert_prog_exists "ldd"
+    fi
+}
+
+function test_module() {
+
+    test_list_modules
+    test_print_module_info
+    test_list_functions
+    test_create_module
+
+    test_func_exists
+    test_usleep
+    test_h2d
+    test_d2h
+    test_random
+    test_trim
+    test_lower
+    test_upper
+    test_str_sanitise
+    test_str_substring
+    test_str_contains
+    test_str_begins
+    test_str_ends
+    test_str_split_part
+    test_str_compare_ver
+    test_sort_ver
+    test_sort_ver_rev
+    test_hash_type
+    [ "$DIST" != "macosx" ] && test_color_codes_remove
+
+    test_file_escape_name
+    test_file_contains
+    test_file_replace_str
+    test_file_remove_str
+    test_file_download
+    test_file_valid_hash
+    test_dir_find_str
+    test_dir_replace_str
+    test_dir_remove_str
+
+    if [ "$DIST" != "macosx" ] && [ "$DIST" != "cygwin" ]; then
+
+        test_chroot_dependency_list
+        test_chroot_dependency_list_all
+        test_chroot_dependency_copy
+        test_chroot_mount_dir
+        test_chroot_create_remove_env
+        test_is_chroot
+
+        test_user_exists
+        test_group_exists
+        test_user_create
+        test_user_delete
+
+    fi
+
+    test_sec_generate_cert
+
+    test_net_is_connected
+    test_net_get_external_ip
+
+    test_www_get
+
+    test_config_option_set
+    test_config_option_get
+    test_download_parse_args
+    test_download_by_args
+}

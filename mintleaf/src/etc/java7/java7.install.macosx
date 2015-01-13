@@ -1,0 +1,31 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+java_home=
+
+################################################################################
+## private routines
+##
+
+function _unpack_java() {
+
+    hdiutil mount -quiet $tmp_dir/$java7_file
+    sudo installer -pkg /Volumes/JDK\ 7\ Update\ ${java7_update}/JDK\ 7\ Update\ ${java7_update}.pkg -target /
+    hdiutil unmount -quiet /Volumes/JDK\ 7\ Update\ ${java7_update}
+    java_home="$(find /Library/Java/JavaVirtualMachines -name jdk1.7.*.jdk | sort -r | head -1)/Contents/Home"
+
+    sudo chown -R $(id -un):$(id -gn) $java_home
+    echo $(get_module_latest_version) > $java_home/version
+
+    rm -rf $java7_path
+    ln -s $java_home $java7_path
+}
+
+function _set_file_permissions_java() {
+
+    sudo chown $(id -un):$(id -gn) $java7_path
+    sudo chown -R root:$(id -gn root) $java_home
+}

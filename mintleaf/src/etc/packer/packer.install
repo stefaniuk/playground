@@ -1,0 +1,130 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://www.packer.io/downloads.html"
+        packer_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        [ "$DIST" == "ubuntu" ] && packer_file="packer_${packer_version}_linux_amd64.zip"
+        [ "$DIST" == "macosx" ] && packer_file="packer_${packer_version}_darwin_amd64.zip"
+        [ "$DIST" == "cygwin" ] && [ "$ARCH_NAME" == "i386" ] && packer_file="packer_${packer_version}_windows_386.zip"
+        [ "$DIST" == "cygwin" ] && [ "$ARCH_NAME" == "amd64" ] && packer_file="packer_${packer_version}_windows_amd64.zip"
+        packer_file_size=80000000
+        packer_download_url="https://dl.bintray.com/mitchellh/packer/${packer_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ] || [ "$DIST" == "cygwin" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_packer
+    _unpack_packer
+    _set_file_permissions_packer
+}
+
+function uninstall_module() {
+
+    rm -rf $packer_path
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        if [ -x $packer_path/packer ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    elif [ "$DIST" == "cygwin" ]; then
+        if [ -x $packer_path/packer.exe ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_packer
+        _unpack_packer
+        _set_file_permissions_packer
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $packer_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $packer_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_packer() {
+
+    local result=$(file_download --url $packer_download_url --file $packer_file --size $packer_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $packer_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_packer() {
+
+    unzip -q $tmp_dir/$packer_file -d $tmp_dir/packer
+    rm -rf $packer_path
+    mv $tmp_dir/packer $packer_path
+    echo $(get_module_latest_version) > $packer_path/version
+
+    if [ ! -x $packer_path/packer ] && [ -x $packer_path/packer-packer ]; then
+        ln -s $packer_path/packer-packer $packer_path/packer
+    fi
+}
+
+function _set_file_permissions_packer() {
+
+    chown -R $(id -un):$(id -gn) $packer_path
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $packer_path/packer*
+    fi
+}

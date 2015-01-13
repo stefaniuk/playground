@@ -1,0 +1,117 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://www.splunk.com/download" --filter 'splunk-'
+        splunk_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+\-[0-9]+' | sort_ver_rev | head -1)
+        splunk_file="splunk-${splunk_version}.tgz"
+        splunk_file_size=70000000
+        splunk_download_url="${alternative_download_url}/splunk-${splunk_version}.tgz"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$OS" == "linux" ] || [ "$DIST_BASED_ON" == "linux" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_splunk
+    _unpack_splunk
+    _set_file_permissions_splunk
+}
+
+function uninstall_module() {
+
+    rm -rf $splunk_path
+    rm -rf $splunk_data_path
+}
+
+function is_module_installed() {
+
+    if [ -x $splunk_path/bin/splunk ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        splunk_stop
+
+        _init_variables
+
+        _download_splunk
+        _unpack_splunk
+        _set_file_permissions_splunk
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $splunk_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $splunk_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_splunk() {
+
+    local result=$(file_download --url $splunk_download_url --file $splunk_file --size $splunk_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $splunk_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_splunk() {
+
+    tar -zxf $tmp_dir/$splunk_file -C $tmp_dir
+    rm -rf $splunk_path
+    mv $tmp_dir/splunk $splunk_path
+    mkdir -p $splunk_data_path
+    echo "$splunk_version" > $splunk_path/version
+}
+
+function _set_file_permissions_splunk() {
+
+    [ $(user_exists $splunk_user) == $result_pos ] && user_delete $splunk_user
+    user_create $splunk_user $splunk_group --home $splunk_data_path
+    chown -R $splunk_user:$splunk_group $splunk_path
+    chown -R $splunk_user:$splunk_group $splunk_data_path
+}

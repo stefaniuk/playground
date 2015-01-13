@@ -1,0 +1,122 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://activemq.apache.org/download.html"
+        activemq_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        activemq_file="apache-activemq-${activemq_version}-bin.tar.gz"
+        activemq_file_size=40000000
+        activemq_download_url="http://apache.mirror.anlx.net/activemq/${activemq_version}/${activemq_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_activemq
+    _unpack_activemq
+    _configure_activemq
+    _set_file_permissions_activemq
+}
+
+function uninstall_module() {
+
+    rm -rf $activemq_path
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        if [ -x $activemq_path/bin/activemq ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_activemq
+        _unpack_activemq
+        _configure_activemq
+        _set_file_permissions_activemq
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $activemq_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $activemq_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_activemq() {
+
+    local result=$(file_download --url $activemq_download_url --file $activemq_file --size $activemq_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $activemq_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_activemq() {
+
+    tar -zxf $tmp_dir/$activemq_file -C $tmp_dir
+    rm -rf $activemq_path
+    mv $(ls -d -1 $tmp_dir/apache-activemq-*/) $activemq_path
+    echo $(get_module_latest_version) > $activemq_path/version
+}
+
+function _configure_activemq() {
+
+    mkdir $activemq_path/log
+}
+
+function _set_file_permissions_activemq() {
+
+    chown -R $(id -un):$(id -gn) $activemq_path
+    chmod 755 $activemq_path/bin/activemq
+}

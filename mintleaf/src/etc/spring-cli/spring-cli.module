@@ -1,0 +1,8 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export SPRING_HOME=$spring_cli_path
+export PATH=$SPRING_HOME/bin:$PATH

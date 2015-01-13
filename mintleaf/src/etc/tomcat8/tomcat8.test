@@ -1,0 +1,95 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_catalina_cmd() {
+
+    local count=`$tomcat8_path/bin/catalina.sh version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test common routines
+##
+
+function test_tomcat_get_ver() {
+
+    local current_version=`tomcat_get_ver`
+
+    tomcat_set_ver 8
+    local cmd=`tomcat_get_ver`
+
+    assert_eq $FUNCNAME "$cmd" 8
+
+    tomcat_set_ver $current_version
+}
+
+function test_tomcat_set_ver() {
+
+    local current_version=`tomcat_get_ver`
+
+    tomcat_set_ver 8
+    local cmd=`java -classpath $tomcat_default_path/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep -i 'tomcat/8' | wc -l`
+
+    assert_eq $FUNCNAME "$cmd" 1
+
+    tomcat_set_ver $current_version
+}
+
+function test_start_running_stop() {
+
+    printf "    waiting ($FUNCNAME) "
+    tomcat_start 8 --quick-start --wait
+    local cmd1=`tomcat_is_running 8`
+
+    tomcat_stop 8
+    local cmd2=`tomcat_is_running 8`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_neg $FUNCNAME "$cmd2"
+}
+
+function test_restart() {
+
+    printf "    waiting ($FUNCNAME) "
+    tomcat_start 8 --quick-start --wait
+    local cmd1=`tomcat_is_running 8`
+
+    printf "    waiting ($FUNCNAME) "
+    tomcat_restart 8 --quick-start --wait
+    local cmd2=`tomcat_is_running 8`
+
+    tomcat_stop 8
+    local cmd3=`tomcat_is_running 8`
+
+    assert_result_pos $FUNCNAME "$cmd1"
+    assert_result_pos $FUNCNAME "$cmd2"
+    assert_result_neg $FUNCNAME "$cmd3"
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+
+    assert_module_installed "java8"
+}
+
+function test_module() {
+
+    test_catalina_cmd
+
+    test_tomcat_get_ver
+    test_tomcat_set_ver
+    if [ "$DIST" != "macosx" ]; then
+        test_start_running_stop
+        test_restart
+    fi
+}

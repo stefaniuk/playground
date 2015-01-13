@@ -1,0 +1,66 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export JAVA_HOME=$java_default_path
+export PATH=$JAVA_HOME/bin:$PATH
+
+################################################################################
+## common routines
+##
+
+function java_get_ver() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Get Java major version currently used.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    if [ -L $java_default_path ]; then
+        local ver=$($java_default_path/bin/java -version 2>&1 | grep -oEi '1\.[0-9]+\.0' | head -1)
+        ver=$(str_substring $ver '1.' '.0')
+    else
+        ver=0
+    fi
+
+    echo $ver
+}
+
+function java_set_ver() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Set Java major version to be used.
+
+    PARAMETERS:
+        \$1 version, e.g. 7, 8 or 0 (defaults to 7)
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -ne 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local ver=$1
+
+    rm -f $java_default_path
+    if [ $ver == "7" ] || [ $ver == "0" ]; then
+        ln -s $java7_path $java_default_path
+    elif [ $ver == "8" ]; then
+        ln -s $java8_path $java_default_path
+    fi
+}

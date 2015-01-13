@@ -1,0 +1,65 @@
+#!/bin/bash
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST_BASED_ON" == "debian" ] || [ "$DIST_BASED_ON" == "redhat" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST_BASED_ON" == "debian" ] || [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        www_get https://getcomposer.org/installer --print | php -- --version="$(get_module_latest_version)"
+        mv -fv composer.phar /usr/local/bin/composer
+
+    fi
+}
+
+function uninstall_module() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST_BASED_ON" == "debian" ] || [ "$DIST_BASED_ON" == "redhat" ]; then
+
+        rm /usr/local/bin/composer
+
+    fi
+}
+
+function is_module_installed() {
+
+    if which /usr/local/bin/composer > /dev/null; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        www_get https://getcomposer.org/installer --print | php -- --version="$(get_module_latest_version)"
+        mv -f composer.phar /usr/local/bin/composer
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    composer --version | grep -i 'composer' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)*' | sort -r | head -1
+}
+
+function get_module_latest_version() {
+
+    www_get https://getcomposer.org/download --print | grep 'composer' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)*' | sort -r | head -1
+}

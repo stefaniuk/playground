@@ -1,0 +1,115 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://jdk7.java.net/download.html" --filter 'href=".*/download/jdk'
+        java7_update=$(echo "$_WWW" | grep -oEi '/jdk[0-9]+u[0-9]+' | grep -oEi '[0-9]+$' | sort_ver_rev | head -1)
+        java7_build=$(echo "$_WWW" | grep -oEi '/b[0-9]+' | grep -oEi '[0-9]+$' | sort_ver_rev | head -1)
+        java7_date=$(echo "$_WWW" | grep -E '(linux|macosx)' | grep -oEi '[0-9]+_[a-zA-Z]+_20[0-9]+' | sort_ver_rev | head -1)
+        [ "$OS" == "linux" ]    && java7_file="jdk-7u${java7_update}-ea-bin-b${java7_build}-linux-x64-${java7_date}.tar.gz"
+        [ "$DIST" == "macosx" ] && java7_file="jdk-7u${java7_update}-ea-bin-b${java7_build}-macosx-x86_64-${java7_date}.dmg"
+        java7_file_size=80000000
+        java7_download_url="http://www.java.net/download/jdk7u${java7_update}/archive/b${java7_build}/binaries/${java7_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_java
+    _unpack_java
+    _set_file_permissions_java
+
+    # set as default
+    if [ ! -L $java_default_path ]; then
+        rm -rf $java_default_path
+        ln -s $java7_path $java_default_path
+    fi
+}
+
+function uninstall_module() {
+
+    rm -rf $java7_path
+}
+
+function is_module_installed() {
+
+    if [ -x $java7_path/bin/javac ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_java
+        _unpack_java
+        _set_file_permissions_java
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $java7_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo "7u${java7_update} b${java7_build}"
+}
+
+################################################################################
+## private routines
+##
+
+function _download_java() {
+
+    local result=$(file_download --url $java7_download_url --file $java7_file --size $java7_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $java7_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_java() {
+
+    tar -zxf $tmp_dir/$java7_file -C $tmp_dir
+    rm -rf $java7_path
+    mv $tmp_dir/jdk1.7* $java7_path
+    echo $(get_module_latest_version) > $java7_path/version
+}
+
+function _set_file_permissions_java() {
+
+    chown -R $(id -un):$(id -gn) $java7_path
+}

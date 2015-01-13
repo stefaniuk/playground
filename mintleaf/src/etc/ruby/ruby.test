@@ -1,0 +1,23 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_ruby_cmd() {
+
+    local ruby=$ruby_path/bin/ruby
+
+    local count=`$ruby --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_module() {
+
+    test_ruby_cmd
+}

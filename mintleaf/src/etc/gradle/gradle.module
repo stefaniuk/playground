@@ -1,0 +1,9 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export GRADLE_HOME=$gradle_path
+[ "$DIST" == "cygwin" ] && export GRADLE_HOME=$(echo $GRADLE_HOME | cyg2win_path)
+export PATH=$GRADLE_HOME/bin:$PATH

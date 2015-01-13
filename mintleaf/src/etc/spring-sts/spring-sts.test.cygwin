@@ -1,0 +1,30 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_spring_sts_cmd() {
+
+    printf "    waiting ($FUNCNAME) "
+    $spring_sts_path/sts-$(get_module_current_version)/STS.exe &
+    local i=0
+    while true; do
+        printf "."
+        sleep 1
+        local count=$(ps aux | grep -v grep | grep STS | wc -l)
+        if [ $count -gt 0 ] && [ $i -ge 2 ]; then
+            printf "\n"
+            break
+        fi
+        i=$(expr $i + 1)
+    done
+
+    local pid=$(ps aux | grep -v grep | grep STS | awk '{ print $1 }')
+    kill -s TERM $pid > /dev/null 2>&1
+    sleep 3
+
+    local count=$(ps aux | grep -v grep | grep STS | wc -l)
+
+    assert_eq $FUNCNAME $count 0
+}

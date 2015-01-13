@@ -1,0 +1,7 @@
+#!/bin/bash
+
+################################################################################
+## includes
+##
+
+[ -f $rvm_path/scripts/rvm ] && source $rvm_path/scripts/rvm

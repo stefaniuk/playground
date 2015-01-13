@@ -1,0 +1,28 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_vagrant_cmd() {
+
+    local vagrant=$vagrant_path/bin/vagrant
+
+    local count=`$vagrant --version | grep -i "$(get_module_current_version)" | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_module_installed "ruby"
+}
+
+function test_module() {
+
+    test_vagrant_cmd
+}

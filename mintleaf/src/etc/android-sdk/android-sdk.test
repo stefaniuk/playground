@@ -1,0 +1,30 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_android_cmd() {
+
+    [ "$DIST" == "macosx" ] && local android=$android_sdk_path/tools/android
+    [ "$DIST" == "cygwin" ] && local android=$android_sdk_path/tools/android.bat
+
+    local count=`$android --help | grep -i 'update sdk' | wc -l`
+
+    assert_gt $FUNCNAME $count 0
+}
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+}
+
+function test_module() {
+
+    test_android_cmd
+}

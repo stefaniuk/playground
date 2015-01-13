@@ -1,0 +1,60 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_java_cmd() {
+
+    local cmd=`$java8_path/bin/java -version 2>&1 | grep '1.8.0' | wc -l`
+
+    assert_ge $FUNCNAME "$cmd" 1
+}
+
+function test_javac_cmd() {
+
+    local cmd=`$java8_path/bin/javac -version 2>&1 | grep '1.8.0' | wc -l`
+
+    assert_ge $FUNCNAME "$cmd" 1
+}
+
+################################################################################
+## test common routines
+##
+
+function test_java_get_ver() {
+
+    local current_version=`java_get_ver`
+
+    java_set_ver 8
+    local cmd=`java_get_ver`
+
+    assert_eq $FUNCNAME "$cmd" 8
+
+    java_set_ver $current_version
+}
+
+function test_java_set_ver() {
+
+    local current_version=`java_get_ver`
+
+    java_set_ver 8
+    local cmd=`$java_default_path/bin/java -version 2>&1 | grep '1.8.0' | wc -l`
+
+    assert_ge $FUNCNAME "$cmd" 1
+
+    java_set_ver $current_version
+}
+
+################################################################################
+## test suites
+##
+
+function test_module() {
+
+    test_java_cmd
+    test_javac_cmd
+
+    test_java_get_ver
+    test_java_set_ver
+}

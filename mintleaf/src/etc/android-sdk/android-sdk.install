@@ -1,0 +1,147 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "https://developer.android.com/sdk/index.html"
+        android_sdk_version=$(echo "$_WWW" | grep 'android-sdk' | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        [ "$DIST" == "macosx" ] && android_sdk_file="android-sdk_r${android_sdk_version}-macosx.zip"
+        [ "$DIST" == "cygwin" ] && android_sdk_file="android-sdk_r${android_sdk_version}-windows.zip"
+        android_sdk_file_size=90000000
+        android_sdk_download_url="http://dl.google.com/android/${android_sdk_file}"
+
+        arg_android_sdk_update_packages=$(_argument_exists "--android-sdk-update-packages")
+        arg_android_sdk_update_packages_only=$(_argument_exists "--android-sdk-update-packages-only")
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "macosx" ] || [ "$DIST" == "cygwin" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_android_sdk
+    _unpack_android_sdk
+    if [ $arg_android_sdk_update_packages == $result_pos ]; then
+        _update_android_sdk_packages
+    fi
+    _set_file_permissions_android_sdk
+}
+
+function uninstall_module() {
+
+    rm -rf $android_sdk_path
+}
+
+function is_module_installed() {
+
+    [ "$DIST" == "macosx" ] && local android=$android_sdk_path/tools/android
+    [ "$DIST" == "cygwin" ] && local android=$android_sdk_path/tools/android.bat
+
+    if [ -x $android ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        if [ $arg_android_sdk_update_packages_only == $result_neg ]; then
+            _download_android_sdk
+            _unpack_android_sdk
+        fi
+        if [ $arg_android_sdk_update_packages == $result_pos ] || [ $arg_android_sdk_update_packages_only == $result_pos ]; then
+            _update_android_sdk_packages
+        fi
+        _set_file_permissions_android_sdk
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $android_sdk_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $android_sdk_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_android_sdk() {
+
+    local result=$(file_download --url $android_sdk_download_url --file $android_sdk_file --size $android_sdk_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $android_sdk_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_android_sdk() {
+
+    unzip -q $tmp_dir/$android_sdk_file -d $tmp_dir
+    rm -rf $android_sdk_path
+    mv $(ls -d -1 $tmp_dir/android-sdk-*/) $android_sdk_path
+    echo "$android_sdk_version" > $android_sdk_path/version
+}
+
+function _update_android_sdk_packages() {
+
+    [ "$DIST" == "macosx" ] && local android=$android_sdk_path/tools/android
+    [ "$DIST" == "cygwin" ] && local android=$android_sdk_path/tools/android.bat
+
+    local script=~/.update_android_sdk.$$
+
+    cat << EOF >> $script
+#!/usr/bin/expect
+set timeout -1;
+spawn $android update sdk --all --no-ui;
+expect {
+    "Do you accept the license" { exp_send "y\r" ; exp_continue }
+    eof
+}
+EOF
+
+    chmod +x $script
+    $script
+    rm -f $script
+}
+
+function _set_file_permissions_android_sdk() {
+
+    chown -R $(id -un):$(id -gn) $android_sdk_path
+}

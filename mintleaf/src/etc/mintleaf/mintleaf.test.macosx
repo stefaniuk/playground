@@ -1,0 +1,166 @@
+#!/bin/bash
+
+################################################################################
+## test hash routines
+##
+
+function test_md5sum() {
+
+    local text="test"
+    local hash="098f6bcd4621d373cade4e832627b4f6"
+
+    local cmd=`echo -n $text | md5sum | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+}
+
+function test_md5sum_file() {
+
+    local text="test"
+    local hash="098f6bcd4621d373cade4e832627b4f6"
+    local file=/tmp/test_md5sum_file.$$
+
+    echo -n $text > $file
+    local cmd=`md5sum $file | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+
+    rm -f $file
+}
+
+function test_sha1sum() {
+
+    local text="test"
+    local hash="a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+
+    local cmd=`echo -n $text | sha1sum | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+}
+
+function test_sha1sum_file() {
+
+    local text="test"
+    local hash="a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+    local file=/tmp/test_sha1sum_file.$$
+
+    echo -n $text > $file
+    local cmd=`sha1sum $file | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+
+    rm -f $file
+}
+
+function test_sha256sum() {
+
+    local text="test"
+    local hash="9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+
+    local cmd=`echo -n $text | sha256sum | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+}
+
+function test_sha384sum() {
+
+    local text="test"
+    local hash="768412320f7b0aa5812fce428dc4706b3cae50e02a64caa16a782249bfe8efc4b7ef1ccb126255d196047dfedf17a0a9"
+
+    local cmd=`echo -n $text | sha384sum | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+}
+
+function test_sha512sum() {
+
+    local text="test"
+    local hash="ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
+
+    local cmd=`echo -n $text | sha512sum | awk '{ print $1 }'`
+
+    assert_eq $FUNCNAME "$cmd" "$hash"
+}
+
+################################################################################
+## test user routines
+##
+
+function test_user_exists() {
+
+    # test 1
+
+    local cmd1=`user_exists this_is_a_test_user`
+
+    assert_result_neg $FUNCNAME "$cmd1"
+
+    # test 2
+
+    local cmd2=`user_exists root`
+
+    assert_result_pos $FUNCNAME "$cmd2"
+}
+
+function test_group_exists() {
+
+    # test 1
+
+    local cmd1=`group_exists this_is_a_test_group`
+
+    assert_result_neg $FUNCNAME "$cmd1"
+
+    # test 2
+
+    local cmd2=`group_exists wheel`
+
+    assert_result_pos $FUNCNAME "$cmd2"
+}
+
+function test_user_create() {
+
+    local name="this_is_a_test"
+
+    user_create $name $name
+    local a1=`user_exists $name`
+    local a2=`group_exists $name`
+
+    assert_eq $FUNCNAME "$a1 $a2" "$result_pos $result_pos"
+
+    user_delete $name
+}
+
+function test_user_delete() {
+
+    local name="this_is_a_test"
+
+    user_create $name $name
+    local a1=`user_exists $name`
+    local a2=`group_exists $name`
+
+    user_delete $name
+    local a3=`user_exists $name`
+    local a4=`group_exists $name`
+
+    assert_eq $FUNCNAME "$a1 $a2 $a3 $a4" "$result_pos $result_pos $result_neg $result_neg"
+}
+
+################################################################################
+## test suites
+##
+
+function test_module_macosx() {
+
+    test_md5sum
+    test_md5sum_file
+    test_sha1sum
+    test_sha1sum_file
+    test_sha256sum
+    test_sha384sum
+    test_sha512sum
+
+    test_user_exists
+    test_group_exists
+    test_user_create
+    test_user_delete
+
+}

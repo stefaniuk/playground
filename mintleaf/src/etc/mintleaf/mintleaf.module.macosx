@@ -1,0 +1,247 @@
+#!/bin/bash
+
+################################################################################
+## hash routines
+##
+
+function md5sum() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create MD5 hash.
+
+    EXAMPLE: echo "test" | md5sum
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    md5 -r $*
+}
+
+function sha1sum() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create SHA-1 hash.
+
+    EXAMPLE: echo "test" | sha1sum
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    shasum --algorithm 1 $*
+}
+
+function sha256sum() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create SHA-256 hash.
+
+    EXAMPLE: echo "test" | sha256sum
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    shasum --algorithm 256 $*
+}
+
+function sha384sum() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create SHA-384 hash.
+
+    EXAMPLE: echo "test" | sha384sum
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    shasum --algorithm 384 $*
+}
+
+function sha512sum() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create SHA-512 hash.
+
+    EXAMPLE: echo "test" | sha512sum
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    shasum --algorithm 512 $*
+}
+
+################################################################################
+## user routines
+##
+
+function user_exists() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Check if user exists.
+
+    PARAMETERS:
+        \$1 user
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -ne 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local user=$1
+
+    if [ $(dscl . -list /Users | grep "^${1}$" | wc -l) -eq 1 ] || [ $(dscl . -list /Users | grep "^_${1}$" | wc -l) -eq 1 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function group_exists() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Check if group exists.
+
+    PARAMETERS:
+        \$1 group
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -ne 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local group=$1
+
+    if [ $(dscl . -list /Groups | grep "^${1}$" | wc -l) -eq 1 ] || [ $(dscl . -list /Groups | grep "^_${1}$" | wc -l) -eq 1 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function user_create() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Create a new system user.
+
+    PARAMETERS:
+        \$1 user
+        \$2 group
+        --uid <user id>
+        --gid <group id>
+        --home <home directory>
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -lt 2 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local user=$1
+    local group=$2
+
+    # get optional parameters
+    local uid=
+    local gid=
+    local home="/dev/null"
+    local shell="/sbin/nologin"
+    while [ "$1" != "" ]; do
+        case $1 in
+            --uid)      shift; uid="$1"
+                        ;;
+            --gid)      shift; gid="$1"
+                        ;;
+            --home)     shift; home="$1"
+                        ;;
+        esac
+        shift
+    done
+
+    sudo dscl . -create /Groups/_$group
+    sudo dscl . -create /Groups/_$group PrimaryGroupID $gid
+    sudo dscl . -create /Groups/_$group Password \*
+
+    sudo dscl . -create /Users/_$user
+    sudo dscl . -create /Users/_$user NFSHomeDirectory $home
+    sudo dscl . -create /Users/_$user Password \*
+    sudo dscl . -create /Users/_$user PrimaryGroupID $gid
+    sudo dscl . -create /Users/_$user UniqueID $uid
+    sudo dscl . -create /Users/_$user UserShell $shell
+    sudo dscl . -delete /Users/_$user PasswordPolicyOptions
+    sudo dscl . -delete /Users/_$user AuthenticationAuthority
+}
+
+function user_delete() {
+
+    # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Delete an existing system user.
+
+    PARAMETERS:
+        \$1 user
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ] || [ $# -ne 1 ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local user=$1
+
+    sudo dscl . -delete /Groups/_$user
+    sudo dscl . -delete /Users/_$user
+}

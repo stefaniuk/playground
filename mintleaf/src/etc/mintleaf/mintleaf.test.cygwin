@@ -1,0 +1,39 @@
+#!/bin/bash
+
+################################################################################
+## test path routines
+##
+
+function test_cyg2win_path() {
+
+    local cyg_path="/cygdrive/c/this/is/a/directory/path"
+    local win_path="c:\this\is\a\directory\path"
+
+    local path1=`echo $cyg_path | cyg2win_path`
+    local path2=`cyg2win_path $cyg_path`
+
+    assert_eq $FUNCNAME "$path1" "$win_path"
+    assert_eq $FUNCNAME "$path2" "$win_path"
+}
+
+function test_cyg2win_slash_path() {
+
+    local cyg_path="/cygdrive/c/this/is/a/directory/path"
+    local win_path="c:/this/is/a/directory/path"
+
+    local path1=`echo $cyg_path | cyg2win_slash_path`
+    local path2=`cyg2win_slash_path $cyg_path`
+
+    assert_eq $FUNCNAME "$path1" "$win_path"
+    assert_eq $FUNCNAME "$path2" "$win_path"
+}
+
+################################################################################
+## test suites
+##
+
+function test_module_cygwin() {
+
+    test_cyg2win_path
+    test_cyg2win_slash_path
+}

@@ -1,0 +1,122 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://nodejs.org/download/"
+        nodejs_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        [ "$DIST" == "ubuntu" ] && nodejs_file=
+        [ "$DIST" == "macosx" ] && nodejs_file="node-v${nodejs_version}-darwin-x64.tar.gz"
+        nodejs_file_size=4000000
+        nodejs_download_url="http://nodejs.org/dist/v${nodejs_version}/${nodejs_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_nodejs
+    _unpack_nodejs
+    _configure_nodejs
+    _set_file_permissions_nodejs
+}
+
+function uninstall_module() {
+
+    rm -rf $nodejs_path
+}
+
+function is_module_installed() {
+
+    if [ "$DIST" == "ubuntu" ] || [ "$DIST" == "macosx" ]; then
+        if [ -x $nodejs_path/bin/node ]; then
+            echo $result_pos
+        else
+            echo $result_neg
+        fi
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_nodejs
+        _unpack_nodejs
+        _configure_nodejs
+        _set_file_permissions_nodejs
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $nodejs_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $nodejs_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_nodejs() {
+
+    local result=$(file_download --url $nodejs_download_url --file $nodejs_file --size $nodejs_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $nodejs_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_nodejs() {
+
+    tar -zxf $tmp_dir/$nodejs_file -C $tmp_dir
+    rm -rf $nodejs_path
+    mv $(ls -d -1 $tmp_dir/node-*/) $nodejs_path
+    echo $(get_module_latest_version) > $nodejs_path/version
+}
+
+function _configure_nodejs() {
+
+    $nodejs_path/bin/npm update -g npm
+}
+
+function _set_file_permissions_nodejs() {
+
+    chown -R $(id -un):$(id -gn) $nodejs_path
+}

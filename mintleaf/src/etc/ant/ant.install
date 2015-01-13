@@ -1,0 +1,113 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://ant.apache.org/bindownload.cgi"
+        ant_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        ant_file="apache-ant-${ant_version}-bin.tar.gz"
+        ant_file_size=5000000
+        ant_download_url="http://mirrors.ukfast.co.uk/sites/ftp.apache.org//ant/binaries/${ant_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_ant
+    _unpack_ant
+    _set_file_permissions_ant
+}
+
+function uninstall_module() {
+
+    rm -rf $ant_path
+}
+
+function is_module_installed() {
+
+    local ant=$ant_path/bin/ant
+    [ "$DIST" == "cygwin" ] && ant=$ant_path/bin/ant.bat
+
+    if [ -x $ant ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_ant
+        _unpack_ant
+        _set_file_permissions_ant
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $ant_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $ant_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_ant() {
+
+    local result=$(file_download --url $ant_download_url --file $ant_file --size $ant_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $ant_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_ant() {
+
+    tar -zxf $tmp_dir/$ant_file -C $tmp_dir
+    rm -rf $ant_path
+    mv $(ls -d -1 $tmp_dir/apache-ant-*/) $ant_path
+    echo "$ant_version" > $ant_path/version
+}
+
+function _set_file_permissions_ant() {
+
+    chown -R $(id -un):$(id -gn) $ant_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $ant_path/bin/ant.bat
+    fi
+}

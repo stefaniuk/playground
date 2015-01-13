@@ -1,0 +1,18 @@
+#!/bin/bash
+
+################################################################################
+## test suites
+##
+
+function test_prerequisites() {
+
+    assert_prog_exists "java"
+    assert_prog_exists "javac"
+
+    assert_module_installed "android-sdk"
+}
+
+function test_module() {
+
+    test_android_studio_cmd 2> /dev/null
+}

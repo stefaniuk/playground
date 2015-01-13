@@ -1,0 +1,9 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export M2_HOME=$maven_path
+[ "$DIST" == "cygwin" ] && export M2_HOME=$(echo $M2_HOME | cyg2win_path)
+export PATH=$M2_HOME/bin:$PATH

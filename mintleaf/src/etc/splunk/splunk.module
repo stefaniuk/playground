@@ -1,0 +1,129 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export SPLUNK_HOME=$splunk_path
+
+################################################################################
+## general routines
+##
+
+function splunk_start() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Start Splunk server.
+
+    PARAMETERS:
+        --wait      wait for the application to start up
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local wait=$result_neg
+    while [ "$1" != "" ]; do
+        case $1 in
+            --wait) wait=$result_pos
+                    ;;
+        esac
+        shift
+    done
+
+    sudo -u $splunk_user $splunk_path/bin/splunk start --accept-license
+
+    # wait
+    if [ $wait == $result_pos ]; then
+        while true; do
+            printf "."
+            sleep 1
+            local result=$(wget -T 1 -t 1 -qO- http://127.0.0.1:8000 | grep -i 'splunk' | wc -l)
+            if [ $result -gt 0 ]; then
+                printf "\n"
+                break
+            fi
+        done
+    else
+        sleep 3
+    fi
+}
+
+function splunk_stop() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Stop Splunk server.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    sudo -u $splunk_user $splunk_path/bin/splunk stop
+    sleep 3
+
+    # kill it if still running
+    if [ $(splunk_is_running) == $result_pos ]; then
+        local pid1=$(ps aux | grep -v grep | grep splunkd | awk '{ print $2 }')
+        local pid2=$(ps aux | grep -v grep | grep $splunk_path | awk '{ print $2 }')
+        kill -9 $pid1 $pid2 > /dev/null 2>&1
+    fi
+}
+
+function splunk_restart() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Restart Splunk server.
+
+    PARAMETERS:
+        --wait      wait for the application to restart
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    splunk_stop
+    sleep 3
+    splunk_start $*
+}
+
+function splunk_is_running() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Check if Splunk server is running.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    local count=$(ps aux | grep -v grep | grep splunkd | wc -l)
+    if [ $count -gt 0 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}

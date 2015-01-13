@@ -1,0 +1,129 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export NEXUS_HOME=$nexus_path
+
+################################################################################
+## general routines
+##
+
+function nexus_start() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Start Nexus application.
+
+    PARAMETERS:
+        --wait      wait for the application to start up
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    # get parameters
+    local wait=$result_neg
+    while [ "$1" != "" ]; do
+        case $1 in
+            --wait) wait=$result_pos
+                    ;;
+        esac
+        shift
+    done
+
+    sudo -u $nexus_user $nexus_path/bin/nexus start > /dev/null 2>&1
+
+    # wait
+    if [ $wait == $result_pos ]; then
+        while true; do
+            printf "."
+            sleep 1
+            local result=$(wget -T 1 -t 1 -qO- http://127.0.0.1:${nexus_port}/nexus | grep -i 'sonatype nexus' | wc -l)
+            if [ $result -gt 0 ]; then
+                printf "\n"
+                break
+            fi
+        done
+    else
+        sleep 3
+    fi
+}
+
+function nexus_stop() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Stop Nexus application.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    sudo -u $nexus_user $nexus_path/bin/nexus stop > /dev/null 2>&1
+    sleep 3
+
+    # kill it if still running
+    if [ $(nexus_is_running) == $result_pos ]; then
+        local pid1=$(ps aux | grep -v grep | grep $nexus_path | awk '{ print $2 }')
+        local pid2=$(ps aux | grep -v grep | grep $JAVA_HOME | grep nexus | awk '{ print $2 }')
+        kill -9 $pid1 $pid2 > /dev/null 2>&1
+    fi
+}
+
+function nexus_restart() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Restart Nexus application.
+
+    PARAMETERS:
+        --wait      wait for the application to restart
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    nexus_stop
+    sleep 3
+    nexus_start $*
+}
+
+function nexus_is_running() {
+
+   # define help
+    local help=$(cat <<HEREDOC
+
+    DESCRIPTION: Check if Nexus application is running.
+HEREDOC
+)
+
+    # check parameters
+    if [ "$1" == "--help" ]; then
+        echo -e "${help}\n"
+        return
+    fi
+
+    local count=$(ps aux | grep -v grep | grep $nexus_path | wc -l)
+    if [ $count -gt 0 ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}

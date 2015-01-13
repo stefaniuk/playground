@@ -1,0 +1,113 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://www.gradle.org/downloads"
+        gradle_version=$(echo "$_WWW" | grep -oEi '[0-9]+\.[0-9]+(\.([a-z0-9]+)*)?(-[a-z0-9]+)*' | grep -v -E '(all|bin|src|milestone)' | sort_ver_rev | head -1)
+        gradle_file="gradle-${gradle_version}-bin.zip"
+        gradle_file_size=40000000
+        gradle_download_url="http://services.gradle.org/distributions/${gradle_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_gradle
+    _unpack_gradle
+    _set_file_permissions_gradle
+}
+
+function uninstall_module() {
+
+    rm -rf $gradle_path
+}
+
+function is_module_installed() {
+
+    local gradle=$gradle_path/bin/gradle
+    [ "$DIST" == "cygwin" ] && gradle=$gradle_path/bin/gradle.bat
+
+    if [ -x $gradle ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_gradle
+        _unpack_gradle
+        _set_file_permissions_gradle
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $gradle_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $gradle_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_gradle() {
+
+    local result=$(file_download --url $gradle_download_url --file $gradle_file --size $gradle_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $gradle_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_gradle() {
+
+    unzip -q $tmp_dir/$gradle_file -d $tmp_dir
+    rm -rf $gradle_path
+    mv $(ls -d -1 $tmp_dir/gradle-*/) $gradle_path
+    echo "$gradle_version" > $gradle_path/version
+}
+
+function _set_file_permissions_gradle() {
+
+    chown -R $(id -un):$(id -gn) $gradle_path
+
+    if [ "$DIST" == "cygwin" ]; then
+        chmod +x $gradle_path/bin/gradle.bat
+    fi
+}

@@ -1,0 +1,137 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+__var_init=
+function _init_variables() {
+
+    if [ "$__var_init" != $result_pos ]; then
+
+        www_get "http://tomcat.apache.org/download-80.cgi"
+        tomcat8_version=$(echo "$_WWW" | grep -oEi '8\.[0-9]+\.[0-9]+' | sort_ver_rev | head -1)
+        tomcat8_file="apache-tomcat-${tomcat8_version}.tar.gz"
+        tomcat8_file_size=8000000
+        tomcat8_download_url="http://www.mirrorservice.org/sites/ftp.apache.org/tomcat/tomcat-8/v${tomcat8_version}/bin/${tomcat8_file}"
+
+        __var_init=$result_pos
+    fi
+}
+
+################################################################################
+## API
+##
+
+function is_module_supported() {
+
+    echo $result_pos
+}
+
+function install_module() {
+
+    _init_variables
+
+    _download_tomcat8
+    _unpack_tomcat8
+    _build_daemon_tomcat8
+    _set_file_permissions_tomcat8
+
+    # set as default
+    if [ ! -L $tomcat_default_path ]; then
+        rm -rf $tomcat_default_path
+        ln -s $tomcat8_path $tomcat_default_path
+    fi
+}
+
+function uninstall_module() {
+
+    rm -rf $tomcat8_path
+}
+
+function is_module_installed() {
+
+    if [ -x $tomcat8_path/bin/jsvc ]; then
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function update_module() {
+
+    if [ $(str_compare_ver "$(get_module_latest_version)" "$(get_module_current_version)") -eq 1 ]; then
+
+        _init_variables
+
+        _download_tomcat8
+        _unpack_tomcat8
+        _build_daemon_tomcat8
+        _set_file_permissions_tomcat8
+
+        echo $result_pos
+    else
+        echo $result_neg
+    fi
+}
+
+function get_module_current_version() {
+
+    cat $tomcat8_path/version
+}
+
+function get_module_latest_version() {
+
+    _init_variables
+
+    echo $tomcat8_version
+}
+
+################################################################################
+## private routines
+##
+
+function _download_tomcat8() {
+
+    local result=$(file_download --url $tomcat8_download_url --file $tomcat8_file --size $tomcat8_file_size)
+    if [ $result == $result_neg ]; then
+        echo "Error: Unable to download $tomcat8_file file!"
+        exit 1
+    fi
+}
+
+function _unpack_tomcat8() {
+
+    tar -zxf $tmp_dir/$tomcat8_file -C $tmp_dir
+    rm -rf $tomcat8_path
+    mv $(ls -d -1 $tmp_dir/apache-tomcat-8*/) $tomcat8_path
+    rm -rf $tomcat8_path/webapps/{docs,examples}
+    echo "#JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom" > $tomcat8_path/bin/setenv.sh # SEE: http://wiki.apache.org/tomcat/HowTo/FasterStartUp from more details
+    echo $(get_module_latest_version) > $tomcat8_path/version
+}
+
+function _build_daemon_tomcat8() {
+
+    local current_dir=$PWD
+    cd $tomcat8_path/bin
+    tar -zxf commons-daemon-native.tar.gz
+    cd $(find . -iname "commons-daemon-*-src")/unix
+    ./configure \
+        --with-java=$java_default_path \
+    && make && cp jsvc ../..
+    cd ../..
+    rm -rf $(find . -iname "commons-daemon-*-src")
+    cd $current_dir
+}
+
+function _set_file_permissions_tomcat8() {
+
+    chown -R $(id -un):$(id -gn) $tomcat8_path
+    if [ "$DIST" != "macosx" ]; then
+        [ $(user_exists $tomcat8_user) == $result_pos ] && user_delete $tomcat8_user
+        user_create $tomcat8_user $tomcat8_group --home $tomcat8_path/temp
+        chown -R $tomcat8_user:$tomcat8_group $tomcat8_path/{conf,logs,temp,webapps,work}
+        chmod 0400 $tomcat8_path/conf/*
+        chmod 0700 $tomcat8_path/{conf,logs,temp,webapps,work}
+    fi
+}

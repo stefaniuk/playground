@@ -1,0 +1,12 @@
+#!/bin/bash
+
+################################################################################
+## test build-in routines
+##
+
+function test_android_studio_cmd() {
+
+    local count=0
+
+    assert_eq $FUNCNAME $count 0
+}

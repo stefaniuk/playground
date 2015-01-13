@@ -1,0 +1,9 @@
+#!/bin/bash
+
+################################################################################
+## variables
+##
+
+export GROOVY_HOME=$groovy_path
+[ "$DIST" == "cygwin" ] && export GROOVY_HOME=$(echo $GROOVY_HOME | cyg2win_path)
+export PATH=$GROOVY_HOME/bin:$PATH
