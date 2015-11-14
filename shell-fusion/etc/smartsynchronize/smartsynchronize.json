@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "smartsynchronize",
+            "version": "3.4.2",
+            "url": "http://www.syntevo.com/downloads/smartsynchronize/smartsynchronize-generic-3_4_2.tar.gz",
+            "file": "smartsynchronize-3.4.2.tar.gz",
+            "hash": "2061bcd9a3ecc5ae69855a2202e0cfd6eb0d075e",
+            "type": "package",
+            "dependsOn": [ "java" ]
+        }
+    ]
+}

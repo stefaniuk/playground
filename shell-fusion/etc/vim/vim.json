@@ -1,0 +1,20 @@
+{
+    "downloads": [
+        {
+            "name": "vim",
+            "version": "7.4.589",
+            "url": "https://github.com/b4winckler/vim.git",
+            "file": "vim-7.4.589-src.tar.gz",
+            "hash": "95bff62b0d92890c1daa739f552dd94b321aee34",
+            "type": "git"
+        },
+        {
+            "name": "vim",
+            "version": "7.4.658",
+            "url": "https://github.com/b4winckler/vim.git",
+            "file": "vim-7.4.658-src.tar.gz",
+            "hash": "1f611c1f921bc219b44272f13a298cd8d97aa6f0",
+            "type": "git"
+        }
+    ]
+}

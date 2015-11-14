@@ -1,0 +1,22 @@
+{
+    "downloads": [
+        {
+            "name": "virtualbox-ext",
+            "version": "4.3.28",
+            "url": "http://download.virtualbox.org/virtualbox/4.3.28/Oracle_VM_VirtualBox_Extension_Pack-4.3.28-100309.vbox-extpack",
+            "file": "Oracle_VM_VirtualBox_Extension_Pack-4.3.28-100309.vbox-extpack",
+            "hash": "d014876b9f9460d20ce9d28e9926375210c96e11",
+            "type": "package",
+            "dependsOn": [ "virtualbox" ]
+        },
+        {
+            "name": "virtualbox-ext",
+            "version": "4.3.26",
+            "url": "http://download.virtualbox.org/virtualbox/4.3.26/Oracle_VM_VirtualBox_Extension_Pack-4.3.26-98988.vbox-extpack",
+            "file": "Oracle_VM_VirtualBox_Extension_Pack-4.3.26-98988.vbox-extpack",
+            "hash": "a7b8de54a208289ad5c9a4e292b528c685b63a95",
+            "type": "package",
+            "dependsOn": [ "virtualbox" ]
+        }
+    ]
+}

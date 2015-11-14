@@ -1,0 +1,14 @@
+{
+    "downloads": [
+        {
+            "name": "puppet",
+            "type": "system",
+            "platform": "macosx"
+        },
+        {
+            "name": "puppet",
+            "type": "system",
+            "platform": "ubuntu"
+        }
+    ]
+}

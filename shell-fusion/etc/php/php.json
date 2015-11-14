@@ -1,0 +1,66 @@
+{
+    "downloads": [
+        {
+            "name": "php",
+            "version": "5.6.6",
+            "url": "http://uk1.php.net/get/php-5.6.6.tar.gz/from/this/mirror",
+            "file": "php-5.6.6-src.tar.gz",
+            "hash": "72668d1eb8d962362ec83714f88094aaadf43d0b",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.6.4",
+            "url": "http://uk1.php.net/get/php-5.6.4.tar.gz/from/this/mirror",
+            "file": "php-5.6.4-src.tar.gz",
+            "hash": "78d872c25ecaa041277c7545fe3ab359",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.5.22",
+            "url": "http://uk1.php.net/get/php-5.5.22.tar.gz/from/this/mirror",
+            "file": "php-5.5.22-src.tar.gz",
+            "hash": "6916440e81551315b5eadae27cbf89bea63fe1c6",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.5.20",
+            "url": "http://uk1.php.net/get/php-5.5.20.tar.gz/from/this/mirror",
+            "file": "php-5.5.20-src.tar.gz",
+            "hash": "63185e6efdd4e381c5f2ec1b1e3baf1f",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.4.38",
+            "url": "http://uk1.php.net/get/php-5.4.38.tar.gz/from/this/mirror",
+            "file": "php-5.4.38-src.tar.gz",
+            "hash": "4ad56035f5b290b4ba8c27235f25918dc53cab37",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.4.36",
+            "url": "http://uk1.php.net/get/php-5.4.36.tar.gz/from/this/mirror",
+            "file": "php-5.4.36-src.tar.gz",
+            "hash": "d724ec84124ec948a7a493b74546efef",
+            "type": "source",
+            "dependsOn": [ "pcre" ]
+        },
+        {
+            "name": "php",
+            "version": "5.3.29",
+            "url": "http://uk1.php.net/get/php-5.3.29.tar.gz/from/this/mirror",
+            "file": "php-5.3.29-src.tar.gz",
+            "hash": "ebfa96ea636b2a7ece71e78ad116a338",
+            "type": "source"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "downloads": [
+        {
+            "name": "ddclient",
+            "version": "3.8.2",
+            "url": "http://sourceforge.net/projects/ddclient/files/ddclient/ddclient-3.8.2/ddclient-3.8.2.tar.gz/download",
+            "file": "ddclient-3.8.2-src.tar.gz",
+            "hash": "3350a9eae0f6f67237239d8eff72be25f9735409",
+            "type": "package"
+        }
+    ]
+}

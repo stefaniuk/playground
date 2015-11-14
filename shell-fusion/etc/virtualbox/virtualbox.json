@@ -1,0 +1,24 @@
+{
+    "downloads": [
+        {
+            "name": "virtualbox",
+            "version": "4.3.28",
+            "url": "http://download.virtualbox.org/virtualbox/4.3.28/VirtualBox-4.3.28-100309-OSX.dmg",
+            "file": "virtualbox-4.3.28.dmg",
+            "hash": "a125f16a78523ab279fb310283e42ef26ea1ccae",
+            "type": "package",
+            "platform": "macosx",
+            "arch": "x86_64"
+        },
+        {
+            "name": "virtualbox",
+            "version": "4.3.28",
+            "url": "http://download.virtualbox.org/virtualbox/4.3.28/virtualbox-4.3_4.3.28-100309~Ubuntu~raring_amd64.deb",
+            "file": "virtualbox-4.3.28.deb",
+            "hash": "4b25fe5a9dc953dd2b5fbea933aead0149c92f12",
+            "type": "package",
+            "platform": "ubuntu",
+            "arch": "x86_64"
+        }
+    ]
+}

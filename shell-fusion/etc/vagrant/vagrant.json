@@ -1,0 +1,24 @@
+{
+    "downloads": [
+        {
+            "name": "vagrant",
+            "version": "1.7.2",
+            "url": "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.7.2.dmg",
+            "file": "vagrant-1.7.2.dmg",
+            "hash": "64c9e0a5e75ac4b987257792d08f497f6877d2fc",
+            "type": "package",
+            "platform": "macosx",
+            "arch": "x86_64"
+        },
+        {
+            "name": "vagrant",
+            "version": "1.7.2",
+            "url": "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.7.2_x86_64.deb",
+            "file": "vagrant-1.7.2.deb",
+            "hash": "68f0821b5a8feb5968593125bdc2d8e4e458c2b1",
+            "type": "package",
+            "platform": "ubuntu",
+            "arch": "x86_64"
+        }
+    ]
+}

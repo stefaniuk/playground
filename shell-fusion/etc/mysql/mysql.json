@@ -1,0 +1,12 @@
+{
+    "downloads": [
+        {
+            "name": "mysql",
+            "version": "5.6.23",
+            "url": "http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.23.tar.gz",
+            "file": "mysql-5.6.23-src.tar.gz",
+            "hash": "2d610ba01ab97df042d5946ba0da411da5547c5d",
+            "type": "source"
+        }
+    ]
+}

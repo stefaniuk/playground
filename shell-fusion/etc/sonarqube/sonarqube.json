@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "sonarqube",
+            "version": "5.0.1",
+            "url": "http://dist.sonar.codehaus.org/sonarqube-5.0.1.zip",
+            "file": "sonarqube-5.0.1.zip",
+            "hash": "c8893e1223592bff34986d142062e06f501f1a13",
+            "type": "package",
+            "dependsOn": [ "jdk", "mysql" ]
+        }
+    ]
+}

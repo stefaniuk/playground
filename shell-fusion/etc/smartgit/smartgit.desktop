@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=SmartGit
+Keywords=git;hg;svn;mercurial;subversion
+Type=Application
+Categories=Development
+Terminal=false
+StartupNotify=true
+Exec="path/bin/smartgit.sh" %u
+MimeType=x-scheme-handler/smartgit
+Icon=path/bin/smartgit-128.png

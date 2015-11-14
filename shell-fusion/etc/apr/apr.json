@@ -1,0 +1,12 @@
+{
+    "downloads": [
+        {
+            "name": "apr",
+            "version": "1.5.1",
+            "url": "https://archive.apache.org/dist/apr/apr-1.5.1.tar.gz",
+            "file": "apr-1.5.1-src.tar.gz",
+            "hash": "9caa83e3f50f3abc9fab7c4a3f2739a12b14c3a3",
+            "type": "source"
+        }
+    ]
+}

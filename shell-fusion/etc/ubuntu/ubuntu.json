@@ -1,0 +1,12 @@
+{
+    "downloads": [
+        {
+            "name": "ubuntu",
+            "version": "14.04.2",
+            "url": "http://releases.ubuntu.com/14.04.2/ubuntu-14.04.2-server-amd64.iso",
+            "file": "ubuntu-14.04.2-server-amd64.iso",
+            "hash": "3bfa6eac84d527380d0cc52db9092cde127f161e",
+            "type": "disk"
+        }
+    ]
+}

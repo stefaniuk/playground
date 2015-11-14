@@ -1,0 +1,9 @@
+{
+    "downloads": [
+        {
+            "name": "firefox-developer",
+            "type": "system",
+            "platform": "ubuntu"
+        }
+    ]
+}

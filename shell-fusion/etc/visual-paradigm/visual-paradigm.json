@@ -1,0 +1,14 @@
+{
+    "downloads": [
+        {
+            "name": "visual-paradigm",
+            "version": "12.1",
+            "url": "http://www.visual-paradigm.com/downloads/vp12.1/Visual_Paradigm_Linux64_InstallFree.tar.gz",
+            "file": "visual-paradigm-12.1.tar.gz",
+            "hash": "",
+            "type": "package",
+            "platform": "ubuntu",
+            "dependsOn": [ "java" ]
+        }
+    ]
+}

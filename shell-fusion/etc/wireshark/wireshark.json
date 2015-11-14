@@ -1,0 +1,14 @@
+{
+    "downloads": [
+        {
+            "name": "wireshark",
+            "type": "system",
+            "platform": "macosx"
+        },
+        {
+            "name": "wireshark",
+            "type": "system",
+            "platform": "ubuntu"
+        }
+    ]
+}

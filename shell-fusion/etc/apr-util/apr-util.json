@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "apr-util",
+            "version": "1.5.4",
+            "url": "https://archive.apache.org/dist/apr/apr-util-1.5.4.tar.gz",
+            "file": "apr-util-1.5.4-src.tar.gz",
+            "hash": "72cc3ac693b52fb831063d5c0de18723bc8e0095",
+            "type": "source",
+            "dependsOn": [ "apr" ]
+        }
+    ]
+}

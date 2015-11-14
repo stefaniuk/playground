@@ -1,0 +1,20 @@
+{
+    "downloads": [
+        {
+            "name": "mc",
+            "version": "4.8.13",
+            "url": "http://ftp.midnight-commander.org/mc-4.8.13.tar.xz",
+            "file": "mc-4.8.13-src.tar.xz",
+            "hash": "b64b81f80fa93224f054ad5f498e479ceac5a49d",
+            "type": "source"
+        },
+        {
+            "name": "mc",
+            "version": "4.8.14",
+            "url": "http://ftp.midnight-commander.org/mc-4.8.14.tar.xz",
+            "file": "mc-4.8.14-src.tar.xz",
+            "hash": "ae64b22a213fac8b8231b5407b8aa312ca25c38f",
+            "type": "source"
+        }
+    ]
+}

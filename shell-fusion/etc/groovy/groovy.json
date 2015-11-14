@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "groovy",
+            "version": "2.4.0",
+            "url": "http://dl.bintray.com/groovy/maven/groovy-binary-2.4.0.zip",
+            "file": "groovy-2.4.0.zip",
+            "hash": "1e521a0c0018e35945e3ab93ae93a9b2dfc43b8e",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

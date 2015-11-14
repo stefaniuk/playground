@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "scm-server",
+            "version": "1.45",
+            "url": "https://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm//scm-server/1.45/scm-server-1.45-app.tar.gz",
+            "file": "scm-server-1.45.tar.gz",
+            "hash": "c8a2e9c694525a570460639bbb5cb01b23595ec4",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

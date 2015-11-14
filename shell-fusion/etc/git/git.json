@@ -1,0 +1,20 @@
+{
+    "downloads": [
+        {
+            "name": "git",
+            "version": "2.3.1",
+            "url": "https://www.kernel.org/pub/software/scm/git/git-2.3.1.tar.gz",
+            "file": "git-2.3.1-src.tar.gz",
+            "hash": "e81ed5d2a0121bdbc1a33e72db7f3703e89b5e7a",
+            "type": "source"
+        },
+        {
+            "name": "git",
+            "version": "2.3.7",
+            "url": "https://www.kernel.org/pub/software/scm/git/git-2.3.7.tar.gz",
+            "file": "git-2.3.7-src.tar.gz",
+            "hash": "21734332706991b26cffe7ea1d11808ebee83269",
+            "type": "source"
+        }
+    ]
+}

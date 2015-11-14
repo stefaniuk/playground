@@ -1,0 +1,14 @@
+{
+    "downloads": [
+        {
+            "name": "docker",
+            "type": "system",
+            "platform": "macosx"
+        },
+        {
+            "name": "docker",
+            "type": "system",
+            "platform": "ubuntu"
+        }
+    ]
+}

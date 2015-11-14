@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "nexus",
+            "version": "2.11.1",
+            "url": "http://download.sonatype.com/nexus/oss/nexus-2.11.1-01-bundle.tar.gz",
+            "file": "nexus-2.11.1.tar.gz",
+            "hash": "fe55d57d00973ce18b2f4ff10caffa45bd42fdac",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

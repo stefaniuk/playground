@@ -1,0 +1,11 @@
+{
+    "downloads": [
+        {
+            "name": "phpunit",
+            "url": "https://phar.phpunit.de/phpunit.phar",
+            "file": "phpunit.phar",
+            "type": "binary",
+            "dependsOn": [ "php" ]
+        }
+    ]
+}

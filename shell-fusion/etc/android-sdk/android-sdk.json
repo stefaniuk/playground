@@ -1,0 +1,26 @@
+{
+    "downloads": [
+        {
+            "name": "android-sdk",
+            "version": "24.0.2",
+            "url": "http://dl.google.com/android/android-sdk_r24.0.2-macosx.zip",
+            "file": "android-sdk_r24.0.2-macosx.zip",
+            "hash": "3ab5e0ab0db5e7c45de9da7ff525dee6cfa97455",
+            "type": "package",
+            "platform": "macosx",
+            "arch": "x86_64",
+            "dependsOn": [ "jdk" ]
+        },
+        {
+            "name": "android-sdk",
+            "version": "24.0.2",
+            "url": "http://dl.google.com/android/android-sdk_r24.0.2-linux.tgz",
+            "file": "android-sdk_r24.0.2-linux.tgz",
+            "hash": "b6fd75e8b06b0028c2427e6da7d8a09d8f956a86",
+            "type": "package",
+            "platform": "linux",
+            "arch": "x86_64",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

@@ -1,0 +1,130 @@
+#!/bin/bash
+
+source $config_script
+
+# The following variables need to be set:
+#   RUN_AS_USER
+#   START_COMMAND
+#   STOP_COMMAND (optional)
+#   RESTART_COMMAND (optional)
+#   PID_FILE
+
+function start {
+
+    # check
+    if is_running; then
+        log "Already started"
+        exit 1
+    fi
+
+    # start
+    $START_COMMAND &
+    local pid=$!
+    sleep 1
+    if [ -f $PID_FILE ]; then
+        pid=`cat $PID_FILE`
+    else
+        echo -n $pid > $PID_FILE
+    fi
+    log "Start with pid=$pid as user=$(echo $(id -u -n) | sed s/^_//g)"
+}
+
+function stop {
+
+    # check
+    if ! is_running; then
+        log "Already stopped"
+        exit 1
+    fi
+
+    # stop
+    log "Stop"
+    if [ -n "$STOP_COMMAND" ]; then
+        $STOP_COMMAND
+    else
+        kill -15 `cat $PID_FILE`
+        rm -f $PID_FILE
+    fi
+}
+
+function restart {
+
+    # check
+    if ! is_running; then
+        log "Not running"
+        exit 1
+    fi
+
+    # restart
+    log "Restart"
+    if [ -n "$RESTART_COMMAND" ]; then
+        $RESTART_COMMAND
+    else
+        stop
+        sleep 1
+        start
+    fi
+}
+
+function is_running {
+
+    if [ -f $PID_FILE ] && kill -0 `cat $PID_FILE` > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function log {
+
+    echo "$(date '+%Y/%m/%d %H:%M:%S') $*"
+}
+
+function usage {
+
+    echo "Usage: $(basename -- "$0") {start|stop|restart|status}"
+}
+
+function get_program_dir {
+
+    local source="${BASH_SOURCE[0]}"
+
+    while [ -h "$source" ]; do
+        DIR="$(cd -P "$(dirname "$source")" && pwd)"
+        source="$(readlink "$source")"
+        [[ $source != /* ]] && source="$DIR/$source"
+    done
+    local dir="$(cd -P "$(dirname "$source")" && pwd)"
+
+    echo $dir
+}
+
+# check variables
+if [ -z "$RUN_AS_USER" ] || [ -z "$START_COMMAND" ] || [ -z "$PID_FILE" ]; then
+    echo "Configuration script does not set required variables"
+    exit 1
+fi
+
+# check permissions
+if [ $(echo $(id -u -n) | sed s/^_//g) != "$(echo $RUN_AS_USER | sed s/^_//g)" ] && [ $# -gt 0 ] && [ $1 != "--help" ] && [ $1 != "-h" ]; then
+   sudo -H -u $RUN_AS_USER bash -c "$(get_program_dir)/daemon $*"
+   exit 0
+fi
+
+# main
+case $1 in
+    start)      start
+                ;;
+    stop)       stop
+                ;;
+    restart)    restart
+                ;;
+    status)     is_running && echo "running" || echo "not running"
+                ;;
+    --help|-h)  usage
+                ;;
+    *)          usage
+                ;;
+esac
+
+exit 0

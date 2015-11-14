@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "ant",
+            "version": "1.9.4",
+            "url": "http://mirrors.ukfast.co.uk/sites/ftp.apache.org//ant/binaries/apache-ant-1.9.4-bin.tar.gz",
+            "file": "ant-1.9.4.tar.gz",
+            "hash": "6c41481e8201f6b3f7e216146b95bb6de70208bb",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

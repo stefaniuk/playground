@@ -1,0 +1,31 @@
+{
+    "downloads": [
+        {
+            "name": "httpd",
+            "version": "2.4.12",
+            "url": "http://mirror.vorboss.net/apache//httpd/httpd-2.4.12.tar.gz",
+            "file": "httpd-2.4.12-src.tar.gz",
+            "hash": "0937fa7867a3d4421fd290dcc82e753977f96dca",
+            "type": "source",
+            "dependsOn": [ "apr", "apr-util", "pcre" ]
+        },
+        {
+            "name": "httpd",
+            "version": "2.4.10",
+            "url": "http://mirror.vorboss.net/apache//httpd/httpd-2.4.10.tar.gz",
+            "file": "httpd-2.4.10-src.tar.gz",
+            "hash": "9682272d16f0b2a7f1c7bbb9816283e3ab161d66",
+            "type": "source",
+            "dependsOn": [ "apr", "apr-util", "pcre" ]
+        },
+        {
+            "name": "httpd",
+            "version": "2.2.29",
+            "url": "http://mirror.vorboss.net/apache//httpd/httpd-2.2.29.tar.gz",
+            "file": "httpd-2.2.29-src.tar.gz",
+            "hash": "eea518d4b8be8e05697ae1d6ce449cd474868d0d",
+            "type": "source",
+            "dependsOn": [ "apr", "apr-util", "pcre" ]
+        }
+    ]
+}

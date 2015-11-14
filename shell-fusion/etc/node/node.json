@@ -1,0 +1,12 @@
+{
+    "downloads": [
+        {
+            "name": "node",
+            "version": "0.12.0",
+            "url": "http://nodejs.org/dist/v0.12.0/node-v0.12.0-darwin-x64.tar.gz",
+            "file": "node-v0.12.0-darwin-x64.tar.gz",
+            "hash": "596eff06fefc11ef10f345ea37e7e05f72533c67",
+            "type": "package"
+        }
+    ]
+}

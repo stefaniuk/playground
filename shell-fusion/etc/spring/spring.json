@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "spring",
+            "version": "1.2.2.RELEASE",
+            "url": "http://repo.spring.io/release/org/springframework/boot/spring-boot-cli/1.2.2.RELEASE/spring-boot-cli-1.2.2.RELEASE-bin.tar.gz",
+            "file": "spring-1.2.2.RELEASE.tar.gz",
+            "hash": "66e2859d4954c3c56f1a0975576116fb7dc16c1f",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

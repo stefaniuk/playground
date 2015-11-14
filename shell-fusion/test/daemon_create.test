@@ -1,0 +1,19 @@
+#!/bin/bash
+
+source $SHELL_FUSION_HOME/lib/asserts.sh
+
+daemon_create --name "test" \
+    --exec /usr/bin/java \
+    --args "-arg --arg2=val2 --arg3=val3" \
+    --user "test" \
+    --group "test" \
+    > /dev/null 2>&1
+
+if [ $DIST == "macosx" ]; then
+    assert_files_exist /System/Library/LaunchDaemons/test.plist
+    sudo rm -f /System/Library/LaunchDaemons/test.plist
+else
+    :
+fi
+
+exit 0

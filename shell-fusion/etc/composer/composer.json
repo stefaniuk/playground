@@ -1,0 +1,11 @@
+{
+    "downloads": [
+        {
+            "name": "composer",
+            "url": "https://getcomposer.org/composer.phar",
+            "file": "composer.phar",
+            "type": "binary",
+            "dependsOn": [ "php" ]
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=SmartSynchronize
+Keywords=synchronize;compare;diff
+Type=Application
+Categories=Development
+Terminal=false
+StartupNotify=true
+Exec="path/bin/smartsynchronize.sh" %u
+MimeType=x-scheme-handler/smartsynchronize
+Icon=path/bin/smartsynchronize-128.png

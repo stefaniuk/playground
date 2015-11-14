@@ -1,0 +1,13 @@
+{
+    "downloads": [
+        {
+            "name": "smartgit",
+            "version": "6.5.8",
+            "url": "http://www.syntevo.com/downloads/smartgit/smartgit-generic-6_5_8.tar.gz",
+            "file": "smartgit-6.5.8.tar.gz",
+            "hash": "c6252d3bd526277f3d3e02e65ed0a1d29a587226",
+            "type": "package",
+            "dependsOn": [ "java" ]
+        }
+    ]
+}

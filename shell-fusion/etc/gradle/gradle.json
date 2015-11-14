@@ -1,0 +1,22 @@
+{
+    "downloads": [
+        {
+            "name": "gradle",
+            "version": "2.3",
+            "url": "https://services.gradle.org/distributions/gradle-2.3-bin.zip",
+            "file": "gradle-2.3.zip",
+            "hash": "db857319150aa8f90cfcc1df7991c0ef4bcd180a",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        },
+        {
+            "name": "gradle",
+            "version": "2.2.1",
+            "url": "https://services.gradle.org/distributions/gradle-2.2.1-bin.zip",
+            "file": "gradle-2.2.1.zip",
+            "hash": "97ae081bc8be8b691e21dcf792eff1630dbc8eb6",
+            "type": "package",
+            "dependsOn": [ "jdk" ]
+        }
+    ]
+}

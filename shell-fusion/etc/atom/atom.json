@@ -1,0 +1,14 @@
+{
+    "downloads": [
+        {
+            "name": "atom",
+            "version": "0.198.0",
+            "url": "https://github.com/atom/atom/releases/download/v0.198.0/atom-amd64.deb",
+            "file": "atom-0.198.0.deb",
+            "hash": "9414a3cb470331b36974d534db26404ae5dca729",
+            "type": "package",
+            "platform": "ubuntu",
+            "arch": "x86_64"
+        }
+    ]
+}

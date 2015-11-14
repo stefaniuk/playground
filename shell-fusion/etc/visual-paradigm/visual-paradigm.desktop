@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Visual Paradigm
+Keywords=uml,design
+Type=Application
+Categories=Development
+Terminal=false
+StartupNotify=true
+Exec="path/Visual_Paradigm" %u
+MimeType=x-scheme-handler/visual-paradigm
+Icon=path/Application/resources/vpuml.png
